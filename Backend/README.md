@@ -1,337 +1,615 @@
-# 🏠 Room Management API
+# 🏨 Rent API — Hệ thống quản lý đặt phòng khách sạn
 
-Dự án quản lý đặt phòng đơn giản, xây dựng bằng **ASP.NET Core 10 Web API** + **SQL Server**.
-
----
-
-## 📋 Yêu cầu
-
-| Công cụ | Mục đích | Link |
-|---------|---------|------|
-| .NET 10 SDK | Chạy API | [Tải về](https://dotnet.microsoft.com/download/dotnet/10.0) |
-| Docker Desktop | Chạy SQL Server (không cần cài SQL Server lên máy) | [Tải về](https://www.docker.com/products/docker-desktop/) |
-| VS Code + C# Dev Kit | IDE | [Tải về](https://code.visualstudio.com/) |
+API RESTful được xây dựng bằng **ASP.NET Core 8**, áp dụng kiến trúc 3 layer (Controller → Service → Repository) với Entity Framework Core và SQL Server.
 
 ---
 
-## ⚙️ Cài đặt
+## 📋 Mục lục
 
-### 1. Cài .NET 10 SDK
-
-**macOS:**
-```bash
-brew install --cask dotnet-sdk
-```
-**Windows:** Tải và cài từ https://dotnet.microsoft.com/download/dotnet/10.0
-
-Kiểm tra:
-```bash
-dotnet --version  # 10.x.x
-```
-
-### 2. Khởi động SQL Server bằng Docker
-
-```bash
-# Ở thư mục root của project (có file docker-compose.yml)
-docker compose up -d
-```
-
-SQL Server sẽ chạy tại `localhost:1433` với thông tin:
-- **User:** `sa`
-- **Password:** `RoomPass@123`
-- **Database:** `RoomManagementDB` *(tự tạo khi migrate)*
-
-> Connection string đã được cấu hình sẵn trong `appsettings.json`, **không cần sửa gì thêm**.
-
-### 3. Cài extension VS Code
-
-Vào Extensions (`Ctrl+Shift+X` / `Cmd+Shift+X`), cài:
-- **C# Dev Kit** (của Microsoft)
+- [Môi trường cần cài đặt](#-môi-trường-cần-cài-đặt)
+- [Cấu trúc thư mục](#-cấu-trúc-thư-mục)
+- [Mối quan hệ các thực thể](#-mối-quan-hệ-các-thực-thể)
+- [Quy trình cấu hình & tạo file](#-quy-trình-cấu-hình--tạo-file)
+- [Danh sách API Endpoints](#-danh-sách-api-endpoints)
+- [Cách test API](#-cách-test-api)
+- [Cấu trúc Response chuẩn](#-cấu-trúc-response-chuẩn)
 
 ---
 
-## 🚀 Chạy project
+## 🛠 Môi trường cần cài đặt
+
+### Bắt buộc
+
+| Công cụ                             | Phiên bản    | Link tải                              |
+| ----------------------------------- | ------------ | ------------------------------------- |
+| .NET SDK                            | 8.0 trở lên  | https://dotnet.microsoft.com/download |
+| SQL Server                          | 2019 trở lên | https://www.microsoft.com/sql-server  |
+| SQL Server Management Studio (SSMS) | Mới nhất     | https://aka.ms/ssmsfullsetup          |
+
+### Tuỳ chọn (khuyến nghị)
+
+| Công cụ                    | Mục đích            |
+| -------------------------- | ------------------- |
+| Visual Studio 2022 / Rider | IDE phát triển      |
+| Visual Studio Code         | Editor nhẹ          |
+| Postman                    | Test API thủ công   |
+| Git                        | Quản lý source code |
+
+### Kiểm tra môi trường
 
 ```bash
-# 1. Clone về
-git clone <link-repo>
-cd RoomManagement
-
-# 2. Khởi động SQL Server
-docker compose up -d
-
-# 4. Tạo database (chỉ làm lần đầu)
-dotnet tool install --global dotnet-ef   # nếu chưa cài
-dotnet ef migrations add InitialCreate
-dotnet ef database update
-
-# 5. Chạy API
-dotnet run
+dotnet --version      # phải >= 8.0
+dotnet ef --version   # kiểm tra EF Core Tools
 ```
 
-Mở trình duyệt: **http://localhost:5000/swagger**
+Nếu chưa có EF Core Tools:
 
-**Lệnh Docker hữu ích:**
-```bash
-docker compose up -d      # Khởi động SQL Server
-docker compose down       # Dừng SQL Server
-docker compose down -v    # Dừng và xoá toàn bộ data DB
-```
-
-
----
-
-## 📁 Cấu trúc project
-
-```
-src/RoomManagement/
-│
-├── Controllers/              # Nhận request, trả response
-│   ├── AuthController.cs     # Đăng ký, đăng nhập
-│   ├── RoomsController.cs    # CRUD phòng
-│   └── BookingsController.cs # Đặt phòng, huỷ phòng
-│
-├── Models/                   # Cấu trúc dữ liệu (bảng trong DB)
-│   ├── User.cs
-│   ├── Room.cs
-│   ├── Booking.cs
-│   └── AppDbContext.cs       # Kết nối database
-│
-├── DTOs/                     # Định dạng dữ liệu gửi/nhận qua API
-│   ├── AuthDtos.cs
-│   ├── RoomDtos.cs
-│   └── BookingDtos.cs
-│
-├── Services/                 # Logic nghiệp vụ
-│   ├── AuthService.cs
-│   ├── RoomService.cs
-│   └── BookingService.cs
-│
-├── Program.cs                # Cấu hình app (entry point)
-└── appsettings.json          # Cấu hình (DB, JWT...)
-```
-
----
-
-## 🔄 Luồng hoạt động (Request Flow)
-
-Mỗi request từ client đi qua **3 lớp** theo thứ tự sau:
-
-```
-Client (Postman / Swagger / Frontend)
-        │
-        │  HTTP Request (JSON)
-        ▼
-┌─────────────────────────────────────────┐
-│           Controller                    │  ← Nhận request, validate đầu vào
-│   (Controllers/*.cs)                    │     Trả về HTTP response (200, 400, 401...)
-└─────────────────┬───────────────────────┘
-                  │  Gọi Service
-                  ▼
-┌─────────────────────────────────────────┐
-│             Service                     │  ← Xử lý logic nghiệp vụ
-│   (Services/*.cs)                       │     Kiểm tra điều kiện, tính toán
-└─────────────────┬───────────────────────┘
-                  │  Dùng DbContext
-                  ▼
-┌─────────────────────────────────────────┐
-│         Model / Database                │  ← Đọc/ghi dữ liệu vào SQL Server
-│   (Models/*.cs + AppDbContext.cs)       │
-└─────────────────────────────────────────┘
-```
-
-### Ví dụ cụ thể: Khách đặt phòng `POST /api/bookings`
-
-```
-1. [Controller] BookingsController.Create()
-      │  Nhận CreateBookingRequest từ body JSON
-      │  Lấy userId từ JWT token
-      │
-2. [Service]  BookingService.CreateAsync(userId, request)
-      │  Kiểm tra ngày check-in < check-out
-      │  Kiểm tra phòng có tồn tại không
-      │  Kiểm tra phòng có bị đặt trùng lịch không
-      │  Tính TotalPrice = PricePerNight × số đêm
-      │
-3. [Model/DB] AppDbContext
-      │  Lưu Booking mới vào bảng Bookings
-      │  Trả dữ liệu về cho Service
-      │
-4. [Controller] Trả về HTTP 201 + BookingResponse (JSON)
-```
-
-### Vai trò của từng lớp
-
-| Lớp | File | Làm gì |
-|-----|------|--------|
-| **Controller** | `Controllers/*.cs` | Nhận HTTP request → gọi Service → trả HTTP response |
-| **DTO** | `DTOs/*.cs` | Định nghĩa cấu trúc JSON request/response. **Không** chứa logic |
-| **Service** | `Services/*.cs` | Toàn bộ logic nghiệp vụ. **Không** biết gì về HTTP |
-| **Model** | `Models/*.cs` | Ánh xạ sang bảng DB. **Không** chứa logic |
-| **DbContext** | `Models/AppDbContext.cs` | Cầu nối EF Core ↔ SQL Server |
-
-> 💡 **Quy tắc vàng:** Controller **không** được viết logic. Service **không** được trả `IActionResult`. Mỗi lớp chỉ làm đúng việc của mình.
-
----
-
-## 🌐 Danh sách API
-
-### 🔐 Auth
-
-| Method | Endpoint | Mô tả | Cần đăng nhập? |
-|--------|----------|-------|----------------|
-| POST | `/api/auth/register` | Đăng ký tài khoản mới | Không |
-| POST | `/api/auth/login` | Đăng nhập, nhận token | Không |
-
-**Ví dụ đăng ký:**
-```json
-POST /api/auth/register
-{
-  "fullName": "Nguyễn Văn A",
-  "email": "a@example.com",
-  "password": "123456"
-}
-```
-
-**Ví dụ đăng nhập:**
-```json
-POST /api/auth/login
-{
-  "email": "a@example.com",
-  "password": "123456"
-}
-```
-→ Nhận về `token`, dùng token này cho các API cần đăng nhập.
-
----
-
-### 🏠 Rooms (Phòng)
-
-| Method | Endpoint | Mô tả | Quyền |
-|--------|----------|-------|-------|
-| GET | `/api/rooms` | Xem tất cả phòng | Tất cả |
-| GET | `/api/rooms/{id}` | Xem chi tiết 1 phòng | Tất cả |
-| POST | `/api/rooms` | Thêm phòng mới | Admin |
-| PUT | `/api/rooms/{id}` | Sửa thông tin phòng | Admin |
-| DELETE | `/api/rooms/{id}` | Xoá phòng | Admin |
-
-**Ví dụ thêm phòng (Admin):**
-```json
-POST /api/rooms
-{
-  "name": "Phòng 102",
-  "description": "Phòng đơn view biển",
-  "pricePerNight": 450000,
-  "capacity": 1,
-  "imageUrl": ""
-}
-```
-
----
-
-### 📅 Bookings (Đặt phòng)
-
-| Method | Endpoint | Mô tả | Quyền |
-|--------|----------|-------|-------|
-| GET | `/api/bookings` | Xem booking (Admin thấy tất cả, Customer thấy của mình) | Đăng nhập |
-| GET | `/api/bookings/{id}` | Xem chi tiết booking | Đăng nhập |
-| POST | `/api/bookings` | Đặt phòng | Đăng nhập |
-| PUT | `/api/bookings/{id}/status` | Xác nhận hoặc từ chối | Admin |
-| DELETE | `/api/bookings/{id}` | Huỷ booking | Đăng nhập |
-
-**Ví dụ đặt phòng:**
-```json
-POST /api/bookings
-{
-  "roomId": 1,
-  "checkIn": "2024-12-01T14:00:00",
-  "checkOut": "2024-12-03T12:00:00",
-  "note": "Cho tôi phòng tầng cao"
-}
-```
-
-**Ví dụ duyệt booking (Admin):**
-```json
-PUT /api/bookings/1/status
-{
-  "status": "Confirmed"
-}
-```
-
-> Các giá trị `status` hợp lệ: `Pending` | `Confirmed` | `Cancelled`
-
----
-
-## 🔑 Cách sử dụng token
-
-Sau khi đăng nhập, copy `token` trong response.  
-Trên Swagger, click nút **Authorize 🔒** (góc trên bên phải), nhập:
-```
-Bearer <token của bạn>
-```
-
----
-
-## 👑 Tạo tài khoản Admin
-
-Mặc định khi đăng ký, tài khoản có quyền `Customer`.  
-Để đổi thành `Admin`, mở **SQL Server Management Studio (SSMS)** hoặc **Azure Data Studio**, kết nối vào DB và chạy:
-
-```sql
-USE RoomManagementDB;
-UPDATE Users SET Role = 'Admin' WHERE Email = 'your@email.com';
-```
-
----
-
-## 🗄️ Dữ liệu mẫu
-
-Khi chạy lần đầu, hệ thống tự tạo sẵn 3 phòng:
-
-| Phòng | Mô tả | Giá/đêm |
-|-------|-------|---------|
-| Phòng 101 | Phòng đơn tiêu chuẩn | 300,000đ |
-| Phòng 201 | Phòng đôi cao cấp | 500,000đ |
-| Phòng 301 | Phòng VIP | 800,000đ |
-
----
-
-## ⚠️ Lỗi thường gặp
-
-**`command not found: dotnet`**
-→ Chưa cài .NET SDK, xem lại bước Cài đặt môi trường.
-
-**`No migrations have been applied`**  
-→ Chạy `dotnet ef migrations add InitialCreate` trước khi `dotnet run`.
-
-**`dotnet ef not found`**  
-→ Cài EF CLI:
 ```bash
 dotnet tool install --global dotnet-ef
 ```
 
-**Lỗi kết nối SQL Server (Cannot open database / Login failed)**  
-→ Kiểm tra lại connection string trong `appsettings.json`. Đảm bảo SQL Server đang chạy và thông tin đăng nhập đúng.
+---
 
-**`TrustServerCertificate` error**  
-→ Thêm `TrustServerCertificate=True` vào cuối connection string.
+## 📁 Cấu trúc thư mục
 
-**Port đã bị dùng**  
-→ Đổi port trong `Properties/launchSettings.json` hoặc kill process đang dùng port đó.
+```
+YourProject/
+│
+├── Controllers/                    # Nhận HTTP request, trả response
+│   ├── BookingController.cs
+│   ├── CustomerController.cs
+│   ├── HotelController.cs
+│   ├── InvoiceController.cs
+│   ├── NotificationController.cs
+│   ├── PaymentController.cs
+│   ├── ReviewController.cs
+│   ├── RoomController.cs
+│   ├── VoucherController.cs
+│   └── WishlistController.cs
+│
+├── Data/                           # Cấu hình database
+│   └── ApplicationDbContext.cs     # DbContext + Fluent API
+│
+├── DTOs/                           # Request & Response objects
+│   ├── AccountDto.cs
+│   ├── ApiResponse.cs              # Wrapper response dùng chung
+│   ├── BookingDto.cs
+│   ├── CustomerDto.cs
+│   ├── HotelDto.cs
+│   ├── HotelOwnerDto.cs
+│   ├── InvoiceDto.cs
+│   ├── NotificationDto.cs
+│   ├── PaymentDto.cs
+│   ├── ReviewDto.cs
+│   ├── RoomDto.cs
+│   ├── VoucherDto.cs
+│   └── WishlistDto.cs
+│
+├── Extensions/                     # Extension methods
+│   └── ServiceCollectionExtensions.cs  # Đăng ký DI toàn bộ
+│
+├── Filters/                        # Action filters
+│   └── ValidationFilter.cs        # Tự động validate DTO → 400
+│
+├── Middlewares/                    # Custom middleware
+│   └── GlobalExceptionMiddleware.cs    # Bắt lỗi toàn cục → JSON
+│
+├── Models/                         # Entity classes (ánh xạ DB)
+│   ├── Account.cs
+│   ├── Admin.cs
+│   ├── Booking.cs
+│   ├── Customer.cs
+│   ├── Hotel.cs
+│   ├── HotelAmenity.cs
+│   ├── HotelImage.cs
+│   ├── HotelOwner.cs
+│   ├── Invoice.cs
+│   ├── Notification.cs
+│   ├── Payment.cs
+│   ├── Promotion.cs
+│   ├── RevenueReport.cs
+│   ├── Review.cs
+│   ├── Room.cs
+│   ├── RoomImage.cs
+│   ├── Voucher.cs
+│   └── Wishlist.cs
+│
+├── Repositories/
+│   ├── Interfaces/                 # Contract (14 interfaces)
+│   │   ├── IGenericRepository.cs
+│   │   ├── IAccountRepository.cs
+│   │   ├── IBookingRepository.cs
+│   │   ├── ICustomerRepository.cs
+│   │   ├── IHotelAmenityRepository.cs
+│   │   ├── IHotelOwnerRepository.cs
+│   │   ├── IHotelRepository.cs
+│   │   ├── IInvoiceRepository.cs
+│   │   ├── INotificationRepository.cs
+│   │   ├── IPaymentRepository.cs
+│   │   ├── IRevenueReportRepository.cs
+│   │   ├── IReviewRepository.cs
+│   │   ├── IRoomRepository.cs
+│   │   ├── IVoucherRepository.cs
+│   │   └── IWishlistRepository.cs
+│   └── Implementations/            # Triển khai (15 classes)
+│       ├── GenericRepository.cs
+│       ├── AccountRepository.cs
+│       ├── BookingRepository.cs
+│       ├── CustomerRepository.cs
+│       ├── HotelAmenityRepository.cs
+│       ├── HotelOwnerRepository.cs
+│       ├── HotelRepository.cs
+│       ├── InvoiceRepository.cs
+│       ├── NotificationRepository.cs
+│       ├── PaymentRepository.cs
+│       ├── RevenueReportRepository.cs
+│       ├── ReviewRepository.cs
+│       ├── RoomRepository.cs
+│       ├── VoucherRepository.cs
+│       └── WishlistRepository.cs
+│
+├── Services/
+│   ├── Interfaces/                 # Contract (10 interfaces)
+│   │   ├── IBookingService.cs
+│   │   ├── ICustomerService.cs
+│   │   ├── IHotelService.cs
+│   │   ├── IInvoiceService.cs
+│   │   ├── INotificationService.cs
+│   │   ├── IPaymentService.cs
+│   │   ├── IReviewService.cs
+│   │   ├── IRoomService.cs
+│   │   ├── IVoucherService.cs
+│   │   └── IWishlistService.cs
+│   └── Implementations/            # Triển khai (10 classes)
+│       ├── BookingService.cs
+│       ├── CustomerService.cs
+│       ├── HotelService.cs
+│       ├── InvoiceService.cs
+│       ├── NotificationService.cs
+│       ├── PaymentService.cs
+│       ├── ReviewService.cs
+│       ├── RoomService.cs
+│       ├── VoucherService.cs
+│       └── WishlistService.cs
+│
+├── appsettings.json                # Cấu hình production
+├── appsettings.Development.json    # Cấu hình development (override)
+└── Program.cs                      # Entry point — cấu hình pipeline
+```
+
+### Luồng xử lý request
+
+```
+HTTP Request
+    │
+    ▼
+[Controller]        → nhận request, validate qua ValidationFilter
+    │
+    ▼
+[Service]           → xử lý business logic (tính giá, kiểm tra điều kiện)
+    │
+    ▼
+[Repository]        → truy vấn database qua EF Core
+    │
+    ▼
+[Database]          → SQL Server
+    │
+    ▼
+[Response]          → ApiResponse<T> JSON chuẩn hóa
+```
 
 ---
 
-## 👥 Phân công (gợi ý)
+## 🔗 Mối quan hệ các thực thể
 
-| Feature | File cần làm việc |
-|---------|-----------------|
-| Auth (đăng ký / đăng nhập) | `AuthController.cs`, `AuthService.cs` |
-| Quản lý phòng | `RoomsController.cs`, `RoomService.cs` |
-| Đặt phòng | `BookingsController.cs`, `BookingService.cs` |
-| Cấu trúc DB | `Models/*.cs`, `AppDbContext.cs` |
+### Sơ đồ tổng quan
+
+```
+Account (1) ──────────────────────────────┐
+    │                                      │
+    ├── (1) Customer                       ├── (1) HotelOwner
+    │        │                             │        │
+    │        ├── (nhiều) Booking           │        └── (nhiều) Hotel
+    │        │        │                   │                 │
+    │        │        ├── (nhiều) Payment  │                 ├── (nhiều) Room
+    │        │        └── (nhiều) Invoice  │                 │        │
+    │        │                            │                 │        ├── (nhiều) RoomImage
+    │        ├── (nhiều) Review            │                 │        └── (nhiều) Booking
+    │        ├── (nhiều) Wishlist          │                 │
+    │        └── (nhiều) Notification      │                 ├── (nhiều) HotelImage
+    │                                      │                 ├── (nhiều) Review
+    └── (1) Admin                          │                 ├── (nhiều) Wishlist
+                                           │                 ├── (nhiều) RevenueReport
+                                           │                 └── (nhiều↔nhiều) HotelAmenity
+```
+
+### Chi tiết quan hệ
+
+| Thực thể A   | Quan hệ       | Thực thể B      | Ghi chú                            |
+| ------------ | ------------- | --------------- | ---------------------------------- |
+| `Account`    | 1 → 1         | `Customer`      | Một tài khoản là một khách hàng    |
+| `Account`    | 1 → 1         | `HotelOwner`    | Một tài khoản là một chủ khách sạn |
+| `Account`    | 1 → 1         | `Admin`         | Một tài khoản là một admin         |
+| `HotelOwner` | 1 → nhiều     | `Hotel`         | Một chủ sở hữu nhiều khách sạn     |
+| `Hotel`      | 1 → nhiều     | `Room`          | Một khách sạn có nhiều phòng       |
+| `Hotel`      | 1 → nhiều     | `HotelImage`    | Cascade delete                     |
+| `Hotel`      | nhiều ↔ nhiều | `HotelAmenity`  | Bảng trung gian `Hotel_Amenity`    |
+| `Hotel`      | 1 → nhiều     | `Review`        |                                    |
+| `Hotel`      | 1 → nhiều     | `RevenueReport` |                                    |
+| `Room`       | 1 → nhiều     | `RoomImage`     | Cascade delete                     |
+| `Room`       | 1 → nhiều     | `Booking`       |                                    |
+| `Customer`   | 1 → nhiều     | `Booking`       |                                    |
+| `Customer`   | 1 → nhiều     | `Review`        |                                    |
+| `Customer`   | 1 → nhiều     | `Wishlist`      |                                    |
+| `Customer`   | 1 → nhiều     | `Notification`  | Cascade delete                     |
+| `Booking`    | 1 → nhiều     | `Payment`       |                                    |
+| `Booking`    | 1 → nhiều     | `Invoice`       |                                    |
 
 ---
 
-## 📞 Liên hệ
+## ⚙️ Quy trình cấu hình & tạo file
 
-Có vấn đề gì thì liên hệ nhóm trưởng hoặc tạo Issue trên GitHub.
+### Bước 1 — Tạo project
+
+```bash
+dotnet new webapi -n YourProject
+cd YourProject
+```
+
+### Bước 2 — Cài đặt packages
+
+```bash
+# EF Core + SQL Server
+dotnet add package Microsoft.EntityFrameworkCore.SqlServer
+dotnet add package Microsoft.EntityFrameworkCore.Tools
+dotnet add package Microsoft.EntityFrameworkCore.Design
+
+# Swagger
+dotnet add package Swashbuckle.AspNetCore
+
+# API Versioning
+dotnet add package Asp.Versioning.Mvc
+
+# Health Check
+dotnet add package Microsoft.Extensions.Diagnostics.HealthChecks.EntityFrameworkCore
+
+# JWT (khi cần Auth)
+dotnet add package Microsoft.AspNetCore.Authentication.JwtBearer
+
+# Unit Test
+dotnet add package xunit
+dotnet add package Moq
+dotnet add package Microsoft.AspNetCore.Mvc.Testing
+```
+
+### Bước 3 — Cấu hình `appsettings.json`
+
+```json
+{
+  "ConnectionStrings": {
+    "DefaultConnection": "Server=.;Database=RentDb;Trusted_Connection=True;TrustServerCertificate=True;MultipleActiveResultSets=True"
+  },
+  "Jwt": {
+    "Key": "YOUR_SECRET_KEY_MINIMUM_32_CHARACTERS",
+    "Issuer": "RentApi",
+    "Audience": "RentApiClient",
+    "ExpiresInMinutes": 60,
+    "RefreshTokenExpiresInDays": 7
+  },
+  "AllowedOrigins": ["http://localhost:3000", "http://localhost:5173"],
+  "Logging": {
+    "LogLevel": {
+      "Default": "Information",
+      "Microsoft.AspNetCore": "Warning",
+      "Microsoft.EntityFrameworkCore.Database.Command": "Warning"
+    }
+  }
+}
+```
+
+> ⚠️ Thêm `appsettings.Development.json` vào `.gitignore` nếu chứa thông tin nhạy cảm.
+
+### Bước 4 — Tạo các file theo thứ tự
+
+Thứ tự tạo file quan trọng vì có phụ thuộc lẫn nhau:
+
+```
+1. Models/          → Entity classes
+2. Data/            → ApplicationDbContext
+3. DTOs/            → Request/Response objects
+4. Repositories/    → Interfaces trước, Implementations sau
+5. Services/        → Interfaces trước, Implementations sau
+6. Controllers/     → Inject Services
+7. Filters/         → ValidationFilter
+8. Middlewares/     → GlobalExceptionMiddleware
+9. Extensions/      → ServiceCollectionExtensions (DI)
+10. Program.cs      → Cấu hình pipeline
+```
+
+### Bước 5 — Cấu hình namespace
+
+Thay toàn bộ `YourProject` bằng namespace thực tế của project. Dùng find & replace trong IDE:
+
+```
+Find:    YourProject
+Replace: TênProjectThậtCủaBạn
+```
+
+### Bước 6 — Tạo Migration và Database
+
+```bash
+# Tạo migration đầu tiên
+dotnet ef migrations add InitialCreate
+
+# Kiểm tra migration (xem file được tạo trong Migrations/)
+# Nếu đúng thì apply lên database
+dotnet ef database update
+```
+
+### Bước 7 — Chạy project
+
+```bash
+dotnet run
+# hoặc
+dotnet watch run   # tự reload khi thay đổi code
+```
+
+Mở trình duyệt tại `https://localhost:{port}` → Swagger UI hiện ra.
+
+---
+
+## 🌐 Danh sách API Endpoints
+
+Base URL: `https://localhost:{port}/api`
+
+### Customer
+
+| Method   | Endpoint         | Mô tả                  |
+| -------- | ---------------- | ---------------------- |
+| `GET`    | `/customer`      | Lấy tất cả khách hàng  |
+| `GET`    | `/customer/{id}` | Lấy khách hàng theo id |
+| `POST`   | `/customer`      | Tạo khách hàng mới     |
+| `PUT`    | `/customer/{id}` | Cập nhật khách hàng    |
+| `DELETE` | `/customer/{id}` | Xóa khách hàng         |
+
+### Hotel
+
+| Method   | Endpoint                 | Mô tả                     |
+| -------- | ------------------------ | ------------------------- |
+| `GET`    | `/hotel`                 | Lấy danh sách KS đã duyệt |
+| `GET`    | `/hotel/{id}`            | Chi tiết khách sạn        |
+| `GET`    | `/hotel/owner/{ownerId}` | KS theo chủ sở hữu        |
+| `GET`    | `/hotel/search?keyword=` | Tìm kiếm khách sạn        |
+| `POST`   | `/hotel`                 | Tạo khách sạn mới         |
+| `PUT`    | `/hotel/{id}`            | Cập nhật khách sạn        |
+| `PATCH`  | `/hotel/{id}/approve`    | Duyệt khách sạn           |
+| `DELETE` | `/hotel/{id}`            | Xóa khách sạn             |
+
+### Room
+
+| Method   | Endpoint                                       | Mô tả                |
+| -------- | ---------------------------------------------- | -------------------- |
+| `GET`    | `/room/hotel/{hotelId}`                        | Phòng theo khách sạn |
+| `GET`    | `/room/{id}`                                   | Chi tiết phòng       |
+| `GET`    | `/room/available?hotelId=&startDate=&endDate=` | Phòng còn trống      |
+| `POST`   | `/room`                                        | Tạo phòng mới        |
+| `PUT`    | `/room/{id}`                                   | Cập nhật phòng       |
+| `DELETE` | `/room/{id}`                                   | Xóa phòng            |
+
+### Booking
+
+| Method  | Endpoint                         | Mô tả                   |
+| ------- | -------------------------------- | ----------------------- |
+| `GET`   | `/booking/customer/{customerId}` | Booking theo khách hàng |
+| `GET`   | `/booking/{id}`                  | Chi tiết booking        |
+| `POST`  | `/booking`                       | Đặt phòng               |
+| `PATCH` | `/booking/{id}/status`           | Cập nhật trạng thái     |
+| `PATCH` | `/booking/{id}/cancel`           | Hủy booking             |
+
+### Payment
+
+| Method | Endpoint                               | Mô tả                |
+| ------ | -------------------------------------- | -------------------- |
+| `GET`  | `/payment/booking/{bookingId}`         | Payment theo booking |
+| `GET`  | `/payment/transaction/{transactionId}` | Theo mã giao dịch    |
+| `POST` | `/payment`                             | Tạo thanh toán       |
+
+### Review
+
+| Method   | Endpoint                         | Mô tả            |
+| -------- | -------------------------------- | ---------------- |
+| `GET`    | `/review/hotel/{hotelId}`        | Đánh giá theo KS |
+| `GET`    | `/review/customer/{customerId}`  | Đánh giá theo KH |
+| `GET`    | `/review/hotel/{hotelId}/rating` | Điểm trung bình  |
+| `POST`   | `/review`                        | Tạo đánh giá     |
+| `DELETE` | `/review/{id}`                   | Xóa đánh giá     |
+
+### Wishlist
+
+| Method   | Endpoint                          | Mô tả              |
+| -------- | --------------------------------- | ------------------ |
+| `GET`    | `/wishlist/customer/{customerId}` | DS yêu thích       |
+| `POST`   | `/wishlist`                       | Thêm vào yêu thích |
+| `DELETE` | `/wishlist?customerId=&hotelId=`  | Xóa khỏi yêu thích |
+
+### Voucher
+
+| Method   | Endpoint               | Mô tả                  |
+| -------- | ---------------------- | ---------------------- |
+| `GET`    | `/voucher`             | Voucher đang hoạt động |
+| `GET`    | `/voucher/code/{code}` | Kiểm tra mã voucher    |
+| `POST`   | `/voucher`             | Tạo voucher            |
+| `DELETE` | `/voucher/{id}`        | Xóa voucher            |
+
+### Notification
+
+| Method  | Endpoint                                            | Mô tả             |
+| ------- | --------------------------------------------------- | ----------------- |
+| `GET`   | `/notification/customer/{customerId}`               | Thông báo theo KH |
+| `GET`   | `/notification/customer/{customerId}/unread-count`  | Số chưa đọc       |
+| `PATCH` | `/notification/customer/{customerId}/mark-all-read` | Đánh dấu đã đọc   |
+| `POST`  | `/notification`                                     | Gửi thông báo     |
+
+### Invoice
+
+| Method | Endpoint                       | Mô tả                |
+| ------ | ------------------------------ | -------------------- |
+| `GET`  | `/invoice/{id}`                | Hóa đơn theo id      |
+| `GET`  | `/invoice/booking/{bookingId}` | Hóa đơn theo booking |
+
+### System
+
+| Method | Endpoint  | Mô tả                               |
+| ------ | --------- | ----------------------------------- |
+| `GET`  | `/health` | Kiểm tra trạng thái API và database |
+
+---
+
+## 🧪 Cách test API
+
+### 1. Swagger UI (nhanh nhất)
+
+Chạy project và truy cập `https://localhost:{port}` — Swagger UI xuất hiện ngay tại root.
+
+Ví dụ test `POST /api/booking`:
+
+```json
+{
+  "id": "BK001",
+  "customerId": "CUS001",
+  "roomId": "ROOM001",
+  "startDate": "2026-05-01",
+  "endDate": "2026-05-05",
+  "guestCount": 2,
+  "specialRequest": "Tầng cao, view biển"
+}
+```
+
+### 2. Postman
+
+Import collection và test từng endpoint. Đặt `Content-Type: application/json` trong Headers.
+
+Ví dụ tìm phòng trống:
+
+```
+GET https://localhost:7001/api/room/available
+    ?hotelId=H001
+    &startDate=2026-05-01
+    &endDate=2026-05-05
+```
+
+### 3. Unit Test với xUnit + Moq
+
+```bash
+# Tạo project test
+dotnet new xunit -n YourProject.Tests
+cd YourProject.Tests
+dotnet add reference ../YourProject/YourProject.csproj
+dotnet add package Moq
+```
+
+Ví dụ test BookingService:
+
+```csharp
+[Fact]
+public async Task CreateAsync_ShouldThrow_WhenRoomOverlaps()
+{
+    // Arrange
+    _bookingRepoMock
+        .Setup(r => r.HasOverlappingBookingAsync(
+            It.IsAny<string>(), It.IsAny<DateOnly>(),
+            It.IsAny<DateOnly>(), null))
+        .ReturnsAsync(true);
+
+    var dto = new CreateBookingDto(
+        "BK001", "CUS001", "ROOM001",
+        new DateOnly(2026, 5, 1), new DateOnly(2026, 5, 5), 2, null);
+
+    // Act + Assert
+    await Assert.ThrowsAsync<InvalidOperationException>(
+        () => _service.CreateAsync(dto));
+}
+```
+
+```bash
+# Chạy tất cả tests
+dotnet test
+
+# Chạy với output chi tiết
+dotnet test --verbosity normal
+```
+
+### 4. Health Check
+
+```
+GET https://localhost:{port}/health
+```
+
+Response khi OK:
+
+```json
+{
+  "status": "Healthy",
+  "results": {
+    "database": { "status": "Healthy" }
+  }
+}
+```
+
+---
+
+## 📦 Cấu trúc Response chuẩn
+
+Mọi endpoint đều trả về `ApiResponse<T>`:
+
+**Thành công:**
+
+```json
+{
+  "success": true,
+  "message": null,
+  "data": { ... }
+}
+```
+
+**Lỗi validation (400):**
+
+```json
+{
+  "success": false,
+  "message": "Dữ liệu đầu vào không hợp lệ.",
+  "data": {
+    "rating": ["Rating phải từ 1 đến 5."],
+    "guestCount": ["Số khách phải từ 1 đến 50."]
+  }
+}
+```
+
+**Không tìm thấy (404):**
+
+```json
+{
+  "success": false,
+  "message": "Không tìm thấy khách sạn.",
+  "data": null
+}
+```
+
+**Lỗi server (500):**
+
+```json
+{
+  "success": false,
+  "message": "Đã xảy ra lỗi hệ thống. Vui lòng thử lại sau.",
+  "data": null
+}
+```
+
+---
+
+## 📝 Ghi chú
+
+- Tất cả `id` trong project đều dùng kiểu `string` (VARCHAR 50) thay vì `int` để linh hoạt hơn khi tích hợp với các hệ thống bên ngoài.
+- `DeleteBehavior.Restrict` được dùng mặc định để tránh xóa dữ liệu liên quan ngoài ý muốn, ngoại trừ `HotelImage`, `RoomImage`, `Notification` dùng `Cascade`.
+- JWT Authentication đã được chuẩn bị sẵn trong `Program.cs`, chỉ cần bỏ comment khi cần bật.
+- CORS đang dùng `AllowAll` cho Development. Khi deploy production phải chuyển sang `AllowFrontend` với đúng domain trong `appsettings.json`.
