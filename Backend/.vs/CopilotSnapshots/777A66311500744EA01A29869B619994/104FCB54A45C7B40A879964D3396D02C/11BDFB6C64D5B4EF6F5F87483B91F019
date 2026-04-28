@@ -1,0 +1,334 @@
+﻿using Microsoft.EntityFrameworkCore;
+using RoomManagement.Models;
+using RoomManagement.Models; // ⚠️ Thay bằng namespace thực tế của bạn
+
+namespace RoomManagement.Data // ⚠️ Thay bằng namespace thực tế của bạn
+{
+    public class AppDbContext : DbContext
+    {
+        public AppDbContext(DbContextOptions<AppDbContext> options)
+            : base(options)
+        {
+        }
+
+        // ── DbSets ──────────────────────────────────────────────────────────
+        public DbSet<Account> Accounts { get; set; }
+        public DbSet<Customer> Customers { get; set; }
+        public DbSet<HotelOwner> HotelOwners { get; set; }
+        public DbSet<Admin> Admins { get; set; }
+        public DbSet<Hotel> Hotels { get; set; }
+        public DbSet<Rooms> Rooms { get; set; }
+        public DbSet<HotelImage> HotelImages { get; set; }
+        public DbSet<RoomImage> RoomImages { get; set; }
+        public DbSet<HotelAmenity> HotelAmenities { get; set; }
+        public DbSet<Booking> Bookings { get; set; }
+        public DbSet<Payment> Payments { get; set; }
+        public DbSet<Invoice> Invoices { get; set; }
+        public DbSet<Review> Reviews { get; set; }
+        public DbSet<Wishlist> Wishlists { get; set; }
+        public DbSet<Voucher> Vouchers { get; set; }
+        public DbSet<Notification> Notifications { get; set; }
+        public DbSet<Promotion> Promotions { get; set; }
+        public DbSet<RevenueReport> RevenueReports { get; set; }
+
+        // ── Fluent API Configuration ─────────────────────────────────────────
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            base.OnModelCreating(modelBuilder);
+
+            // ── Account ──────────────────────────────────────────────────────
+            modelBuilder.Entity<Account>(entity =>
+            {
+                entity.ToTable("Account");
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.Id).HasMaxLength(50);
+                entity.HasIndex(e => e.Email).IsUnique();
+                entity.Property(e => e.Email).HasMaxLength(100);
+                entity.Property(e => e.Password).HasMaxLength(255);
+                entity.Property(e => e.Status).HasMaxLength(20);
+                entity.Property(e => e.Role).HasMaxLength(20);
+            });
+
+            // ── Customer ──────────────────────────────────────────────────────
+            modelBuilder.Entity<Customer>(entity =>
+            {
+                entity.ToTable("Customer");
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.Id).HasMaxLength(50);
+                entity.Property(e => e.AccountId).HasMaxLength(50);
+                entity.Property(e => e.Name).HasMaxLength(100);
+                entity.Property(e => e.Phone).HasMaxLength(20);
+                entity.Property(e => e.IdentityDoc).HasMaxLength(100);
+
+                entity.HasOne(e => e.Account)
+                      .WithMany()
+                      .HasForeignKey(e => e.AccountId)
+                      .OnDelete(DeleteBehavior.Restrict);
+            });
+
+            // ── HotelOwner ────────────────────────────────────────────────────
+            modelBuilder.Entity<HotelOwner>(entity =>
+            {
+                entity.ToTable("HotelOwner");
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.Id).HasMaxLength(50);
+                entity.Property(e => e.AccountId).HasMaxLength(50);
+                entity.Property(e => e.CompanyName).HasMaxLength(100);
+                entity.Property(e => e.TaxCode).HasMaxLength(50);
+                entity.Property(e => e.Phone).HasMaxLength(20);
+
+                entity.HasOne(e => e.Account)
+                      .WithMany()
+                      .HasForeignKey(e => e.AccountId)
+                      .OnDelete(DeleteBehavior.Restrict);
+            });
+
+            // ── Admin ─────────────────────────────────────────────────────────
+            modelBuilder.Entity<Admin>(entity =>
+            {
+                entity.ToTable("Admin");
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.Id).HasMaxLength(50);
+                entity.Property(e => e.AccountId).HasMaxLength(50);
+
+                entity.HasOne(e => e.Account)
+                      .WithMany()
+                      .HasForeignKey(e => e.AccountId)
+                      .OnDelete(DeleteBehavior.Restrict);
+            });
+
+            // ── Hotel ─────────────────────────────────────────────────────────
+            modelBuilder.Entity<Hotel>(entity =>
+            {
+                entity.ToTable("Hotel");
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.Id).HasMaxLength(50);
+                entity.Property(e => e.Name).HasMaxLength(100);
+                entity.Property(e => e.OwnerId).HasMaxLength(50);
+
+                entity.HasOne(e => e.Owner)
+                      .WithMany(o => o.Hotels)
+                      .HasForeignKey(e => e.OwnerId)
+                      .OnDelete(DeleteBehavior.Restrict);
+
+                // Many-to-many: Hotel <-> HotelAmenity
+                entity.HasMany(e => e.Amenities)
+                      .WithMany(a => a.Hotels)
+                      .UsingEntity(j => j.ToTable("Hotel_Amenity"));
+            });
+
+            // ── Room ──────────────────────────────────────────────────────────
+            modelBuilder.Entity<Room>(entity =>
+            {
+                entity.ToTable("Room");
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.Id).HasMaxLength(50);
+                entity.Property(e => e.HotelId).HasMaxLength(50);
+                entity.Property(e => e.RoomNumber).HasMaxLength(20);
+                entity.Property(e => e.RoomType).HasMaxLength(50);
+                entity.Property(e => e.PricePerNight).HasColumnType("decimal(18,2)");
+                entity.Property(e => e.Status).HasMaxLength(20);
+
+                entity.HasOne(e => e.Hotel)
+                      .WithMany(h => h.Rooms)
+                      .HasForeignKey(e => e.HotelId)
+                      .OnDelete(DeleteBehavior.Restrict);
+            });
+
+            // ── HotelImage ────────────────────────────────────────────────────
+            modelBuilder.Entity<HotelImage>(entity =>
+            {
+                entity.ToTable("HotelImage");
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.Id).HasMaxLength(50);
+                entity.Property(e => e.HotelId).HasMaxLength(50);
+
+                entity.HasOne(e => e.Hotel)
+                      .WithMany(h => h.Images)
+                      .HasForeignKey(e => e.HotelId)
+                      .OnDelete(DeleteBehavior.Cascade);
+            });
+
+            // ── RoomImage ─────────────────────────────────────────────────────
+            modelBuilder.Entity<RoomImage>(entity =>
+            {
+                entity.ToTable("RoomImage");
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.Id).HasMaxLength(50);
+                entity.Property(e => e.RoomId).HasMaxLength(50);
+
+                entity.HasOne(e => e.Room)
+                      .WithMany(r => r.Images)
+                      .HasForeignKey(e => e.RoomId)
+                      .OnDelete(DeleteBehavior.Cascade);
+            });
+
+            // ── HotelAmenity ──────────────────────────────────────────────────
+            modelBuilder.Entity<HotelAmenity>(entity =>
+            {
+                entity.ToTable("HotelAmenity");
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.Id).HasMaxLength(50);
+                entity.Property(e => e.Name).HasMaxLength(100);
+                entity.Property(e => e.Icon).HasMaxLength(100);
+            });
+
+            // ── Booking ───────────────────────────────────────────────────────
+            modelBuilder.Entity<Booking>(entity =>
+            {
+                entity.ToTable("Booking");
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.Id).HasMaxLength(50);
+                entity.Property(e => e.CustomerId).HasMaxLength(50);
+                entity.Property(e => e.RoomId).HasMaxLength(50);
+                entity.Property(e => e.ReservationNumber).HasMaxLength(100);
+                entity.Property(e => e.TotalPrice).HasColumnType("decimal(18,2)");
+                entity.Property(e => e.Status).HasMaxLength(20);
+                entity.Property(e => e.CreatedAt).HasColumnType("datetime2");
+
+                entity.HasOne(e => e.Customer)
+                      .WithMany(c => c.Bookings)
+                      .HasForeignKey(e => e.CustomerId)
+                      .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(e => e.Room)
+                      .WithMany(r => r.Bookings)
+                      .HasForeignKey(e => e.RoomId)
+                      .OnDelete(DeleteBehavior.Restrict);
+            });
+
+            // ── Payment ───────────────────────────────────────────────────────
+            modelBuilder.Entity<Payment>(entity =>
+            {
+                entity.ToTable("Payment");
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.Id).HasMaxLength(50);
+                entity.Property(e => e.BookingId).HasMaxLength(50);
+                entity.Property(e => e.Amount).HasColumnType("decimal(18,2)");
+                entity.Property(e => e.Method).HasMaxLength(50);
+                entity.Property(e => e.Status).HasMaxLength(20);
+                entity.Property(e => e.TransactionId).HasMaxLength(100);
+                entity.Property(e => e.PaidAt).HasColumnType("datetime2");
+                entity.Property(e => e.RefundedAt).HasColumnType("datetime2");
+
+                entity.HasOne(e => e.Booking)
+                      .WithMany(b => b.Payments)
+                      .HasForeignKey(e => e.BookingId)
+                      .OnDelete(DeleteBehavior.Restrict);
+            });
+
+            // ── Invoice ───────────────────────────────────────────────────────
+            modelBuilder.Entity<Invoice>(entity =>
+            {
+                entity.ToTable("Invoice");
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.Id).HasMaxLength(50);
+                entity.Property(e => e.BookingId).HasMaxLength(50);
+                entity.Property(e => e.TotalAmount).HasColumnType("decimal(18,2)");
+                entity.Property(e => e.TaxAmount).HasColumnType("decimal(18,2)");
+                entity.Property(e => e.IssuedAt).HasColumnType("datetime2");
+
+                entity.HasOne(e => e.Booking)
+                      .WithMany(b => b.Invoices)
+                      .HasForeignKey(e => e.BookingId)
+                      .OnDelete(DeleteBehavior.Restrict);
+            });
+
+            // ── Review ────────────────────────────────────────────────────────
+            modelBuilder.Entity<Review>(entity =>
+            {
+                entity.ToTable("Review");
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.Id).HasMaxLength(50);
+                entity.Property(e => e.HotelId).HasMaxLength(50);
+                entity.Property(e => e.CustomerId).HasMaxLength(50);
+                entity.Property(e => e.CreatedAt).HasColumnType("datetime2");
+
+                entity.HasOne(e => e.Hotel)
+                      .WithMany(h => h.Reviews)
+                      .HasForeignKey(e => e.HotelId)
+                      .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(e => e.Customer)
+                      .WithMany(c => c.Reviews)
+                      .HasForeignKey(e => e.CustomerId)
+                      .OnDelete(DeleteBehavior.Restrict);
+            });
+
+            // ── Wishlist ──────────────────────────────────────────────────────
+            modelBuilder.Entity<Wishlist>(entity =>
+            {
+                entity.ToTable("Wishlist");
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.Id).HasMaxLength(50);
+                entity.Property(e => e.CustomerId).HasMaxLength(50);
+                entity.Property(e => e.HotelId).HasMaxLength(50);
+
+                entity.HasOne(e => e.Customer)
+                      .WithMany(c => c.Wishlists)
+                      .HasForeignKey(e => e.CustomerId)
+                      .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(e => e.Hotel)
+                      .WithMany()
+                      .HasForeignKey(e => e.HotelId)
+                      .OnDelete(DeleteBehavior.Restrict);
+            });
+
+            // ── Voucher ───────────────────────────────────────────────────────
+            modelBuilder.Entity<Voucher>(entity =>
+            {
+                entity.ToTable("Voucher");
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.Id).HasMaxLength(50);
+                entity.Property(e => e.Code).HasMaxLength(50);
+                entity.Property(e => e.Type).HasMaxLength(20);
+                entity.Property(e => e.DiscountValue).HasColumnType("decimal(18,2)");
+                entity.Property(e => e.MinOrderAmount).HasColumnType("decimal(18,2)");
+            });
+
+            // ── Notification ──────────────────────────────────────────────────
+            modelBuilder.Entity<Notification>(entity =>
+            {
+                entity.ToTable("Notification");
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.Id).HasMaxLength(50);
+                entity.Property(e => e.CustomerId).HasMaxLength(50);
+                entity.Property(e => e.Type).HasMaxLength(50);
+                entity.Property(e => e.SentAt).HasColumnType("datetime2");
+
+                entity.HasOne(e => e.Customer)
+                      .WithMany(c => c.Notifications)
+                      .HasForeignKey(e => e.CustomerId)
+                      .OnDelete(DeleteBehavior.Cascade);
+            });
+
+            // ── Promotion ─────────────────────────────────────────────────────
+            modelBuilder.Entity<Promotion>(entity =>
+            {
+                entity.ToTable("Promotion");
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.Id).HasMaxLength(50);
+                entity.Property(e => e.Name).HasMaxLength(100);
+                entity.Property(e => e.RoomTypeApplied).HasMaxLength(50);
+            });
+
+            // ── RevenueReport ─────────────────────────────────────────────────
+            modelBuilder.Entity<RevenueReport>(entity =>
+            {
+                entity.ToTable("RevenueReport");
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.Id).HasMaxLength(50);
+                entity.Property(e => e.HotelId).HasMaxLength(50);
+                entity.Property(e => e.PeriodType).HasMaxLength(50);
+                entity.Property(e => e.TotalRevenue).HasColumnType("decimal(18,2)");
+                entity.Property(e => e.Commission).HasColumnType("decimal(18,2)");
+
+                entity.HasOne(e => e.Hotel)
+                      .WithMany(h => h.RevenueReports)
+                      .HasForeignKey(e => e.HotelId)
+                      .OnDelete(DeleteBehavior.Restrict);
+            });
+        }
+    }
+}
