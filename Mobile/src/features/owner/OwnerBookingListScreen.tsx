@@ -8,6 +8,7 @@ import {
   TextInput,
   View,
 } from 'react-native';
+import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { AppCard } from '../../shared/components/AppCard';
 import { colors } from '../../shared/constants/colors';
@@ -53,6 +54,7 @@ export function OwnerBookingListScreen({
   onGoHome,
   onGoHotels,
 }: OwnerBookingListProps) {
+  const router = useRouter();
   const [bookings, setBookings] = useState<OwnerBooking[]>([
     ...ownerBookingsMockData,
   ]);
@@ -365,8 +367,17 @@ export function OwnerBookingListScreen({
               key={tab.key}
               style={styles.navTab}
               onPress={() => {
-                if (tab.key === 'home') onGoHome?.();
-                if (tab.key === 'hotels') onGoHotels?.();
+                if (tab.key === 'home') {
+                  if (onGoHome) onGoHome();
+                  else router.push('/owner');
+                }
+                if (tab.key === 'hotels') {
+                  if (onGoHotels) onGoHotels();
+                  else router.push('/owner/hotels');
+                }
+                if (tab.key === 'reports') {
+                  router.push('/owner/reports');
+                }
                 // 'bookings' is already active
               }}
             >

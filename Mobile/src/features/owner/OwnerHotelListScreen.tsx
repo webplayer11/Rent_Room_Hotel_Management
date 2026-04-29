@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useRouter } from 'expo-router';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { AppButton } from '../../shared/components/AppButton';
 import { AppCard } from '../../shared/components/AppCard';
@@ -67,6 +68,7 @@ export function OwnerHotelListScreen({
   onGoHome,
   onGoBookings,
 }: OwnerHotelListProps) {
+  const router = useRouter();
   const { hotels } = ownerDashboardMockData;
   const [activeFilter, setActiveFilter] = useState<FilterKey>('all');
 
@@ -96,7 +98,10 @@ export function OwnerHotelListScreen({
           <AppButton
             title="+ Thêm KS"
             style={styles.addBtn}
-            onPress={onAddHotel}
+            onPress={() => {
+              if (onAddHotel) onAddHotel();
+              else router.push('/owner/hotel-form');
+            }}
           />
         </View>
 
@@ -306,8 +311,17 @@ export function OwnerHotelListScreen({
               key={tab.key}
               style={styles.navTab}
               onPress={() => {
-                if (tab.key === 'home') onGoHome?.();
-                if (tab.key === 'bookings') onGoBookings?.();
+                if (tab.key === 'home') {
+                  if (onGoHome) onGoHome();
+                  else router.push('/owner');
+                }
+                if (tab.key === 'bookings') {
+                  if (onGoBookings) onGoBookings();
+                  else router.push('/owner/bookings');
+                }
+                if (tab.key === 'reports') {
+                  router.push('/owner/reports');
+                }
                 // 'hotels' is already active
               }}
             >

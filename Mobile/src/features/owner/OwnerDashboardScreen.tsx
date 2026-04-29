@@ -1,4 +1,5 @@
 import React from 'react';
+import { useRouter } from 'expo-router';
 import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { AppButton } from '../../shared/components/AppButton';
@@ -99,6 +100,7 @@ type OwnerDashboardProps = {
 };
 
 export function OwnerDashboardScreen({ onAddHotel, onGoHotels, onGoBookings }: OwnerDashboardProps) {
+  const router = useRouter();
   const {
     ownerName,
     companyName,
@@ -224,7 +226,10 @@ export function OwnerDashboardScreen({ onAddHotel, onGoHotels, onGoBookings }: O
             <Text style={styles.sectionTitle}>Thao tác nhanh</Text>
           </View>
           <View style={styles.actionGrid}>
-            <AppButton title="Thêm khách sạn" style={styles.actionBtn} onPress={onAddHotel} />
+            <AppButton title="Thêm khách sạn" style={styles.actionBtn} onPress={() => {
+              if (onAddHotel) onAddHotel();
+              else router.push('/owner/hotel-form');
+            }} />
             <AppButton
               title="Quản lý phòng"
               variant="outline"
@@ -234,7 +239,10 @@ export function OwnerDashboardScreen({ onAddHotel, onGoHotels, onGoBookings }: O
               title="Xem đơn đặt phòng"
               variant="outline"
               style={styles.actionBtn}
-              onPress={onGoBookings}
+              onPress={() => {
+                if (onGoBookings) onGoBookings();
+                else router.push('/owner/bookings');
+              }}
             />
             <AppButton
               title="Báo cáo doanh thu"
@@ -420,8 +428,20 @@ export function OwnerDashboardScreen({ onAddHotel, onGoHotels, onGoBookings }: O
               key={tab.key}
               style={styles.navTab}
               onPress={() => {
-                if (tab.key === 'hotels') onGoHotels?.();
-                if (tab.key === 'bookings') onGoBookings?.();
+                if (tab.key === 'home') {
+                  // No action needed if already home
+                }
+                if (tab.key === 'hotels') {
+                  if (onGoHotels) onGoHotels();
+                  else router.push('/owner/hotels');
+                }
+                if (tab.key === 'bookings') {
+                  if (onGoBookings) onGoBookings();
+                  else router.push('/owner/bookings');
+                }
+                if (tab.key === 'reports') {
+                  router.push('/owner/reports');
+                }
               }}
             >
               <Ionicons

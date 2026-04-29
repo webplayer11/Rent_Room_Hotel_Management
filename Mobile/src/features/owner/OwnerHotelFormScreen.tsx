@@ -8,6 +8,7 @@ import {
   TextInput,
   View,
 } from 'react-native';
+import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { AppButton } from '../../shared/components/AppButton';
 import { AppCard } from '../../shared/components/AppCard';
@@ -28,6 +29,7 @@ type OwnerHotelFormProps = {
 };
 
 export function OwnerHotelFormScreen({ onBack }: OwnerHotelFormProps) {
+  const router = useRouter();
   const [form, setForm] = useState<HotelFormData>({
     ...defaultHotelFormData,
     legalDocuments: defaultHotelFormData.legalDocuments.map((d) => ({ ...d })),
@@ -179,7 +181,8 @@ export function OwnerHotelFormScreen({ onBack }: OwnerHotelFormProps) {
             style={{ marginTop: 20 }}
             onPress={() => {
               setSubmitted(false);
-              onBack?.();
+              if (onBack) onBack();
+              else router.back();
             }}
           />
         </ScrollView>
@@ -198,7 +201,10 @@ export function OwnerHotelFormScreen({ onBack }: OwnerHotelFormProps) {
       >
         {/* ===== HEADER ===== */}
         <View style={styles.header}>
-          <Pressable style={styles.backBtn} onPress={onBack}>
+          <Pressable style={styles.backBtn} onPress={() => {
+            if (onBack) onBack();
+            else router.back();
+          }}>
             <Ionicons name="arrow-back" size={22} color={colors.text} />
           </Pressable>
           <View style={styles.headerTextWrap}>
