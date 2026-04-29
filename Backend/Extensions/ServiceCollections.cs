@@ -15,6 +15,7 @@ namespace RoomManagement.Extensions
             this IServiceCollection services)
         {
             // ── Repositories ──────────────────────────────────────────────────
+            services.AddScoped<IAuthRepository, AuthRepository>();
             services.AddScoped<IAccountRepository, AccountRepository>();
             services.AddScoped<ICustomerRepository, CustomerRepository>();
             services.AddScoped<IHotelOwnerRepository, HotelOwnerRepository>();
@@ -41,6 +42,7 @@ namespace RoomManagement.Extensions
             services.AddScoped<IVoucherService, VoucherService>();
             services.AddScoped<INotificationService, NotificationService>();
             services.AddScoped<IInvoiceService, InvoiceService>();
+            
 
             return services;
         }

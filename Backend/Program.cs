@@ -1,235 +1,107 @@
-using Asp.Versioning;
-using Microsoft.AspNetCore.Mvc;
+using System.Text;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.OpenApi.Models;
+using Microsoft.IdentityModel.Tokens;
 using RoomManagement.Extensions;
-using System.Text.Json;
-using System.Text.Json.Serialization;
-using RoomManagement.Data;       
-using RoomManagement.Filters;     
-using RoomManagement.Middlewares; 
+using RoomManagement.Data;
+using RoomManagement.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// ═══════════════════════════════════════════════════════════════════
-//  1. DATABASE – EF Core + SQL Server
-// ═══════════════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════
+//  1. DATABASE
+// ═══════════════════════════════════════════════════════════════
 builder.Services.AddDbContext<AppDbContext>(options =>
-{
     options.UseSqlServer(
-        builder.Configuration.GetConnectionString("DefaultConnection")
-            ?? throw new InvalidOperationException(
-                "Connection string 'DefaultConnection' chưa được cấu hình."),
-        sqlOptions =>
-        {
-            sqlOptions.EnableRetryOnFailure(
-                maxRetryCount: 5,
-                maxRetryDelay: TimeSpan.FromSeconds(10),
-                errorNumbersToAdd: null);
-            sqlOptions.CommandTimeout(30);
-        });
+        builder.Configuration.GetConnectionString("Default"),
+        sql => sql.EnableRetryOnFailure(maxRetryCount: 5,
+                                        maxRetryDelay: TimeSpan.FromSeconds(10),
+                                        errorNumbersToAdd: null)
+    )
+);
 
-    if (builder.Environment.IsDevelopment())
-    {
-        options.EnableSensitiveDataLogging();
-        options.EnableDetailedErrors();
-    }
-});
+builder.Services.AddIdentity<ApplicationUser, IdentityRole>()
+    .AddEntityFrameworkStores<AppDbContext>().AddDefaultTokenProviders();
 
-// ═══════════════════════════════════════════════════════════════════
-//  2. REPOSITORIES + SERVICES
-// ═══════════════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════
+//  2. REPOSITORIES + SERVICES  (một dòng duy nhất)
+// ═══════════════════════════════════════════════════════════════
 builder.Services.AddApplicationServices();
 
-// ═══════════════════════════════════════════════════════════════════
-//  3. CONTROLLERS + JSON + VALIDATION
-// ═══════════════════════════════════════════════════════════════════
-builder.Services.AddControllers(options =>
-{
-    // Tự động trả 400 nếu ModelState không hợp lệ (không cần check trong Controller)
-    options.Filters.Add<ValidationFilter>();
-})
-.AddJsonOptions(options =>
-{
-    // camelCase JSON response
-    options.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
+// ═══════════════════════════════════════════════════════════════
+//  3. CONTROLLERS + JSON
+// ═══════════════════════════════════════════════════════════════
+builder.Services.AddControllers()
+    .AddJsonOptions(opt =>
+    {
+        opt.JsonSerializerOptions.PropertyNamingPolicy =
+            System.Text.Json.JsonNamingPolicy.CamelCase;
+        opt.JsonSerializerOptions.ReferenceHandler =
+            System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles;
+    });
 
-    // Tránh lỗi vòng lặp circular reference từ navigation properties
-    options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
-
-    // Bỏ qua property null trong response → response gọn hơn
-    options.JsonSerializerOptions.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull;
-
-    // Cho phép đọc số dạng string từ JSON body
-    options.JsonSerializerOptions.NumberHandling = JsonNumberHandling.AllowReadingFromString;
-})
-.ConfigureApiBehaviorOptions(options =>
-{
-    // Tắt response mặc định 400 của ASP.NET — để ValidationFilter xử lý theo chuẩn ApiResponse
-    options.SuppressModelStateInvalidFilter = true;
-});
-
-// ═══════════════════════════════════════════════════════════════════
-//  4. API VERSIONING
-// ═══════════════════════════════════════════════════════════════════
-builder.Services.AddApiVersioning(options =>
-{
-    options.DefaultApiVersion = new ApiVersion(1, 0);
-    options.AssumeDefaultVersionWhenUnspecified = true;
-    options.ReportApiVersions = true; // Trả header "api-supported-versions"
-});
-
-// ═══════════════════════════════════════════════════════════════════
-//  5. SWAGGER / OPENAPI
-// ═══════════════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════
+//  4. SWAGGER
+// ═══════════════════════════════════════════════════════════════
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen(options =>
+builder.Services.AddSwaggerGen(opt =>
 {
-    options.SwaggerDoc("v1", new OpenApiInfo
+    opt.SwaggerDoc("v1", new Microsoft.OpenApi.Models.OpenApiInfo
     {
         Title = "Rent API",
         Version = "v1",
         Description = "API quản lý đặt phòng khách sạn"
     });
+});
 
-    // JWT Bearer support trong Swagger UI
-    options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+builder.Services.AddAuthentication(options =>
     {
-        Name = "Authorization",
-        Type = SecuritySchemeType.Http,
-        Scheme = "Bearer",
-        BearerFormat = "JWT",
-        In = ParameterLocation.Header,
-        Description = "Nhập JWT token. Ví dụ: Bearer eyJhbGci..."
-    });
-
-    options.AddSecurityRequirement(new OpenApiSecurityRequirement
+        options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+        options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+        options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
+    })
+    .AddJwtBearer(options =>
     {
+        options.SaveToken = true;
+        options.RequireHttpsMetadata = false;
+        options.TokenValidationParameters = new TokenValidationParameters()
         {
-            new OpenApiSecurityScheme
-            {
-                Reference = new OpenApiReference
-                {
-                    Type = ReferenceType.SecurityScheme,
-                    Id   = "Bearer"
-                }
-            },
-            Array.Empty<string>()
-        }
+            ValidateIssuer = true,
+            ValidateAudience = true,
+            ValidAudience = builder.Configuration["Jwt:Audience"],
+            ValidIssuer = builder.Configuration["Jwt:Issuer"],
+            IssuerSigningKey =  new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"])),
+        };
     });
-});
 
-// ═══════════════════════════════════════════════════════════════════
-//  6. CORS
-// ═══════════════════════════════════════════════════════════════════
-builder.Services.AddCors(options =>
-{
-    options.AddPolicy("AllowAll", policy =>
-        policy.AllowAnyOrigin()
-              .AllowAnyHeader()
-              .AllowAnyMethod());
+// ═══════════════════════════════════════════════════════════════
+//  5. CORS
+// ═══════════════════════════════════════════════════════════════
+builder.Services.AddCors(opt =>
+    opt.AddPolicy("AllowAll", p =>
+        p.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod()));
 
-    // Production – bỏ comment và cấu hình AllowedOrigins trong appsettings.json
-    // options.AddPolicy("AllowFrontend", policy =>
-    //     policy.WithOrigins(
-    //             builder.Configuration
-    //                    .GetSection("AllowedOrigins")
-    //                    .Get<string[]>() ?? Array.Empty<string>())
-    //           .AllowAnyHeader()
-    //           .AllowAnyMethod()
-    //           .AllowCredentials());
-});
-
-// ═══════════════════════════════════════════════════════════════════
-//  7. HEALTH CHECK
-// ═══════════════════════════════════════════════════════════════════
-builder.Services.AddHealthChecks()
-    .AddDbContextCheck<AppDbContext>("database");
-
-// ═══════════════════════════════════════════════════════════════════
-//  8. JWT AUTHENTICATION  — bỏ comment khi cần
-// ═══════════════════════════════════════════════════════════════════
-// builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-//     .AddJwtBearer(options =>
-//     {
-//         var jwtKey = builder.Configuration["Jwt:Key"]
-//             ?? throw new InvalidOperationException("JWT Key chưa được cấu hình.");
-//
-//         options.TokenValidationParameters = new TokenValidationParameters
-//         {
-//             ValidateIssuer           = true,
-//             ValidateAudience         = true,
-//             ValidateLifetime         = true,
-//             ValidateIssuerSigningKey = true,
-//             ValidIssuer              = builder.Configuration["Jwt:Issuer"],
-//             ValidAudience            = builder.Configuration["Jwt:Audience"],
-//             IssuerSigningKey         = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey)),
-//             ClockSkew                = TimeSpan.Zero
-//         };
-//     });
-// builder.Services.AddAuthorization();
-
-// ═══════════════════════════════════════════════════════════════════
-//  9. BUILD APP
-// ═══════════════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════
+//  6. BUILD + MIDDLEWARE
+// ═══════════════════════════════════════════════════════════════
 var app = builder.Build();
 
-// ═══════════════════════════════════════════════════════════════════
-//  10. AUTO MIGRATION (chỉ Development)
-// ═══════════════════════════════════════════════════════════════════
 if (app.Environment.IsDevelopment())
 {
     using var scope = app.Services.CreateScope();
-    try
-    {
-        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-        db.Database.Migrate();
-        app.Logger.LogInformation("✅ Database migration hoàn tất.");
-    }
-    catch (Exception ex)
-    {
-        app.Logger.LogError(ex, "❌ Lỗi khi chạy database migration.");
-        throw;
-    }
-}
+    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+    db.Database.Migrate();
 
-// ═══════════════════════════════════════════════════════════════════
-//  11. MIDDLEWARE PIPELINE
-//  ⚠️ Thứ tự này có ý nghĩa — không được đổi chỗ tùy tiện
-// ═══════════════════════════════════════════════════════════════════
-
-// [1] Global exception handler — phải đứng ĐẦU TIÊN
-app.UseGlobalExceptionHandler();
-
-// [2] HTTPS Redirect
-app.UseHttpsRedirection();
-
-// [3] Swagger — chỉ Development
-if (app.Environment.IsDevelopment())
-{
     app.UseSwagger();
-    app.UseSwaggerUI(options =>
+    app.UseSwaggerUI(opt =>
     {
-        options.SwaggerEndpoint("/swagger/v1/swagger.json", "Rent API v1");
-        options.RoutePrefix = string.Empty; // Swagger tại "/"
-        options.DisplayRequestDuration();           // Hiển thị thời gian response
+        opt.SwaggerEndpoint("/swagger/v1/swagger.json", "Rent API v1");
+        opt.RoutePrefix = string.Empty;
     });
 }
 
-// [4] CORS — phải đứng TRƯỚC Authentication
-var corsPolicy = app.Environment.IsDevelopment() ? "AllowAll" : "AllowAll";
-// ↑ Đổi "AllowAll" thứ 2 thành "AllowFrontend" khi deploy production
-app.UseCors(corsPolicy);
-
-// [5] Authentication + Authorization (bỏ comment khi thêm JWT)
-// app.UseAuthentication();
-// app.UseAuthorization();
-
-// [6] Health check — GET /health
-app.MapHealthChecks("/health");
-
-// [7] Controllers
-app.MapControllers();
-
-app.Logger.LogInformation("Rent API đang chạy.");
+//app.UseHttpsRedirection();
+app.UseCors("AllowAll");
+app.MapControllers();   
 app.Run();
