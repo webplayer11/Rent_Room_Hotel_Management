@@ -97,9 +97,10 @@ type OwnerDashboardProps = {
   onAddHotel?: () => void;
   onGoHotels?: () => void;
   onGoBookings?: () => void;
+  onGoReports?: () => void;
 };
 
-export function OwnerDashboardScreen({ onAddHotel, onGoHotels, onGoBookings }: OwnerDashboardProps) {
+export function OwnerDashboardScreen({ onAddHotel, onGoHotels, onGoBookings, onGoReports }: OwnerDashboardProps) {
   const router = useRouter();
   const {
     ownerName,
@@ -248,6 +249,10 @@ export function OwnerDashboardScreen({ onAddHotel, onGoHotels, onGoBookings }: O
               title="Báo cáo doanh thu"
               variant="outline"
               style={styles.actionBtn}
+              onPress={() => {
+                if (onGoReports) onGoReports();
+                else router.push('/owner/reports');
+              }}
             />
           </View>
         </AppCard>

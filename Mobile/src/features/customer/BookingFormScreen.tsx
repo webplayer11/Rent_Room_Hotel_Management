@@ -16,7 +16,7 @@ import {
   TextInput,
   View,
 } from 'react-native';
-import { COLORS } from '../../shared/constants/colors';
+import { colors as COLORS } from '../../shared/constants/colors';
 import { AppButton } from '../../shared/components/AppButton';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -120,7 +120,7 @@ export default function BookingFormScreen({ hotelId = '1', onNavigate }: Props) 
                 value={checkIn}
                 onChangeText={setCheckIn}
                 placeholder="DD/MM/YYYY"
-                placeholderTextColor={COLORS.textMuted}
+                placeholderTextColor={COLORS.muted}
               />
             </View>
             <View style={styles.dateSep}>
@@ -133,7 +133,7 @@ export default function BookingFormScreen({ hotelId = '1', onNavigate }: Props) 
                 value={checkOut}
                 onChangeText={setCheckOut}
                 placeholder="DD/MM/YYYY"
-                placeholderTextColor={COLORS.textMuted}
+                placeholderTextColor={COLORS.muted}
               />
             </View>
           </View>
@@ -149,12 +149,12 @@ export default function BookingFormScreen({ hotelId = '1', onNavigate }: Props) 
               onPress={() => room.available && setSelectedRoom(room.id)}
             >
               <View style={styles.roomInfo}>
-                <Text style={[styles.roomName, !room.available && { color: COLORS.textMuted }]}>{room.name}</Text>
+                <Text style={[styles.roomName, !room.available && { color: COLORS.muted }]}>{room.name}</Text>
                 <Text style={styles.roomBed}>🛏 {room.bed}</Text>
                 {!room.available && <Text style={styles.roomUnavail}>Hết phòng</Text>}
               </View>
               <View style={styles.roomPriceBlock}>
-                <Text style={[styles.roomPrice, !room.available && { color: COLORS.textMuted }]}>{fmt(room.price)}</Text>
+                <Text style={[styles.roomPrice, !room.available && { color: COLORS.muted }]}>{fmt(room.price)}</Text>
                 <Text style={styles.roomPriceNight}>/đêm</Text>
               </View>
               {selectedRoom === room.id && room.available && (
@@ -184,10 +184,10 @@ export default function BookingFormScreen({ hotelId = '1', onNavigate }: Props) 
         {/* ── Guest info ── */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>👤 Thông tin khách</Text>
-          <TextInput style={styles.input} placeholder="Họ và tên *" placeholderTextColor={COLORS.textMuted} value={name} onChangeText={setName} />
-          <TextInput style={styles.input} placeholder="Số điện thoại *" placeholderTextColor={COLORS.textMuted} value={phone} onChangeText={setPhone} keyboardType="phone-pad" />
-          <TextInput style={styles.input} placeholder="Email *" placeholderTextColor={COLORS.textMuted} value={email} onChangeText={setEmail} keyboardType="email-address" autoCapitalize="none" />
-          <TextInput style={[styles.input, styles.textarea]} placeholder="Yêu cầu đặc biệt (không bắt buộc)" placeholderTextColor={COLORS.textMuted} value={note} onChangeText={setNote} multiline numberOfLines={3} />
+          <TextInput style={styles.input} placeholder="Họ và tên *" placeholderTextColor={COLORS.muted} value={name} onChangeText={setName} />
+          <TextInput style={styles.input} placeholder="Số điện thoại *" placeholderTextColor={COLORS.muted} value={phone} onChangeText={setPhone} keyboardType="phone-pad" />
+          <TextInput style={styles.input} placeholder="Email *" placeholderTextColor={COLORS.muted} value={email} onChangeText={setEmail} keyboardType="email-address" autoCapitalize="none" />
+          <TextInput style={[styles.input, styles.textarea]} placeholder="Yêu cầu đặc biệt (không bắt buộc)" placeholderTextColor={COLORS.muted} value={note} onChangeText={setNote} multiline numberOfLines={3} />
         </View>
 
         {/* ── Payment method ── */}
@@ -219,7 +219,7 @@ export default function BookingFormScreen({ hotelId = '1', onNavigate }: Props) 
         </View>
 
         <View style={{ paddingHorizontal: 20, marginBottom: 8 }}>
-          <AppButton label="Xác nhận đặt phòng" onPress={handleConfirm} loading={loading} icon="🏨" />
+          <AppButton title="Xác nhận đặt phòng" onPress={handleConfirm} />
         </View>
         <Text style={styles.notice}>* Bạn có thể huỷ miễn phí trước 24h check-in</Text>
 
@@ -237,9 +237,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row', alignItems: 'center',
     backgroundColor: COLORS.surface, borderBottomWidth: 1, borderBottomColor: COLORS.border,
   },
-  backBtn: { width: 36, height: 36, borderRadius: 12, backgroundColor: COLORS.surfaceAlt, justifyContent: 'center', alignItems: 'center', marginRight: 12 },
-  backIcon: { fontSize: 20, color: COLORS.textPrimary },
-  headerTitle: { flex: 1, fontSize: 18, fontWeight: '700', color: COLORS.textPrimary },
+  backBtn: { width: 36, height: 36, borderRadius: 12, backgroundColor: COLORS.surface, justifyContent: 'center', alignItems: 'center', marginRight: 12 },
+  backIcon: { fontSize: 20, color: COLORS.text },
+  headerTitle: { flex: 1, fontSize: 18, fontWeight: '700', color: COLORS.text },
 
   scroll: { paddingBottom: 48 },
 
@@ -248,18 +248,18 @@ const styles = StyleSheet.create({
     borderRadius: 20, padding: 20,
     shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.04, shadowRadius: 8, elevation: 2,
   },
-  sectionTitle: { fontSize: 15, fontWeight: '700', color: COLORS.textPrimary, marginBottom: 16 },
+  sectionTitle: { fontSize: 15, fontWeight: '700', color: COLORS.text, marginBottom: 16 },
 
   dateRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   dateBox: { flex: 1 },
-  dateLabel: { fontSize: 11, fontWeight: '600', color: COLORS.textMuted, marginBottom: 6 },
+  dateLabel: { fontSize: 11, fontWeight: '600', color: COLORS.muted, marginBottom: 6 },
   dateInput: {
-    backgroundColor: COLORS.surfaceAlt, borderRadius: 12,
+    backgroundColor: COLORS.surface, borderRadius: 12,
     paddingHorizontal: 14, height: 48, fontSize: 14,
-    color: COLORS.textPrimary, borderWidth: 1, borderColor: COLORS.border,
+    color: COLORS.text, borderWidth: 1, borderColor: COLORS.border,
   },
   dateSep: { alignItems: 'center', paddingHorizontal: 6 },
-  dateSepText: { fontSize: 11, color: COLORS.textSecondary, fontWeight: '600' },
+  dateSepText: { fontSize: 11, color: COLORS.muted, fontWeight: '600' },
 
   roomCard: {
     flexDirection: 'row', alignItems: 'center', padding: 14,
@@ -269,20 +269,20 @@ const styles = StyleSheet.create({
   roomCardSelected: { borderColor: COLORS.primary, backgroundColor: COLORS.primary + '08' },
   roomCardDisabled: { opacity: 0.5 },
   roomInfo: { flex: 1 },
-  roomName: { fontSize: 14, fontWeight: '700', color: COLORS.textPrimary, marginBottom: 4 },
-  roomBed: { fontSize: 12, color: COLORS.textSecondary },
+  roomName: { fontSize: 14, fontWeight: '700', color: COLORS.text, marginBottom: 4 },
+  roomBed: { fontSize: 12, color: COLORS.muted },
   roomUnavail: { fontSize: 11, color: COLORS.danger, marginTop: 4, fontWeight: '600' },
   roomPriceBlock: { alignItems: 'flex-end' },
   roomPrice: { fontSize: 15, fontWeight: '800', color: COLORS.primary },
-  roomPriceNight: { fontSize: 10, color: COLORS.textMuted },
+  roomPriceNight: { fontSize: 10, color: COLORS.muted },
   roomCheck: {
     position: 'absolute', top: -8, right: -8,
     width: 24, height: 24, borderRadius: 12, backgroundColor: COLORS.primary,
     justifyContent: 'center', alignItems: 'center',
   },
 
-  row: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: COLORS.divider },
-  rowLabel: { fontSize: 14, color: COLORS.textPrimary, fontWeight: '500' },
+  row: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: COLORS.border },
+  rowLabel: { fontSize: 14, color: COLORS.text, fontWeight: '500' },
   counter: { flexDirection: 'row', alignItems: 'center', gap: 16 },
   counterBtn: {
     width: 36, height: 36, borderRadius: 12, borderWidth: 1.5, borderColor: COLORS.primary,
@@ -290,12 +290,12 @@ const styles = StyleSheet.create({
   },
   counterBtnDisabled: { borderColor: COLORS.border },
   counterBtnText: { fontSize: 20, color: COLORS.primary, lineHeight: 24 },
-  counterValue: { fontSize: 16, fontWeight: '700', color: COLORS.textPrimary, minWidth: 24, textAlign: 'center' },
+  counterValue: { fontSize: 16, fontWeight: '700', color: COLORS.text, minWidth: 24, textAlign: 'center' },
 
   input: {
-    backgroundColor: COLORS.surfaceAlt, borderRadius: 14,
+    backgroundColor: COLORS.surface, borderRadius: 14,
     paddingHorizontal: 16, height: 52, fontSize: 14,
-    color: COLORS.textPrimary, marginBottom: 12,
+    color: COLORS.text, marginBottom: 12,
     borderWidth: 1, borderColor: COLORS.border,
   },
   textarea: { height: 90, paddingTop: 14, textAlignVertical: 'top' },
@@ -307,8 +307,8 @@ const styles = StyleSheet.create({
   },
   payOptionActive: { borderColor: COLORS.primary, backgroundColor: COLORS.primary + '08' },
   payIcon: { fontSize: 24 },
-  payLabel: { fontSize: 14, fontWeight: '600', color: COLORS.textPrimary, marginBottom: 2 },
-  paySub: { fontSize: 11, color: COLORS.textSecondary },
+  payLabel: { fontSize: 14, fontWeight: '600', color: COLORS.text, marginBottom: 2 },
+  paySub: { fontSize: 11, color: COLORS.muted },
   radioOuter: { width: 20, height: 20, borderRadius: 10, borderWidth: 2, borderColor: COLORS.border, justifyContent: 'center', alignItems: 'center' },
   radioOuterActive: { borderColor: COLORS.primary },
   radioInner: { width: 10, height: 10, borderRadius: 5, backgroundColor: COLORS.primary },
@@ -320,14 +320,14 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   summaryRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 10 },
-  summaryLabel: { fontSize: 13, color: COLORS.textSecondary, flex: 1, marginRight: 8 },
-  summaryVal: { fontSize: 13, fontWeight: '600', color: COLORS.textPrimary },
+  summaryLabel: { fontSize: 13, color: COLORS.muted, flex: 1, marginRight: 8 },
+  summaryVal: { fontSize: 13, fontWeight: '600', color: COLORS.text },
   summaryTotal: {
     borderTopWidth: 1, borderTopColor: COLORS.border,
     paddingTop: 12, marginTop: 4, marginBottom: 0,
   },
-  totalLabel: { fontSize: 15, fontWeight: '700', color: COLORS.textPrimary },
+  totalLabel: { fontSize: 15, fontWeight: '700', color: COLORS.text },
   totalVal: { fontSize: 20, fontWeight: '800', color: COLORS.primary },
 
-  notice: { fontSize: 12, color: COLORS.textMuted, textAlign: 'center', paddingHorizontal: 24, marginBottom: 16 },
+  notice: { fontSize: 12, color: COLORS.muted, textAlign: 'center', paddingHorizontal: 24, marginBottom: 16 },
 });
