@@ -21,7 +21,9 @@ const bookingStatusMap: Record<BookingStatus, { label: string; bg: string; fg: s
   pending: { label: 'Chờ xác nhận', bg: '#FEF3C7', fg: '#B45309' },
   confirmed: { label: 'Đã xác nhận', bg: '#DBEAFE', fg: colors.primary },
   checked_in: { label: 'Đã check-in', bg: '#DCFCE7', fg: colors.success },
-  cancelled: { label: 'Đã hủy', bg: '#FEE2E2', fg: colors.danger },
+  checked_out: { label: 'Đã check-out', bg: '#F3F4F6', fg: '#6B7280' },
+  cancelled_by_customer: { label: 'Khách đã hủy', bg: '#FEE2E2', fg: colors.danger },
+  rejected_by_owner: { label: 'KS từ chối', bg: '#FEE2E2', fg: '#991B1B' },
 };
 
 const alertStyleMap: Record<string, { bg: string; iconColor: string }> = {
@@ -93,9 +95,10 @@ function KpiIcon({ name, color }: { name: KpiIconName; color: string }) {
 type OwnerDashboardProps = {
   onAddHotel?: () => void;
   onGoHotels?: () => void;
+  onGoBookings?: () => void;
 };
 
-export function OwnerDashboardScreen({ onAddHotel, onGoHotels }: OwnerDashboardProps) {
+export function OwnerDashboardScreen({ onAddHotel, onGoHotels, onGoBookings }: OwnerDashboardProps) {
   const {
     ownerName,
     companyName,
@@ -231,6 +234,7 @@ export function OwnerDashboardScreen({ onAddHotel, onGoHotels }: OwnerDashboardP
               title="Xem đơn đặt phòng"
               variant="outline"
               style={styles.actionBtn}
+              onPress={onGoBookings}
             />
             <AppButton
               title="Báo cáo doanh thu"
@@ -417,6 +421,7 @@ export function OwnerDashboardScreen({ onAddHotel, onGoHotels }: OwnerDashboardP
               style={styles.navTab}
               onPress={() => {
                 if (tab.key === 'hotels') onGoHotels?.();
+                if (tab.key === 'bookings') onGoBookings?.();
               }}
             >
               <Ionicons
