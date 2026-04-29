@@ -58,12 +58,14 @@ type OwnerHotelListProps = {
   onAddHotel?: () => void;
   onBack?: () => void;
   onGoHome?: () => void;
+  onGoBookings?: () => void;
 };
 
 export function OwnerHotelListScreen({
   onAddHotel,
   onBack,
   onGoHome,
+  onGoBookings,
 }: OwnerHotelListProps) {
   const { hotels } = ownerDashboardMockData;
   const [activeFilter, setActiveFilter] = useState<FilterKey>('all');
@@ -305,6 +307,7 @@ export function OwnerHotelListScreen({
               style={styles.navTab}
               onPress={() => {
                 if (tab.key === 'home') onGoHome?.();
+                if (tab.key === 'bookings') onGoBookings?.();
                 // 'hotels' is already active
               }}
             >

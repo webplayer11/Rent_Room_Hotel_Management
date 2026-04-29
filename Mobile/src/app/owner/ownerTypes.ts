@@ -1,6 +1,12 @@
 export type HotelStatus = 'approved' | 'pending' | 'need_update';
 
-export type BookingStatus = 'pending' | 'confirmed' | 'checked_in' | 'cancelled';
+export type BookingStatus =
+  | 'pending'
+  | 'confirmed'
+  | 'checked_in'
+  | 'checked_out'
+  | 'cancelled_by_customer'
+  | 'rejected_by_owner';
 
 export type AlertAction =
   | 'pending_bookings'
@@ -19,10 +25,13 @@ export type OwnerHotel = {
 
 export type OwnerBooking = {
   id: string;
+  code: string;
   customerName: string;
   hotelName: string;
   roomType: string;
   checkInDate: string;
+  checkOutDate: string;
+  nights: number;
   totalAmount: string;
   status: BookingStatus;
 };
