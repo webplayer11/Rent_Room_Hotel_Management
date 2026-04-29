@@ -1,103 +1,94 @@
 import React from 'react';
-import { Pressable, StyleSheet, Text } from 'react-native';
-import type { PressableProps, StyleProp, ViewStyle } from 'react-native';
+import { Pressable, Text, StyleSheet, ViewStyle, TextStyle } from 'react-native';
 import { colors } from '../constants/colors';
 
-type AppButtonProps = PressableProps & {
+interface AppButtonProps {
   title: string;
-  variant?: 'primary' | 'outline' | 'danger';
-  style?: StyleProp<ViewStyle>;
-};
-
-export function AppButton({
-  title,
-  variant = 'primary',
-  style,
-  ...props
-}: AppButtonProps) {
-  const variantStyles = {
-    primary: {
-      container: styles.primaryContainer,
-      text: styles.primaryText,
-      pressed: styles.primaryPressed,
-    },
-    outline: {
-      container: styles.outlineContainer,
-      text: styles.outlineText,
-      pressed: styles.outlinePressed,
-    },
-    danger: {
-      container: styles.dangerContainer,
-      text: styles.dangerText,
-      pressed: styles.dangerPressed,
-    },
-  };
-
-  const current = variantStyles[variant];
-
-  return (
-    <Pressable
-      style={({ pressed }) => [
-        styles.base,
-        current.container,
-        pressed && current.pressed,
-        style,
-      ]}
-      {...props}
-    >
-      <Text style={[styles.baseText, current.text]}>{title}</Text>
-    </Pressable>
-  );
+  onPress: () => void;
+  style?: ViewStyle;
+  textStyle?: TextStyle;
+  variant?: 'primary' | 'outline' | 'ghost';
+  disabled?: boolean;
 }
 
+export const AppButton = ({ 
+  title, 
+  onPress, 
+  style, 
+  textStyle, 
+  variant = 'primary',
+  disabled = false 
+}: AppButtonProps) => {
+  const getButtonStyle = () => {
+    switch (variant) {
+      case 'outline':
+        return styles.outlineButton;
+      case 'ghost':
+        return styles.ghostButton;
+      default:
+        return styles.primaryButton;
+    }
+  };
+
+  const getTextStyle = () => {
+    switch (variant) {
+      case 'outline':
+        return styles.outlineText;
+      case 'ghost':
+        return styles.ghostText;
+      default:
+        return styles.primaryText;
+    }
+  };
+
+  return (
+    <Pressable 
+      onPress={onPress} 
+      disabled={disabled}
+      style={({ pressed }) => [
+        styles.button,
+        getButtonStyle(),
+        style,
+        (pressed || disabled) && { opacity: 0.7 }
+      ]}
+    >
+      <Text style={[styles.text, getTextStyle(), textStyle]}>{title}</Text>
+    </Pressable>
+  );
+};
+
 const styles = StyleSheet.create({
-  base: {
-    minHeight: 44,
-    paddingVertical: 10,
-    paddingHorizontal: 16,
-    borderRadius: 10,
+  button: {
+    paddingVertical: 14,
+    paddingHorizontal: 20,
+    borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
+    width: '100%',
+    marginVertical: 8,
   },
-  baseText: {
-    fontWeight: '600',
-    fontSize: 14,
-  },
-
-  // Primary
-  primaryContainer: {
+  primaryButton: {
     backgroundColor: colors.primary,
   },
-  primaryText: {
-    color: colors.textLight,
-  },
-  primaryPressed: {
-    backgroundColor: colors.primaryDark,
-  },
-
-  // Outline
-  outlineContainer: {
-    backgroundColor: colors.surface,
+  outlineButton: {
+    backgroundColor: 'transparent',
     borderWidth: 1,
     borderColor: colors.primary,
+  },
+  ghostButton: {
+    backgroundColor: 'transparent',
+  },
+  text: {
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  primaryText: {
+    color: colors.white,
   },
   outlineText: {
     color: colors.primary,
   },
-  outlinePressed: {
-    backgroundColor: colors.background,
-  },
-
-  // Danger
-  dangerContainer: {
-    backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.danger,
-  },
-  dangerText: {
-    color: colors.danger,
-  },
-  dangerPressed: {
-    backgroundColor: '#FEE2E2',
+  ghostText: {
+    color: colors.primary,
   },
 });
