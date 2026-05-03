@@ -104,3 +104,45 @@ export type HotelFormData = {
   houseRules: string;
   legalDocuments: HotelLegalDocument[];
 };
+
+// ---------------------------------------------------------------------------
+// Revenue Report types
+// ---------------------------------------------------------------------------
+
+export type RevenueTimeFilter = '7_days' | '30_days' | 'this_month' | 'last_month' | 'custom';
+
+export type RevenueBreakdown = {
+  grossRevenue: string;
+  vouchers: string;
+  paidAmount: string;
+  commissionAmount: string;
+  commissionRate: number;
+  netRevenue: string;
+};
+
+export type HotelRevenueSummary = {
+  id: string;
+  name: string;
+  netRevenue: string;
+  bookings: number;
+  occupancyRate: number;
+  trend?: number; // percentage change
+};
+
+export type BusinessInsight = {
+  id: string;
+  message: string;
+  type: 'warning' | 'danger' | 'success' | 'info';
+};
+
+export type OwnerRevenueReportData = {
+  netRevenue: string;
+  totalBookings: number;
+  completedBookings: number;
+  occupancyRate: string;
+  periodComparison: number; // e.g. 12 or -8
+  breakdown: RevenueBreakdown;
+  revenue7Days: RevenuePoint[];
+  hotelSummaries: HotelRevenueSummary[];
+  insights: BusinessInsight[];
+};

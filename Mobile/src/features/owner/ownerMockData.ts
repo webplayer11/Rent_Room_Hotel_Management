@@ -39,13 +39,13 @@ export const ownerDashboardMockData: OwnerDashboardData = {
   ],
 
   revenue7Days: [
-    { label: 'T2', value: 4.2 },
-    { label: 'T3', value: 5.1 },
-    { label: 'T4', value: 3.8 },
-    { label: 'T5', value: 6.4 },
-    { label: 'T6', value: 7.2 },
-    { label: 'T7', value: 9.5 },
-    { label: 'CN', value: 8.1 },
+    { label: 'T2\n27/4', value: 4.2 },
+    { label: 'T3\n28/4', value: 5.1 },
+    { label: 'T4\n29/4', value: 3.8 },
+    { label: 'T5\n30/4', value: 6.4 },
+    { label: 'T6\n1/5', value: 7.2 },
+    { label: 'T7\n2/5', value: 9.5 },
+    { label: 'CN\n3/5', value: 8.1 },
   ],
 
   recentBookings: [
@@ -259,4 +259,73 @@ export const sampleFileNames = {
   galleryImage: 'hotel_gallery_01.jpg',
   businessLicense: 'giay_phep_kinh_doanh.pdf',
   propertyCert: 'giay_cn_quyen_su_dung.pdf',
+};
+
+// ---------------------------------------------------------------------------
+// Revenue Report mock data
+// ---------------------------------------------------------------------------
+
+export const revenueReportMockData: import('./ownerTypes').OwnerRevenueReportData = {
+  netRevenue: '74.2M',
+  totalBookings: 128,
+  completedBookings: 96,
+  occupancyRate: '76%',
+  periodComparison: 12,
+  breakdown: {
+    grossRevenue: '95.0M',
+    vouchers: '-6.5M',
+    paidAmount: '88.5M',
+    commissionRate: 16,
+    commissionAmount: '-14.3M',
+    netRevenue: '74.2M',
+  },
+  revenue7Days: [
+    { label: 'T2\n27/4', value: 4.2 },
+    { label: 'T3\n28/4', value: 5.1 },
+    { label: 'T4\n29/4', value: 3.8 },
+    { label: 'T5\n30/4', value: 6.4 },
+    { label: 'T6\n1/5', value: 7.2 },
+    { label: 'T7\n2/5', value: 9.5 },
+    { label: 'CN\n3/5', value: 8.1 },
+  ],
+  hotelSummaries: [
+    {
+      id: 'hotel-1',
+      name: 'Guma Hotel',
+      netRevenue: '45.2M',
+      bookings: 68,
+      occupancyRate: 82,
+      trend: 15,
+    },
+    {
+      id: 'hotel-2',
+      name: 'Biển Xanh Resort',
+      netRevenue: '28.6M',
+      bookings: 42,
+      occupancyRate: 74,
+      trend: -5,
+    },
+  ],
+  insights: [
+    {
+      id: 'insight-1',
+      message: 'Guma Hotel đang có hiệu suất đặt phòng tốt nhất.',
+      type: 'success',
+    },
+    {
+      id: 'insight-2',
+      message: 'Tỷ lệ lấp đầy dưới 30% tại một số phòng cuối tuần.',
+      type: 'warning',
+    },
+    {
+      id: 'insight-3',
+      message: 'Central Stay cần bổ sung hồ sơ nên chưa được tính doanh thu.',
+      type: 'info',
+    },
+    {
+      id: 'insight-4',
+      message: '3 đơn bị hủy liên tiếp tại Biển Xanh Resort.',
+      type: 'danger',
+    },
+  ],
 };
