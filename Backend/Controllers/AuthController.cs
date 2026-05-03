@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using RoomManagement.DTOs;
 using RoomManagement.Models;
@@ -39,13 +40,14 @@ public class AuthController : ControllerBase
         var result = await _authRepository.LoginAsync(loginDto);
         if (result == null)
         {
-            return BadRequest(ResponseApi<AuthResponseDto>.Failure(400, "Đăng nhập thất bại!"));
+            return BadRequest(ResponseApi<AuthResponseDto>.Failure(400, "Email hoặc mật khẩu không chính xác"));
         }
         
         return Ok(ResponseApi<AuthResponseDto>.Success(result));
     }
 
     [HttpPost("logout")]
+    [Authorize]
     public async Task<IActionResult> Logout( TokenRequestDto tokenRequestDto)
     {
         var resut = await _authRepository.LogoutAsync(tokenRequestDto);
@@ -56,6 +58,7 @@ public class AuthController : ControllerBase
     }
 
     [HttpPost("refreshtoken")]
+    [Authorize]
     public async Task<IActionResult> RefeshToken(TokenRequestDto  tokenRequestDto)
     {
         var result = await _authRepository.RefreshTokenAsync(tokenRequestDto);
