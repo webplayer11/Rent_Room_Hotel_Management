@@ -45,11 +45,11 @@ namespace RoomManagement.Repositories.Implementations
             var result = await _userManager.CreateAsync(user, registerDto.Password);
             if (result.Succeeded)
             {
-                if (!await _roleManager.RoleExistsAsync(AppRoles.Customer))
+                if (!await _roleManager.RoleExistsAsync(AppRoles.Admin))
                 {
-                    await _roleManager.CreateAsync(new IdentityRole(AppRoles.Customer));
+                    await _roleManager.CreateAsync(new IdentityRole(AppRoles.Admin));
                 }
-                await _userManager.AddToRoleAsync(user, AppRoles.Customer);
+                await _userManager.AddToRoleAsync(user, AppRoles.Admin);
             }
             
             return result;
@@ -141,15 +141,18 @@ namespace RoomManagement.Repositories.Implementations
         }
 
 
-        public async Task<bool> LogoutAsync(TokenRequestDto  tokenRequestDto)
+        public async Task<bool> LogoutAsync(string token)
         {
-            var principal = GetPrincipalFromExpiredToken(tokenRequestDto.AccessToken);
+            var principal = GetPrincipalFromExpiredToken(token);
             var email = principal.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Email)?.Value;
             if (email == null)
                 return false;
             var user = await _userManager.FindByEmailAsync(email);
-            user.RefreshToken = "null";
+            if (user == null)
+                return false;
+            user.RefreshToken = null;
             user.RefreshTokenExpiryTime = DateTime.UtcNow;
+            await _userManager.UpdateAsync(user);
             return true;
         }
         

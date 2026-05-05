@@ -48,9 +48,12 @@ public class AuthController : ControllerBase
 
     [HttpPost("logout")]
     [Authorize]
-    public async Task<IActionResult> Logout( TokenRequestDto tokenRequestDto)
+    public async Task<IActionResult> Logout()
     {
-        var resut = await _authRepository.LogoutAsync(tokenRequestDto);
+        var token = Request.Headers["Authorization"]
+            .ToString()
+            .Replace("Bearer ", "");
+        var resut = await _authRepository.LogoutAsync(token);
         if (resut == null)
             return  BadRequest(ResponseApi<AuthResponseDto>.Failure(400,"Đăng xuất thất bại!"));
         
