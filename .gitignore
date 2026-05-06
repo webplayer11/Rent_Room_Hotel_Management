@@ -3,3 +3,5 @@
 /BuildHost-netcore
 Backend/bin/
 Backend/obj/
+.vs
+bin
