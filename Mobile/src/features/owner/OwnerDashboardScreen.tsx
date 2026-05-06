@@ -133,7 +133,7 @@ export function OwnerDashboardScreen({ onAddHotel, onGoHotels, onGoBookings, onG
             </View>
           </Pressable>
 
-          <Pressable style={styles.bellWrapper}>
+          <Pressable style={styles.bellWrapper} onPress={() => router.push('/owner/notifications')}>
             <Ionicons name="notifications-outline" size={22} color={colors.text} />
             {unreadNotifications > 0 && (
               <View style={styles.badge}>
