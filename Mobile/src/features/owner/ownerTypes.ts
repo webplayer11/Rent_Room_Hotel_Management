@@ -211,3 +211,25 @@ export type OwnerReview = {
   date: string;
   reply?: string;
 };
+
+// ---------------------------------------------------------------------------
+// Promotion types
+// ---------------------------------------------------------------------------
+
+export type PromotionStatus = 'active' | 'upcoming' | 'expired' | 'paused';
+export type PromotionFilter = 'all' | PromotionStatus;
+
+export type OwnerPromotion = {
+  id: string;
+  hotelId: string;
+  hotelName: string;
+  title: string;
+  code: string;
+  discountPercent: number;
+  startDate: string;
+  endDate: string;
+  status: PromotionStatus;
+  maxUsage?: number;
+  currentUsage: number;
+  description?: string;
+};

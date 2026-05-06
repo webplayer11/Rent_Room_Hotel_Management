@@ -266,6 +266,12 @@ export function OwnerDashboardScreen({ onAddHotel, onGoHotels, onGoBookings, onG
               style={styles.actionBtn}
               onPress={() => router.push('/owner/reviews')}
             />
+            <AppButton
+              title="Khuyến mãi"
+              variant="outline"
+              style={styles.actionBtn}
+              onPress={() => router.push('/owner/promotions')}
+            />
           </View>
         </AppCard>
 
