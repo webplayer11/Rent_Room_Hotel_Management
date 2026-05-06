@@ -458,3 +458,51 @@ export const ownerReviewsMockData: import('./ownerTypes').OwnerReview[] = [
     date: '02/05/2026',
   },
 ];
+
+// ---------------------------------------------------------------------------
+// Promotions mock data
+// ---------------------------------------------------------------------------
+
+export const ownerPromotionsMockData: import('./ownerTypes').OwnerPromotion[] = [
+  {
+    id: 'promo-1',
+    hotelId: 'hotel-1',
+    hotelName: 'Guma Hotel',
+    title: 'Ưu đãi hè 2026',
+    code: 'SUMMER20',
+    discountPercent: 20,
+    startDate: '01/06/2026',
+    endDate: '31/08/2026',
+    status: 'active',
+    maxUsage: 100,
+    currentUsage: 45,
+    description: 'Giảm 20% cho tất cả các phòng trong mùa hè.',
+  },
+  {
+    id: 'promo-2',
+    hotelId: 'hotel-1',
+    hotelName: 'Guma Hotel',
+    title: 'Đặt sớm tiết kiệm',
+    code: 'EARLY15',
+    discountPercent: 15,
+    startDate: '01/09/2026',
+    endDate: '30/11/2026',
+    status: 'upcoming',
+    currentUsage: 0,
+    description: 'Giảm 15% khi đặt trước 30 ngày.',
+  },
+  {
+    id: 'promo-3',
+    hotelId: 'hotel-1',
+    hotelName: 'Guma Hotel',
+    title: 'Cuối tuần vui vẻ',
+    code: 'WEEKEND10',
+    discountPercent: 10,
+    startDate: '01/01/2026',
+    endDate: '31/12/2026',
+    status: 'paused',
+    maxUsage: 500,
+    currentUsage: 120,
+    description: 'Giảm 10% cho các đặt phòng vào thứ 7 và Chủ nhật.',
+  },
+];
