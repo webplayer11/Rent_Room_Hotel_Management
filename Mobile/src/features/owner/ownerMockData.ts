@@ -506,3 +506,52 @@ export const ownerPromotionsMockData: import('./ownerTypes').OwnerPromotion[] = 
     description: 'Giảm 10% cho các đặt phòng vào thứ 7 và Chủ nhật.',
   },
 ];
+
+// ---------------------------------------------------------------------------
+// Notifications mock data
+// ---------------------------------------------------------------------------
+
+export const ownerNotificationsMockData: import('./ownerTypes').OwnerNotification[] = [
+  {
+    id: 'notif-1',
+    type: 'booking',
+    title: 'Đơn đặt phòng mới',
+    message: '2 đơn đặt phòng đang chờ xác nhận',
+    date: '5 phút trước',
+    isRead: false,
+  },
+  {
+    id: 'notif-2',
+    type: 'review',
+    title: 'Đánh giá mới',
+    message: 'Bạn có 1 đánh giá mới từ khách hàng',
+    date: '1 giờ trước',
+    isRead: false,
+  },
+  {
+    id: 'notif-3',
+    type: 'hotel',
+    title: 'Khách sạn cần cập nhật',
+    message: 'Central Stay cần bổ sung hồ sơ',
+    date: 'Hôm qua',
+    isRead: false,
+    dataId: 'hotel-3',
+  },
+  {
+    id: 'notif-4',
+    type: 'hotel',
+    title: 'Khách sạn đã được duyệt',
+    message: 'Guma Hotel đã được duyệt và có thể kinh doanh',
+    date: '2 ngày trước',
+    isRead: true,
+    dataId: 'hotel-1',
+  },
+  {
+    id: 'notif-5',
+    type: 'promotion',
+    title: 'Khuyến mãi sắp hết hạn',
+    message: 'Khuyến mãi SUMMER20 sắp hết hạn trong 3 ngày tới',
+    date: '3 ngày trước',
+    isRead: true,
+  },
+];

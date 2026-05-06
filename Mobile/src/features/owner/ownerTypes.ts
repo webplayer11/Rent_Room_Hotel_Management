@@ -233,3 +233,20 @@ export type OwnerPromotion = {
   currentUsage: number;
   description?: string;
 };
+
+// ---------------------------------------------------------------------------
+// Notification types
+// ---------------------------------------------------------------------------
+
+export type NotificationType = 'booking' | 'hotel' | 'review' | 'promotion' | 'system';
+export type NotificationFilter = 'all' | 'unread' | NotificationType;
+
+export type OwnerNotification = {
+  id: string;
+  type: NotificationType;
+  title: string;
+  message: string;
+  date: string;
+  isRead: boolean;
+  dataId?: string;
+};
