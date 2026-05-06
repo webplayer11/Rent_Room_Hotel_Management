@@ -53,13 +53,13 @@ public class AuthController : ControllerBase
         var token = Request.Headers["Authorization"]
             .ToString()
             .Replace("Bearer ", "");
-        var resut = await _authRepository.LogoutAsync(token);
-        if (resut == null)
+        var result = await _authRepository.LogoutAsync(token);
+        if (!result)
             return  BadRequest(ResponseApi<AuthResponseDto>.Failure(400,"Đăng xuất thất bại!"));
         
         return Ok(ResponseApi<AuthResponseDto>.Success(null));
     }
-
+    
     [HttpPost("refreshtoken")]
     [Authorize]
     public async Task<IActionResult> RefeshToken(TokenRequestDto  tokenRequestDto)
