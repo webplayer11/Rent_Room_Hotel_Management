@@ -33,13 +33,19 @@ export function OwnerRoomListScreen() {
     return true;
   });
 
-  const handleAction = (status: RoomStatus) => {
-    if (status === 'available') {
-      Alert.alert('Chỉnh sửa', 'Tính năng chỉnh sửa phòng sẽ được phát triển sau.');
-    } else if (status === 'booked') {
-      Alert.alert('Xem đơn', 'Tính năng xem đơn đặt phòng sẽ được phát triển sau.');
-    } else if (status === 'maintenance') {
-      Alert.alert('Cập nhật', 'Tính năng cập nhật trạng thái bảo trì sẽ được phát triển sau.');
+  const handleAction = (room: any) => {
+    const isApproved = hotelStatusMap[room.hotelName] === 'approved';
+    if (!isApproved) {
+      Alert.alert('Lỗi', 'Khách sạn chưa được duyệt nên chưa thể quản lý phòng.');
+      return;
+    }
+    
+    if (room.status === 'available') {
+      Alert.alert('Chỉnh sửa', 'Tính năng chỉnh sửa phòng sẽ được xử lý khi nối backend.');
+    } else if (room.status === 'booked') {
+      router.push('/owner/bookings');
+    } else if (room.status === 'maintenance') {
+      Alert.alert('Cập nhật', 'Tính năng cập nhật trạng thái phòng sẽ được xử lý khi nối backend.');
     }
   };
 
@@ -50,7 +56,19 @@ export function OwnerRoomListScreen() {
           <Ionicons name="arrow-back" size={24} color={colors.text} />
         </Pressable>
         <Text style={styles.headerTitle}>Quản lý phòng</Text>
-        <View style={{ width: 24 }} />
+        <Pressable 
+          style={styles.headerAddBtn}
+          onPress={() => {
+            const hasApproved = ownerDashboardMockData.hotels.some(h => h.status === 'approved');
+            if (!hasApproved) {
+              Alert.alert('Lỗi', 'Bạn cần có khách sạn được duyệt trước khi thêm phòng.');
+            } else {
+              router.push('/owner/room-form');
+            }
+          }}
+        >
+          <Ionicons name="add" size={24} color={colors.primary} />
+        </Pressable>
       </View>
 
       <ScrollView style={styles.container} contentContainerStyle={styles.content}>
@@ -118,19 +136,19 @@ export function OwnerRoomListScreen() {
                 </View>
 
                 <View style={styles.actionsContainer}>
-                  {hotelStatusMap[room.hotelName] !== 'approved' && (
+                  {hotelStatusMap[room.hotelName] !== 'approved' ? (
                     <Text style={styles.unapprovedText}>
-                      * Khách sạn chưa được duyệt nên chưa thể quản lý phòng
+                      * Khách sạn chưa được duyệt nên chưa thể quản lý phòng.
                     </Text>
+                  ) : (
+                    <View style={styles.actions}>
+                      <AppButton 
+                        title={room.status === 'available' ? 'Chỉnh sửa' : room.status === 'booked' ? 'Xem đơn' : 'Cập nhật'} 
+                        onPress={() => handleAction(room)}
+                        style={styles.actionBtn}
+                      />
+                    </View>
                   )}
-                  <View style={styles.actions}>
-                    <AppButton 
-                      title={room.status === 'available' ? 'Chỉnh sửa' : room.status === 'booked' ? 'Xem đơn' : 'Cập nhật'} 
-                      onPress={() => handleAction(room.status)}
-                      style={styles.actionBtn}
-                      disabled={hotelStatusMap[room.hotelName] !== 'approved'}
-                    />
-                  </View>
                 </View>
               </AppCard>
             );
@@ -195,6 +213,9 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '700',
     color: colors.text,
+  },
+  headerAddBtn: {
+    padding: 4,
   },
   container: {
     flex: 1,

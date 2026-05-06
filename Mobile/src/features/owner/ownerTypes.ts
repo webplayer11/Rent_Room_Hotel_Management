@@ -30,6 +30,7 @@ export type OwnerHotel = {
   businessLicenseFileName?: string | null;
   propertyDocumentFileName?: string | null;
   approvalNote?: string;
+  submittedAt?: string;
 };
 
 export type OwnerBooking = {

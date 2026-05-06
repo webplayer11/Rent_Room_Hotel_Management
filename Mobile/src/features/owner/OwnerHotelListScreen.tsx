@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Alert, Pressable, ScrollView, StyleSheet, Text, View, TextInput } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { AppButton } from '../../shared/components/AppButton';
@@ -53,11 +53,16 @@ export function OwnerHotelListScreen({
   const router = useRouter();
   const { hotels } = ownerDashboardMockData;
   const [activeFilter, setActiveFilter] = useState<FilterKey>('all');
+  const [searchQuery, setSearchQuery] = useState('');
 
-  const filteredHotels =
-    activeFilter === 'all'
-      ? hotels
-      : hotels.filter((h) => h.status === activeFilter);
+  const filteredHotels = hotels.filter((h) => {
+    const matchStatus = activeFilter === 'all' || h.status === activeFilter;
+    const matchSearch =
+      searchQuery === '' ||
+      h.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      h.address.toLowerCase().includes(searchQuery.toLowerCase());
+    return matchStatus && matchSearch;
+  });
 
   // ---- Bottom nav ----
   const activeTab = 'hotels';
@@ -77,13 +82,26 @@ export function OwnerHotelListScreen({
               Quản lý danh sách khách sạn và trạng thái phê duyệt.
             </Text>
           </View>
-          <AppButton
-            title="+ Thêm KS"
-            style={styles.addBtn}
+          <Pressable
+            style={styles.headerAddBtn}
             onPress={() => {
               if (onAddHotel) onAddHotel();
               else router.push('/owner/hotel-form');
             }}
+          >
+            <Ionicons name="add" size={24} color={colors.primary} />
+          </Pressable>
+        </View>
+
+        {/* ===== SEARCH BAR ===== */}
+        <View style={styles.searchContainer}>
+          <Ionicons name="search" size={20} color={colors.muted} style={styles.searchIcon} />
+          <TextInput
+            style={styles.searchInput}
+            placeholder="Tìm khách sạn..."
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+            placeholderTextColor={colors.muted}
           />
         </View>
 
@@ -123,11 +141,18 @@ export function OwnerHotelListScreen({
         </Text>
 
         {/* ===== HOTEL LIST ===== */}
-        {filteredHotels.length === 0 ? (
+        {hotels.length === 0 ? (
           <AppCard style={styles.emptyCard}>
             <Ionicons name="business-outline" size={40} color={colors.muted} />
             <Text style={styles.emptyText}>
-              Không có khách sạn nào trong mục này.
+              Thêm khách sạn để bắt đầu kinh doanh.
+            </Text>
+          </AppCard>
+        ) : filteredHotels.length === 0 ? (
+          <AppCard style={styles.emptyCard}>
+            <Ionicons name="search-outline" size={40} color={colors.muted} />
+            <Text style={styles.emptyText}>
+              Không tìm thấy khách sạn phù hợp.
             </Text>
           </AppCard>
         ) : (
@@ -193,6 +218,24 @@ export function OwnerHotelListScreen({
                             </Text>
                           </View>
                         )}
+                      </View>
+                    )}
+
+                    {hotel.status === 'pending' && hotel.submittedAt && (
+                      <View style={styles.perfRow}>
+                        <View style={styles.perfItem}>
+                          <Ionicons name="time-outline" size={13} color={colors.muted} />
+                          <Text style={styles.perfText}>Gửi duyệt: {hotel.submittedAt}</Text>
+                        </View>
+                      </View>
+                    )}
+
+                    {hotel.status === 'need_update' && hotel.approvalNote && (
+                      <View style={styles.perfRow}>
+                        <View style={styles.perfItem}>
+                          <Ionicons name="alert-circle-outline" size={13} color={colors.danger} />
+                          <Text style={styles.perfText}>Lý do: {hotel.approvalNote}</Text>
+                        </View>
                       </View>
                     )}
 
@@ -369,9 +412,14 @@ const styles = StyleSheet.create({
     marginTop: 4,
     lineHeight: 19,
   },
-  addBtn: {
+  headerAddBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#EFF6FF',
+    alignItems: 'center',
+    justifyContent: 'center',
     marginTop: 2,
-    paddingHorizontal: 14,
   },
 
   // ---- Filter ----
@@ -475,7 +523,27 @@ const styles = StyleSheet.create({
   },
   hotelAddress: {
     color: colors.muted,
-    fontSize: 13,
+    fontSize: 14,
+  },
+  searchContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.surface,
+    marginHorizontal: 16,
+    marginBottom: 16,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: colors.border,
+    paddingHorizontal: 12,
+  },
+  searchIcon: {
+    marginRight: 8,
+  },
+  searchInput: {
+    flex: 1,
+    height: 44,
+    fontSize: 14,
+    color: colors.text,
   },
   hotelBottom: {
     flexDirection: 'row',

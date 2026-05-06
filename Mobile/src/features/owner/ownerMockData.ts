@@ -117,6 +117,7 @@ export const ownerDashboardMockData: OwnerDashboardData = {
       businessLicenseFileName: 'giay_phep_kinh_doanh_bx.pdf',
       propertyDocumentFileName: 'giay_cn_quyen_su_dung_bx.pdf',
       approvalNote: 'Hồ sơ đang chờ admin xét duyệt.',
+      submittedAt: '28/04/2026',
     },
     {
       id: 'hotel-3',
@@ -131,6 +132,7 @@ export const ownerDashboardMockData: OwnerDashboardData = {
       businessLicenseFileName: null,
       propertyDocumentFileName: 'giay_cn_quyen_su_dung_cs.pdf',
       approvalNote: 'Thiếu giấy phép kinh doanh. Vui lòng bổ sung.',
+      submittedAt: '25/04/2026',
     },
   ],
 };
