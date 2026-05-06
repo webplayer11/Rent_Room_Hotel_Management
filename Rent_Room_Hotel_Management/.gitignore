@@ -1,0 +1,5 @@
+/Dependencies
+/BuildHost-net472
+/BuildHost-netcore
+Backend/bin/
+Backend/obj/
