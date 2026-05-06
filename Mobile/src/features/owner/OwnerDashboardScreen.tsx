@@ -49,7 +49,7 @@ function handleAlertPress(action: AlertAction, router: any) {
       router.push('/owner/bookings');
       break;
     case 'new_reviews':
-      Alert.alert('Thông báo', 'Tính năng quản lý đánh giá sẽ được phát triển sau.');
+      router.push('/owner/reviews');
       break;
     case 'update_hotel_docs':
       router.push('/owner/hotels');
@@ -57,19 +57,16 @@ function handleAlertPress(action: AlertAction, router: any) {
   }
 }
 
-function handleHotelManage(hotelId: string) {
-  // TODO: navigate to OwnerHotelDetailScreen
-  Alert.alert('Quản lý', `Mở chi tiết khách sạn ${hotelId}`);
+function handleHotelManage(hotelId: string, router: any) {
+  router.push(`/owner/hotel-detail?id=${hotelId}`);
 }
 
-function handleHotelViewStatus(hotelId: string) {
-  // TODO: navigate to hotel approval status screen
-  Alert.alert('Xem trạng thái', `Xem trạng thái phê duyệt khách sạn ${hotelId}`);
+function handleHotelViewStatus(hotelId: string, router: any) {
+  router.push(`/owner/hotel-detail?id=${hotelId}`);
 }
 
-function handleHotelUpdateDocs(hotelId: string) {
-  // TODO: navigate to hotel form / legal docs section
-  Alert.alert('Bổ sung hồ sơ', `Bổ sung hồ sơ cho khách sạn ${hotelId}`);
+function handleHotelUpdateDocs(hotelId: string, router: any) {
+  router.push(`/owner/hotel-detail?id=${hotelId}`);
 }
 
 // ---------------------------------------------------------------------------
@@ -157,31 +154,39 @@ export function OwnerDashboardScreen({ onAddHotel, onGoHotels, onGoBookings, onG
 
         {/* ===== 3. KPI CARDS ===== */}
         <View style={styles.kpiGrid}>
-          <AppCard style={styles.kpiCard}>
-            <KpiIcon name="business-outline" color={colors.primary} />
-            <Text style={styles.kpiValue}>{stats.totalHotels}</Text>
-            <Text style={styles.kpiLabel}>Tổng khách sạn</Text>
-          </AppCard>
+          <Pressable style={{ width: '48%' }} onPress={() => { if (onGoHotels) onGoHotels(); else router.push('/owner/hotels'); }}>
+            <AppCard style={[styles.kpiCard, { width: '100%' }]}>
+              <KpiIcon name="business-outline" color={colors.primary} />
+              <Text style={styles.kpiValue}>{stats.totalHotels}</Text>
+              <Text style={styles.kpiLabel}>Tổng khách sạn</Text>
+            </AppCard>
+          </Pressable>
 
-          <AppCard style={styles.kpiCard}>
-            <KpiIcon name="receipt-outline" color={colors.primary} />
-            <Text style={styles.kpiValue}>{stats.totalBookings}</Text>
-            <Text style={styles.kpiLabel}>Tổng đơn đặt</Text>
-          </AppCard>
+          <Pressable style={{ width: '48%' }} onPress={() => { if (onGoBookings) onGoBookings(); else router.push('/owner/bookings'); }}>
+            <AppCard style={[styles.kpiCard, { width: '100%' }]}>
+              <KpiIcon name="receipt-outline" color={colors.primary} />
+              <Text style={styles.kpiValue}>{stats.totalBookings}</Text>
+              <Text style={styles.kpiLabel}>Tổng đơn đặt</Text>
+            </AppCard>
+          </Pressable>
 
-          <AppCard style={styles.kpiCard}>
-            <KpiIcon name="wallet-outline" color={colors.success} />
-            <Text style={styles.kpiValue}>{stats.monthlyRevenue}</Text>
-            <Text style={styles.kpiLabel}>Doanh thu tháng</Text>
-          </AppCard>
+          <Pressable style={{ width: '48%' }} onPress={() => { if (onGoReports) onGoReports(); else router.push('/owner/reports'); }}>
+            <AppCard style={[styles.kpiCard, { width: '100%' }]}>
+              <KpiIcon name="wallet-outline" color={colors.success} />
+              <Text style={styles.kpiValue}>{stats.monthlyRevenue}</Text>
+              <Text style={styles.kpiLabel}>Doanh thu tháng</Text>
+            </AppCard>
+          </Pressable>
 
-          <AppCard style={styles.kpiCard}>
-            <KpiIcon name="time-outline" color={colors.warning} />
-            <Text style={[styles.kpiValue, { color: colors.warning }]}>
-              {stats.pendingHotelApprovals}
-            </Text>
-            <Text style={styles.kpiLabel}>Chờ admin duyệt</Text>
-          </AppCard>
+          <Pressable style={{ width: '48%' }} onPress={() => { if (onGoHotels) onGoHotels(); else router.push('/owner/hotels'); }}>
+            <AppCard style={[styles.kpiCard, { width: '100%' }]}>
+              <KpiIcon name="time-outline" color={colors.warning} />
+              <Text style={[styles.kpiValue, { color: colors.warning }]}>
+                {stats.pendingHotelApprovals}
+              </Text>
+              <Text style={styles.kpiLabel}>Chờ admin duyệt</Text>
+            </AppCard>
+          </Pressable>
         </View>
 
         {/* ===== 4. ALERTS ===== */}
@@ -229,10 +234,13 @@ export function OwnerDashboardScreen({ onAddHotel, onGoHotels, onGoBookings, onG
               else router.push('/owner/hotel-form');
             }} />
             <AppButton
-              title="Quản lý phòng"
+              title="Quản lý khách sạn"
               variant="outline"
               style={styles.actionBtn}
-              onPress={() => router.push('/owner/rooms')}
+              onPress={() => {
+                if (onGoHotels) onGoHotels();
+                else router.push('/owner/hotels');
+              }}
             />
             <AppButton
               title="Xem đơn đặt phòng"
@@ -251,6 +259,12 @@ export function OwnerDashboardScreen({ onAddHotel, onGoHotels, onGoBookings, onG
                 if (onGoReports) onGoReports();
                 else router.push('/owner/reports');
               }}
+            />
+            <AppButton
+              title="Quản lý đánh giá"
+              variant="outline"
+              style={styles.actionBtn}
+              onPress={() => router.push('/owner/reviews')}
             />
           </View>
         </AppCard>
@@ -341,7 +355,11 @@ export function OwnerDashboardScreen({ onAddHotel, onGoHotels, onGoBookings, onG
             {hotels.map((hotel) => {
               const status = hotelStatusMap[hotel.status];
               return (
-                <View key={hotel.id} style={styles.hotelItem}>
+                <Pressable 
+                  key={hotel.id} 
+                  style={({ pressed }) => [styles.hotelItem, pressed && { opacity: 0.8 }]}
+                  onPress={() => router.push(`/owner/hotel-detail?id=${hotel.id}`)}
+                >
                   <View style={styles.hotelTop}>
                     <View style={styles.hotelInfo}>
                       <Text style={styles.hotelName}>{hotel.name}</Text>
@@ -378,7 +396,7 @@ export function OwnerDashboardScreen({ onAddHotel, onGoHotels, onGoBookings, onG
                     {hotel.status === 'approved' && (
                       <Pressable
                         style={styles.hotelActionBtn}
-                        onPress={() => handleHotelManage(hotel.id)}
+                        onPress={() => handleHotelManage(hotel.id, router)}
                       >
                         <Ionicons name="settings-outline" size={14} color={colors.primary} />
                         <Text style={styles.hotelActionText}>Quản lý</Text>
@@ -387,7 +405,7 @@ export function OwnerDashboardScreen({ onAddHotel, onGoHotels, onGoBookings, onG
                     {hotel.status === 'pending' && (
                       <Pressable
                         style={[styles.hotelActionBtn, styles.hotelActionWarning]}
-                        onPress={() => handleHotelViewStatus(hotel.id)}
+                        onPress={() => handleHotelViewStatus(hotel.id, router)}
                       >
                         <Ionicons name="eye-outline" size={14} color="#B45309" />
                         <Text style={[styles.hotelActionText, { color: '#B45309' }]}>
@@ -398,7 +416,7 @@ export function OwnerDashboardScreen({ onAddHotel, onGoHotels, onGoBookings, onG
                     {hotel.status === 'need_update' && (
                       <Pressable
                         style={[styles.hotelActionBtn, styles.hotelActionDanger]}
-                        onPress={() => handleHotelUpdateDocs(hotel.id)}
+                        onPress={() => handleHotelUpdateDocs(hotel.id, router)}
                       >
                         <Ionicons name="create-outline" size={14} color={colors.danger} />
                         <Text style={[styles.hotelActionText, { color: colors.danger }]}>
@@ -407,7 +425,7 @@ export function OwnerDashboardScreen({ onAddHotel, onGoHotels, onGoBookings, onG
                       </Pressable>
                     )}
                   </View>
-                </View>
+                </Pressable>
               );
             })}
           </View>
@@ -577,11 +595,11 @@ const styles = StyleSheet.create({
   kpiGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
+    justifyContent: 'space-between',
     gap: 10,
     marginBottom: 14,
   },
   kpiCard: {
-    width: '47%',
     alignItems: 'center',
     paddingVertical: 16,
     paddingHorizontal: 10,

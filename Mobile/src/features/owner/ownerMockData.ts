@@ -96,6 +96,13 @@ export const ownerDashboardMockData: OwnerDashboardData = {
       status: 'approved',
       rating: 4.8,
       monthlyBookings: 32,
+      description: 'Khách sạn cao cấp giữa trung tâm thành phố, cách các địa điểm du lịch vài bước chân.',
+      amenities: ['wifi', 'pool', 'restaurant', 'aircon'],
+      checkInTime: '14:00',
+      checkOutTime: '12:00',
+      businessLicenseFileName: 'giay_phep_kinh_doanh.pdf',
+      propertyDocumentFileName: 'giay_cn_quyen_su_dung.pdf',
+      approvalNote: 'Khách sạn đã được duyệt và có thể kinh doanh.',
     },
     {
       id: 'hotel-2',
@@ -103,6 +110,13 @@ export const ownerDashboardMockData: OwnerDashboardData = {
       address: 'Đà Nẵng',
       roomCount: 36,
       status: 'pending',
+      description: 'Khu nghỉ dưỡng ven biển lý tưởng cho gia đình.',
+      amenities: ['wifi', 'pool', 'spa', 'airport_shuttle'],
+      checkInTime: '15:00',
+      checkOutTime: '11:00',
+      businessLicenseFileName: 'giay_phep_kinh_doanh_bx.pdf',
+      propertyDocumentFileName: 'giay_cn_quyen_su_dung_bx.pdf',
+      approvalNote: 'Hồ sơ đang chờ admin xét duyệt.',
     },
     {
       id: 'hotel-3',
@@ -110,6 +124,13 @@ export const ownerDashboardMockData: OwnerDashboardData = {
       address: 'Hà Nội',
       roomCount: 18,
       status: 'need_update',
+      description: 'Khách sạn tiện lợi dành cho khách công tác.',
+      amenities: ['wifi', 'aircon', 'laundry'],
+      checkInTime: '14:00',
+      checkOutTime: '12:00',
+      businessLicenseFileName: null,
+      propertyDocumentFileName: 'giay_cn_quyen_su_dung_cs.pdf',
+      approvalNote: 'Thiếu giấy phép kinh doanh. Vui lòng bổ sung.',
     },
   ],
 };
@@ -399,3 +420,41 @@ export const ownerProfileMockData: import('./ownerTypes').OwnerProfile = {
     verificationStatus: 'verified',
   },
 };
+
+// ---------------------------------------------------------------------------
+// Reviews mock data
+// ---------------------------------------------------------------------------
+
+export const ownerReviewsMockData: import('./ownerTypes').OwnerReview[] = [
+  {
+    id: 'rev-1',
+    hotelId: 'hotel-1',
+    hotelName: 'Guma Hotel',
+    roomType: 'Deluxe Double',
+    customerName: 'Nguyễn Văn Hùng',
+    rating: 5,
+    content: 'Phòng sạch, nhân viên thân thiện, vị trí ngay trung tâm rất tiện lợi.',
+    date: '06/05/2026',
+  },
+  {
+    id: 'rev-2',
+    hotelId: 'hotel-1',
+    hotelName: 'Guma Hotel',
+    roomType: 'Standard Single',
+    customerName: 'Trần Thị Mai',
+    rating: 4,
+    content: 'Vị trí thuận tiện, phòng ổn nhưng cách âm chưa tốt lắm.',
+    date: '04/05/2026',
+    reply: 'Cảm ơn bạn đã góp ý. Khách sạn sẽ cải thiện hệ thống cách âm trong thời gian tới.',
+  },
+  {
+    id: 'rev-3',
+    hotelId: 'hotel-1',
+    hotelName: 'Guma Hotel',
+    roomType: 'Superior Twin',
+    customerName: 'Lê Minh Tuấn',
+    rating: 3,
+    content: 'Check-in hơi chậm, bù lại phòng ốc rất sạch sẽ và tiện nghi.',
+    date: '02/05/2026',
+  },
+];

@@ -13,7 +13,7 @@ export const AppCard = ({ children, style }: AppCardProps) => {
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: colors.white,
+    backgroundColor: colors.surface,
     borderRadius: 16,
     padding: 20,
     shadowColor: colors.primaryDark,

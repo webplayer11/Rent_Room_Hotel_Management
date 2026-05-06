@@ -31,25 +31,7 @@ const filterTabs: { key: FilterKey; label: string }[] = [
 // Placeholder handlers
 // ---------------------------------------------------------------------------
 
-function handleHotelManage(hotelId: string) {
-  // TODO: navigate to OwnerHotelDetailScreen
-  Alert.alert('Quản lý', `Mở chi tiết khách sạn ${hotelId}`);
-}
-
-function handleHotelViewStatus(hotelId: string) {
-  // TODO: navigate to hotel approval status screen
-  Alert.alert('Xem trạng thái', `Xem trạng thái phê duyệt khách sạn ${hotelId}`);
-}
-
-function handleHotelUpdateDocs(hotelId: string) {
-  // TODO: navigate to hotel form / legal docs section
-  Alert.alert('Bổ sung hồ sơ', `Bổ sung hồ sơ cho khách sạn ${hotelId}`);
-}
-
-function handleHotelPress(hotelId: string) {
-  // TODO: navigate to OwnerHotelDetailScreen
-  Alert.alert('Chi tiết', `Sau này chuyển sang OwnerHotelDetailScreen cho ${hotelId}`);
-}
+// Handlers are now inlined in the component
 
 // ---------------------------------------------------------------------------
 // Component
@@ -155,7 +137,7 @@ export function OwnerHotelListScreen({
               return (
                 <Pressable
                   key={hotel.id}
-                  onPress={() => handleHotelPress(hotel.id)}
+                  onPress={() => router.push(`/owner/hotel-detail?id=${hotel.id}`)}
                 >
                   <AppCard style={styles.hotelCard}>
                     <View style={styles.hotelTop}>
@@ -229,7 +211,7 @@ export function OwnerHotelListScreen({
                       {hotel.status === 'approved' && (
                         <Pressable
                           style={styles.hotelActionBtn}
-                          onPress={() => handleHotelManage(hotel.id)}
+                          onPress={() => router.push(`/owner/hotel-detail?id=${hotel.id}`)}
                         >
                           <Ionicons
                             name="settings-outline"
@@ -245,7 +227,7 @@ export function OwnerHotelListScreen({
                             styles.hotelActionBtn,
                             styles.hotelActionWarning,
                           ]}
-                          onPress={() => handleHotelViewStatus(hotel.id)}
+                          onPress={() => router.push(`/owner/hotel-detail?id=${hotel.id}`)}
                         >
                           <Ionicons
                             name="eye-outline"
@@ -268,7 +250,7 @@ export function OwnerHotelListScreen({
                             styles.hotelActionBtn,
                             styles.hotelActionDanger,
                           ]}
-                          onPress={() => handleHotelUpdateDocs(hotel.id)}
+                          onPress={() => router.push(`/owner/hotel-detail?id=${hotel.id}`)}
                         >
                           <Ionicons
                             name="create-outline"

@@ -21,6 +21,15 @@ export type OwnerHotel = {
   status: HotelStatus;
   rating?: number;
   monthlyBookings?: number;
+  description?: string;
+  amenities?: string[];
+  checkInTime?: string;
+  checkOutTime?: string;
+  thumbnailUrl?: string;
+  galleryImages?: string[];
+  businessLicenseFileName?: string | null;
+  propertyDocumentFileName?: string | null;
+  approvalNote?: string;
 };
 
 export type OwnerBooking = {
@@ -183,4 +192,22 @@ export type OwnerRevenueReportData = {
   revenue7Days: RevenuePoint[];
   hotelSummaries: HotelRevenueSummary[];
   insights: BusinessInsight[];
+};
+
+// ---------------------------------------------------------------------------
+// Review types
+// ---------------------------------------------------------------------------
+
+export type ReviewFilter = 'all' | '5_star' | '4_star' | 'under_4_star' | 'unreplied';
+
+export type OwnerReview = {
+  id: string;
+  hotelId: string;
+  hotelName: string;
+  roomType?: string;
+  customerName: string;
+  rating: number;
+  content: string;
+  date: string;
+  reply?: string;
 };
