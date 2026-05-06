@@ -68,6 +68,42 @@ export type OwnerDashboardData = {
 };
 
 // ---------------------------------------------------------------------------
+// Profile types
+// ---------------------------------------------------------------------------
+
+export type OwnerBusinessProfile = {
+  companyName: string;
+  taxId: string;
+  address: string;
+  representativeName: string;
+  verificationStatus: 'verified' | 'unverified';
+};
+
+export type OwnerProfile = {
+  fullName: string;
+  phone: string;
+  email: string;
+  avatarUrl?: string;
+  businessInfo: OwnerBusinessProfile;
+};
+
+// ---------------------------------------------------------------------------
+// Room Management types
+// ---------------------------------------------------------------------------
+
+export type RoomStatus = 'available' | 'booked' | 'maintenance';
+
+export type OwnerRoom = {
+  id: string;
+  name: string;
+  hotelName: string;
+  roomType: string;
+  pricePerNight: string;
+  capacity: number;
+  status: RoomStatus;
+};
+
+// ---------------------------------------------------------------------------
 // Hotel Form types
 // ---------------------------------------------------------------------------
 
@@ -79,12 +115,14 @@ export type HotelAmenity = {
 export type HotelImageUpload = {
   id: string;
   fileName: string;
+  uri?: string;
 };
 
 export type HotelLegalDocument = {
   id: string;
   label: string;
   fileName: string | null;
+  uri?: string;
 };
 
 export type HotelFormData = {

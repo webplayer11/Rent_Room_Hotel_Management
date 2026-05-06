@@ -43,19 +43,16 @@ const alertIconMap: Record<AlertAction, keyof typeof Ionicons.glyphMap> = {
 // Alert action handler (placeholder until navigation is wired)
 // ---------------------------------------------------------------------------
 
-function handleAlertPress(action: AlertAction) {
+function handleAlertPress(action: AlertAction, router: any) {
   switch (action) {
     case 'pending_bookings':
-      // TODO: navigate to OwnerBookingListScreen with filter = 'pending'
-      Alert.alert('Đơn chờ xác nhận', 'Điều hướng đến danh sách đơn chờ xác nhận.');
+      router.push('/owner/bookings');
       break;
     case 'new_reviews':
-      // TODO: navigate to reviews screen
-      Alert.alert('Đánh giá mới', 'Điều hướng đến danh sách đánh giá.');
+      Alert.alert('Thông báo', 'Tính năng quản lý đánh giá sẽ được phát triển sau.');
       break;
     case 'update_hotel_docs':
-      // TODO: navigate to hotel form / legal docs section
-      Alert.alert('Bổ sung hồ sơ', 'Điều hướng đến bổ sung hồ sơ pháp lý.');
+      router.push('/owner/hotels');
       break;
   }
 }
@@ -127,7 +124,7 @@ export function OwnerDashboardScreen({ onAddHotel, onGoHotels, onGoBookings, onG
       >
         {/* ===== 1. HEADER ===== */}
         <View style={styles.header}>
-          <View style={styles.headerLeft}>
+          <Pressable style={styles.headerLeft} onPress={() => router.push('/owner/profile')}>
             <View style={styles.avatar}>
               <Text style={styles.avatarText}>AN</Text>
             </View>
@@ -137,7 +134,7 @@ export function OwnerDashboardScreen({ onAddHotel, onGoHotels, onGoBookings, onG
                 {companyName}
               </Text>
             </View>
-          </View>
+          </Pressable>
 
           <Pressable style={styles.bellWrapper}>
             <Ionicons name="notifications-outline" size={22} color={colors.text} />
@@ -205,7 +202,7 @@ export function OwnerDashboardScreen({ onAddHotel, onGoHotels, onGoBookings, onG
                     { backgroundColor: alertStyle?.bg || colors.background },
                     pressed && styles.alertPressed,
                   ]}
-                  onPress={() => handleAlertPress(alert.action)}
+                  onPress={() => handleAlertPress(alert.action, router)}
                 >
                   <Ionicons
                     name={iconName}
@@ -235,6 +232,7 @@ export function OwnerDashboardScreen({ onAddHotel, onGoHotels, onGoBookings, onG
               title="Quản lý phòng"
               variant="outline"
               style={styles.actionBtn}
+              onPress={() => router.push('/owner/rooms')}
             />
             <AppButton
               title="Xem đơn đặt phòng"

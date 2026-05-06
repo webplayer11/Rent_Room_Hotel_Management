@@ -329,3 +329,73 @@ export const revenueReportMockData: import('./ownerTypes').OwnerRevenueReportDat
     },
   ],
 };
+
+// ---------------------------------------------------------------------------
+// Room list mock data
+// ---------------------------------------------------------------------------
+
+export const ownerRoomsMockData: import('./ownerTypes').OwnerRoom[] = [
+  {
+    id: 'room-1',
+    name: 'Phòng 101',
+    hotelName: 'Guma Hotel',
+    roomType: 'Standard Twin',
+    pricePerNight: '950.000đ',
+    capacity: 2,
+    status: 'available',
+  },
+  {
+    id: 'room-2',
+    name: 'Phòng 102',
+    hotelName: 'Guma Hotel',
+    roomType: 'Deluxe Double',
+    pricePerNight: '1.200.000đ',
+    capacity: 2,
+    status: 'booked',
+  },
+  {
+    id: 'room-3',
+    name: 'Phòng 201',
+    hotelName: 'Biển Xanh Resort',
+    roomType: 'Superior Twin',
+    pricePerNight: '1.600.000đ',
+    capacity: 2,
+    status: 'maintenance',
+  },
+  {
+    id: 'room-4',
+    name: 'Phòng 202',
+    hotelName: 'Biển Xanh Resort',
+    roomType: 'Family Suite',
+    pricePerNight: '3.500.000đ',
+    capacity: 4,
+    status: 'available',
+  },
+  {
+    id: 'room-5',
+    name: 'Phòng 301',
+    hotelName: 'Central Stay',
+    roomType: 'Standard Single',
+    pricePerNight: '650.000đ',
+    capacity: 1,
+    status: 'booked',
+  },
+];
+
+// ---------------------------------------------------------------------------
+// Profile mock data
+// ---------------------------------------------------------------------------
+
+export const ownerProfileMockData: import('./ownerTypes').OwnerProfile = {
+  fullName: 'Nguyễn Văn An',
+  phone: '0901234567',
+  email: 'an.nguyen@bienxanh.com',
+  avatarUrl: undefined,
+  businessInfo: {
+    companyName: 'Công ty TNHH Du lịch Biển Xanh',
+    taxId: '0101234567',
+    address: '123 Đường Ven Biển, Quận 1, TP. Hồ Chí Minh',
+    representativeName: 'Nguyễn Văn An',
+    verificationStatus: 'verified',
+  },
+};

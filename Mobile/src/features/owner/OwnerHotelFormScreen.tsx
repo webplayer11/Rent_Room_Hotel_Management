@@ -7,7 +7,10 @@ import {
   Text,
   TextInput,
   View,
+  Image,
 } from 'react-native';
+import * as ImagePicker from 'expo-image-picker';
+import * as DocumentPicker from 'expo-document-picker';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { AppButton } from '../../shared/components/AppButton';
@@ -51,27 +54,44 @@ export function OwnerHotelFormScreen({ onBack }: OwnerHotelFormProps) {
     });
   }
 
-  // ---- Simulated image upload ----
-  function simulateCoverUpload() {
-    updateField('coverImage', {
-      id: 'cover-1',
-      fileName: sampleFileNames.coverImage,
+  // ---- Real image upload ----
+  async function simulateCoverUpload() {
+    let result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      quality: 0.8,
     });
+    if (!result.canceled && result.assets && result.assets.length > 0) {
+      const asset = result.assets[0];
+      updateField('coverImage', {
+        id: `cover-${Date.now()}`,
+        fileName: asset.fileName || `image-${Date.now()}.jpg`,
+        uri: asset.uri,
+      });
+    }
   }
 
   function removeCoverImage() {
     updateField('coverImage', null);
   }
 
-  function simulateGalleryUpload() {
-    const newImg: HotelImageUpload = {
-      id: `gallery-${Date.now()}`,
-      fileName: sampleFileNames.galleryImage,
-    };
-    setForm((prev) => ({
-      ...prev,
-      galleryImages: [...prev.galleryImages, newImg],
-    }));
+  async function simulateGalleryUpload() {
+    let result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsMultipleSelection: true,
+      quality: 0.8,
+    });
+    if (!result.canceled && result.assets) {
+      const newImages = result.assets.map(asset => ({
+        id: `gallery-${Date.now()}-${Math.random()}`,
+        fileName: asset.fileName || `image-${Date.now()}.jpg`,
+        uri: asset.uri,
+      }));
+      setForm((prev) => ({
+        ...prev,
+        galleryImages: [...prev.galleryImages, ...newImages],
+      }));
+    }
   }
 
   function removeGalleryImage(id: string) {
@@ -81,27 +101,31 @@ export function OwnerHotelFormScreen({ onBack }: OwnerHotelFormProps) {
     }));
   }
 
-  // ---- Simulated legal doc upload ----
-  function simulateDocUpload(docId: string) {
-    const fileNameMap: Record<string, string> = {
-      business_license: sampleFileNames.businessLicense,
-      property_cert: sampleFileNames.propertyCert,
-    };
-    setForm((prev) => ({
-      ...prev,
-      legalDocuments: prev.legalDocuments.map((doc) =>
-        doc.id === docId
-          ? { ...doc, fileName: fileNameMap[docId] || 'document.pdf' }
-          : doc,
-      ),
-    }));
+  // ---- Real document upload ----
+  async function simulateDocUpload(docId: string) {
+    let result = await DocumentPicker.getDocumentAsync({
+      type: ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'image/*'],
+      copyToCacheDirectory: true,
+    });
+    
+    if (!result.canceled && result.assets && result.assets.length > 0) {
+      const asset = result.assets[0];
+      setForm((prev) => ({
+        ...prev,
+        legalDocuments: prev.legalDocuments.map((doc) =>
+          doc.id === docId
+            ? { ...doc, fileName: asset.name, uri: asset.uri }
+            : doc,
+        ),
+      }));
+    }
   }
 
   function removeDoc(docId: string) {
     setForm((prev) => ({
       ...prev,
       legalDocuments: prev.legalDocuments.map((doc) =>
-        doc.id === docId ? { ...doc, fileName: null } : doc,
+        doc.id === docId ? { ...doc, fileName: null, uri: undefined } : doc,
       ),
     }));
   }
@@ -125,14 +149,14 @@ export function OwnerHotelFormScreen({ onBack }: OwnerHotelFormProps) {
 
     if (errors.length > 0) {
       Alert.alert(
-        'Thiếu thông tin bắt buộc',
-        `Vui lòng điền đủ thông tin bắt buộc và tải lên đầy đủ giấy tờ pháp lý.\n\nCòn thiếu:\n• ${errors.join('\n• ')}`,
+        'Vui lòng tải ảnh đại diện khách sạn và đầy đủ giấy tờ pháp lý.',
+        `Còn thiếu:\n• ${errors.join('\n• ')}`,
       );
       return;
     }
 
     Alert.alert(
-      'Gửi thành công',
+      'Hồ sơ đã được chọn đầy đủ. Khi Backend hỗ trợ upload, app sẽ gửi ảnh và giấy tờ lên server.',
       'Khách sạn đang chờ admin xét duyệt.',
       [{ text: 'OK', onPress: () => setSubmitted(true) }],
     );
@@ -309,20 +333,25 @@ export function OwnerHotelFormScreen({ onBack }: OwnerHotelFormProps) {
           {/* Cover image */}
           <FormField label="Ảnh đại diện" required>
             {form.coverImage ? (
-              <View style={styles.uploadedFile}>
-                <View style={styles.uploadedFileInfo}>
-                  <Ionicons name="image" size={18} color={colors.success} />
-                  <Text style={styles.uploadedFileName} numberOfLines={1}>
-                    {form.coverImage.fileName}
-                  </Text>
-                </View>
-                <View style={styles.uploadedFileActions}>
-                  <Pressable onPress={simulateCoverUpload} style={styles.fileActionBtn}>
-                    <Text style={styles.fileActionReplace}>Thay thế</Text>
-                  </Pressable>
-                  <Pressable onPress={removeCoverImage} style={styles.fileActionBtn}>
-                    <Text style={styles.fileActionRemove}>Xóa</Text>
-                  </Pressable>
+              <View style={styles.uploadedFileContainer}>
+                {form.coverImage.uri ? (
+                  <Image source={{ uri: form.coverImage.uri }} style={styles.previewImage} />
+                ) : null}
+                <View style={styles.uploadedFile}>
+                  <View style={styles.uploadedFileInfo}>
+                    <Ionicons name="image" size={18} color={colors.success} />
+                    <Text style={styles.uploadedFileName} numberOfLines={1}>
+                      {form.coverImage.fileName}
+                    </Text>
+                  </View>
+                  <View style={styles.uploadedFileActions}>
+                    <Pressable onPress={simulateCoverUpload} style={styles.fileActionBtn}>
+                      <Text style={styles.fileActionReplace}>Thay thế</Text>
+                    </Pressable>
+                    <Pressable onPress={removeCoverImage} style={styles.fileActionBtn}>
+                      <Text style={styles.fileActionRemove}>Xóa</Text>
+                    </Pressable>
+                  </View>
                 </View>
               </View>
             ) : (
@@ -336,19 +365,24 @@ export function OwnerHotelFormScreen({ onBack }: OwnerHotelFormProps) {
           {/* Gallery images */}
           <FormField label="Ảnh thư viện">
             {form.galleryImages.map((img) => (
-              <View key={img.id} style={styles.uploadedFile}>
-                <View style={styles.uploadedFileInfo}>
-                  <Ionicons name="image" size={18} color={colors.success} />
-                  <Text style={styles.uploadedFileName} numberOfLines={1}>
-                    {img.fileName}
-                  </Text>
+              <View key={img.id} style={styles.uploadedFileContainer}>
+                {img.uri ? (
+                  <Image source={{ uri: img.uri }} style={styles.previewImage} />
+                ) : null}
+                <View style={styles.uploadedFile}>
+                  <View style={styles.uploadedFileInfo}>
+                    <Ionicons name="image" size={18} color={colors.success} />
+                    <Text style={styles.uploadedFileName} numberOfLines={1}>
+                      {img.fileName}
+                    </Text>
+                  </View>
+                  <Pressable
+                    onPress={() => removeGalleryImage(img.id)}
+                    style={styles.fileActionBtn}
+                  >
+                    <Text style={styles.fileActionRemove}>Xóa</Text>
+                  </Pressable>
                 </View>
-                <Pressable
-                  onPress={() => removeGalleryImage(img.id)}
-                  style={styles.fileActionBtn}
-                >
-                  <Text style={styles.fileActionRemove}>Xóa</Text>
-                </Pressable>
               </View>
             ))}
             <Pressable style={styles.uploadBtn} onPress={simulateGalleryUpload}>
@@ -672,6 +706,16 @@ const styles = StyleSheet.create({
     color: colors.primary,
     fontSize: 14,
     fontWeight: '600',
+  },
+  uploadedFileContainer: {
+    marginBottom: 8,
+  },
+  previewImage: {
+    width: '100%',
+    height: 150,
+    borderRadius: 10,
+    marginBottom: 8,
+    resizeMode: 'cover',
   },
   uploadedFile: {
     flexDirection: 'row',
