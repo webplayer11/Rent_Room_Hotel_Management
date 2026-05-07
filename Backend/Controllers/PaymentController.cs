@@ -1,16 +1,27 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using RoomManagement.DTOs;
 using RoomManagement.Services.Interfaces;
+using RoomManagement.Utils;
 
 namespace RoomManagement.Controllers
 {
     [ApiController]
-    [Route("api/[controller]")]
+    [Route("api/pay")]
     public class PaymentController : ControllerBase
     {
         private readonly IPaymentService _service;
+        
+        
+        private readonly HttpClient _httpClient;
 
-        public PaymentController(IPaymentService service) => _service = service;
+ 
+
+        public PaymentController(IPaymentService service, HttpClient httpClient) 
+        {
+            _service = service;
+            _httpClient = httpClient;
+        
+        }    
 
         [HttpGet("booking/{bookingId}")]
         public async Task<IActionResult> GetByBooking(string bookingId)
@@ -34,5 +45,24 @@ namespace RoomManagement.Controllers
                 new { transactionId = result.TransactionId },
                 new ApiResponse<PaymentDto>(true, "Tạo thanh toán thành công.", result));
         }
+        [HttpPost ("createpayment")]
+        public async Task<IActionResult> CreatePayment(PaymentRequestDto paymentRequestDto)
+        {
+            var request = new HttpRequestMessage(
+                HttpMethod.Post,
+                "http://localhost:5193/api/paymentgate/createbuiltpayment"
+            );
+            var data = $"{paymentRequestDto.idBooking}|{paymentRequestDto.price}|{paymentRequestDto.timestamp}";
+            var signature = _service.GenerateHmacSha256(data, AppRoles.Key);
+
+            request.Headers.Add("X-Signature", signature);
+            request.Content = JsonContent.Create(paymentRequestDto);
+
+            var response = await _httpClient.SendAsync(request);
+             var datas = await response.Content.ReadAsStringAsync();
+            return Ok(datas);
+        }
+        
+        
     }
 }

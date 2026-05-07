@@ -45,6 +45,7 @@ builder.Services.AddControllers()
 // ═══════════════════════════════════════════════════════════════
 //  4. SWAGGER
 // ═══════════════════════════════════════════════════════════════
+builder.Services.AddHttpClient();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(opt =>
 {

@@ -1,4 +1,6 @@
-﻿using RoomManagement.DTOs;
+﻿using System.Security.Cryptography;
+using System.Text;
+using RoomManagement.DTOs;
 using RoomManagement.Models;
 using RoomManagement.Repositories.Interfaces;
 using RoomManagement.Services.Interfaces;
@@ -38,5 +40,18 @@ namespace RoomManagement.Services.Implementations
         private static PaymentDto MapToDto(Payment p) => new(
             p.Id, p.BookingId, p.Amount, p.Method,
             p.Status, p.TransactionId, p.PaidAt, p.RefundedAt);
+        
+        
+        public string GenerateHmacSha256(string data, string secretKey)
+        {
+            var keyBytes = Encoding.UTF8.GetBytes(secretKey);
+            var dataBytes = Encoding.UTF8.GetBytes(data);
+
+            using var hmac = new HMACSHA256(keyBytes);
+
+            var hashBytes = hmac.ComputeHash(dataBytes);
+
+            return Convert.ToHexString(hashBytes).ToLower();
+        }
     }
 }
