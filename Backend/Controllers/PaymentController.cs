@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using System.Text.Json;
+using Microsoft.AspNetCore.Mvc;
 using RoomManagement.DTOs;
 using RoomManagement.Services.Interfaces;
 using RoomManagement.Utils;
@@ -54,13 +55,28 @@ namespace RoomManagement.Controllers
             );
             var data = $"{paymentRequestDto.idBooking}|{paymentRequestDto.price}|{paymentRequestDto.timestamp}";
             var signature = _service.GenerateHmacSha256(data, AppRoles.Key);
-
             request.Headers.Add("X-Signature", signature);
             request.Content = JsonContent.Create(paymentRequestDto);
-
             var response = await _httpClient.SendAsync(request);
-             var datas = await response.Content.ReadAsStringAsync();
-            return Ok(datas);
+            var datas = await response.Content.ReadAsStringAsync();
+            
+            if(!response.IsSuccessStatusCode)
+            {
+                return StatusCode(
+                    (int)response.StatusCode,
+                    ResponseApi<string>.Failure(
+                        (int)response.StatusCode,
+                        $"Payment gateway error: {datas}"
+                    )
+                );
+            }
+            var result = JsonSerializer.Deserialize<ResponseApi<PayGateResponseDto>>(datas);
+            if (result is null)
+            {
+                return BadRequest(ResponseApi<string>.Failure(400,""));
+            }
+            var qrUrl = await _service.CreateQrUrlAsync(paymentRequestDto, result);
+             return Ok(qrUrl);
         }
         
         

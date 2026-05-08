@@ -8,5 +8,6 @@ namespace RoomManagement.Services.Interfaces
         Task<PaymentDto> CreateAsync(CreatePaymentDto dto);
         Task<PaymentDto?> GetByTransactionIdAsync(string transactionId);
         string GenerateHmacSha256(string data, string secretKey);
+        Task<PaymentResponseDto> CreateQrUrlAsync(PaymentRequestDto paymentRequestDto ,ResponseApi<PayGateResponseDto> paygateResponse );
     }
 }

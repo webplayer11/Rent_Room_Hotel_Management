@@ -17,9 +17,9 @@ public class PaymentRequestDto
 
 public class PaymentResponseDto
 {
-    public string builId { get; set; }
-    public string bankAccount { get; set; }
-    public string nameAccount { get; set; }
-    public string bankId { get; set; }
+    public string BuilId { get; set; }
+    public string BankAccount { get; set; }
+    public string NameAccount { get; set; }
+    public string BankId { get; set; }
     
 }

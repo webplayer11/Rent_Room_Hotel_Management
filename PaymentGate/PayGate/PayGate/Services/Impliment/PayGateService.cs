@@ -38,10 +38,10 @@ namespace PayGate.Services.Impliment
             
             return new PaymentResponseDto
             {
-                builId = buildID,
-                bankAccount = an.accountNo,
-                bankId = an.bankId,
-                nameAccount = an.accountName
+                BuilId = buildID,
+                BankAccount = an.accountNo,
+                BankId = an.bankId,
+                NameAccount = an.accountName
 
             };
         }

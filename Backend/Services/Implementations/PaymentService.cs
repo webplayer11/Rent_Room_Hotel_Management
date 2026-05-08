@@ -46,12 +46,45 @@ namespace RoomManagement.Services.Implementations
         {
             var keyBytes = Encoding.UTF8.GetBytes(secretKey);
             var dataBytes = Encoding.UTF8.GetBytes(data);
-
             using var hmac = new HMACSHA256(keyBytes);
-
             var hashBytes = hmac.ComputeHash(dataBytes);
-
             return Convert.ToHexString(hashBytes).ToLower();
         }
+        private string BuildVietQrUrl(string bankId, string accountNo, string accountName,
+            decimal amount, int orderId)
+        {
+            var addInfo = Uri.EscapeDataString($"Thanh toan {orderId}");
+            var encodedName = Uri.EscapeDataString(accountName);
+            var url =
+                $"https://img.vietqr.io/image/{bankId}-{accountNo}-compact2.png" +
+                $"?amount={amount}" +
+                $"&addInfo={addInfo}" +
+                $"&accountName={encodedName}";
+            return url;
+        }
+
+        
+        public async Task<PaymentResponseDto> CreateQrUrlAsync(PaymentRequestDto paymentRequestDto, ResponseApi<PayGateResponseDto> paygateResponse)
+        {
+            var payget = new PayGateResponseDto
+            {
+                BuilId = paygateResponse.Data.BuilId,
+                BankAccount =  paygateResponse.Data.BankAccount,
+                NameAccount =   paygateResponse.Data.NameAccount,
+                BankId =  paygateResponse.Data.BankId,
+
+            };
+            var url = BuildVietQrUrl(payget.BankId, payget.BankAccount, payget.NameAccount,
+                paymentRequestDto.price, paymentRequestDto.idBooking);
+
+            return new PaymentResponseDto
+            {
+                IdBooking = paymentRequestDto.idBooking,
+                BuilId = payget.BuilId,
+                QrUrl = url
+            };
+
+        }
+        
     }
 }
