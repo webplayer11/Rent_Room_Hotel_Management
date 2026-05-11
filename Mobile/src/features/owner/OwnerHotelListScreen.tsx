@@ -338,14 +338,14 @@ export function OwnerHotelListScreen({
               onPress={() => {
                 if (tab.key === 'home') {
                   if (onGoHome) onGoHome();
-                  else router.push('/owner');
+                  else router.replace('/owner');
                 }
                 if (tab.key === 'bookings') {
                   if (onGoBookings) onGoBookings();
-                  else router.push('/owner/bookings');
+                  else router.replace('/owner/bookings');
                 }
                 if (tab.key === 'reports') {
-                  router.push('/owner/reports');
+                  router.replace('/owner/reports');
                 }
                 // 'hotels' is already active
               }}

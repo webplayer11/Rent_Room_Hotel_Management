@@ -4,7 +4,7 @@ import {
     ScrollView, StyleSheet, KeyboardAvoidingView,
     Platform, ActivityIndicator,
 } from 'react-native';
-import Colors from '../../shared/constants/colors';
+import { colors as Colors } from '../../shared/constants/colors';
 
 function validateIdentifier(value: string): string {
     const trimmed = value.trim();

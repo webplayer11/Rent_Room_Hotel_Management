@@ -124,7 +124,7 @@ export function OwnerNotificationScreen() {
               const typeInfo = typeMap[notif.type] || typeMap.system;
               return (
                 <Pressable key={notif.id} onPress={() => handlePress(notif)}>
-                  <AppCard style={[styles.notifCard, !notif.isRead && styles.notifCardUnread]}>
+                  <AppCard style={StyleSheet.flatten([styles.notifCard, !notif.isRead && styles.notifCardUnread])}>
                     <View style={styles.cardHeader}>
                       <View style={styles.headerLeft}>
                         <View style={[styles.iconBox, { backgroundColor: typeInfo.bg }]}>
