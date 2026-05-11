@@ -3,6 +3,7 @@ import { Stack } from 'expo-router';
 export default function RootLayout() {
   return (
     <Stack screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="customer" options={{ headerShown: false }} />
       {/* Owner tab screens – no animation on tab switch */}
       <Stack.Screen name="owner/index" options={{ animation: 'none' }} />
       <Stack.Screen name="owner/hotels" options={{ animation: 'none' }} />

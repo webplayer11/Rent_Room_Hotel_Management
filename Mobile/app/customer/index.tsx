@@ -1,10 +1,5 @@
-import React from 'react';
-import { View, Text } from 'react-native';
+import { Redirect } from 'expo-router';
 
 export default function CustomerIndex() {
-  return (
-    <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-      <Text>Customer Placeholder</Text>
-    </View>
-  );
+  return <Redirect href="/customer/(tabs)" />;
 }

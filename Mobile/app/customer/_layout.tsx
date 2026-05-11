@@ -1,0 +1,11 @@
+import { Stack } from 'expo-router';
+
+export default function CustomerLayout() {
+  return (
+    <Stack screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+      <Stack.Screen name="hotel" options={{ headerShown: false }} />
+      <Stack.Screen name="booking" options={{ headerShown: false }} />
+    </Stack>
+  );
+}
