@@ -369,14 +369,14 @@ export function OwnerBookingListScreen({
               onPress={() => {
                 if (tab.key === 'home') {
                   if (onGoHome) onGoHome();
-                  else router.push('/owner');
+                  else router.replace('/owner');
                 }
                 if (tab.key === 'hotels') {
                   if (onGoHotels) onGoHotels();
-                  else router.push('/owner/hotels');
+                  else router.replace('/owner/hotels');
                 }
                 if (tab.key === 'reports') {
-                  router.push('/owner/reports');
+                  router.replace('/owner/reports');
                 }
                 // 'bookings' is already active
               }}

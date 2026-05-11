@@ -5,7 +5,7 @@ import {
     ScrollView, StyleSheet, KeyboardAvoidingView,
     Platform, ActivityIndicator, Modal,
 } from 'react-native';
-import Colors from '../../shared/constants/colors';
+import { colors as Colors } from '../../shared/constants/colors';
 
 export default function LoginScreen({ navigation }: any) {
     const [identifier, setIdentifier] = useState('');
