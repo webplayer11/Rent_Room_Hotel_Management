@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using RoomManagement.DTOs;
 using RoomManagement.Services.Interfaces;
 
@@ -13,11 +14,13 @@ namespace RoomManagement.Controllers
         public BookingController(IBookingService service) => _service = service;
 
         [HttpGet("customer/{customerId}")]
+        [Authorize]
         public async Task<IActionResult> GetByCustomer(string customerId)
             => Ok(new ApiResponse<IEnumerable<BookingDto>>(true, null,
                 await _service.GetByCustomerAsync(customerId)));
 
         [HttpGet("{id}")]
+        [Authorize]
         public async Task<IActionResult> GetDetail(string id)
         {
             var result = await _service.GetDetailAsync(id);
@@ -27,6 +30,7 @@ namespace RoomManagement.Controllers
         }
 
         [HttpPost]
+        [Authorize]
         public async Task<IActionResult> Create([FromBody] CreateBookingDto dto)
         {
             try
