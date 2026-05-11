@@ -1,5 +1,4 @@
-﻿using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using RoomManagement.DTOs;
 using RoomManagement.Services.Interfaces;
 
@@ -14,13 +13,11 @@ namespace RoomManagement.Controllers
         public BookingController(IBookingService service) => _service = service;
 
         [HttpGet("customer/{customerId}")]
-        [Authorize]
         public async Task<IActionResult> GetByCustomer(string customerId)
             => Ok(new ApiResponse<IEnumerable<BookingDto>>(true, null,
                 await _service.GetByCustomerAsync(customerId)));
 
         [HttpGet("{id}")]
-        [Authorize]
         public async Task<IActionResult> GetDetail(string id)
         {
             var result = await _service.GetDetailAsync(id);
@@ -30,7 +27,6 @@ namespace RoomManagement.Controllers
         }
 
         [HttpPost]
-        [Authorize]
         public async Task<IActionResult> Create([FromBody] CreateBookingDto dto)
         {
             try
@@ -49,24 +45,5 @@ namespace RoomManagement.Controllers
             }
         }
 
-        [HttpPatch("{id}/status")]
-        [Authorize(Roles = "Admin")]
-        public async Task<IActionResult> UpdateStatus(string id, [FromBody] UpdateBookingStatusDto dto)
-        {
-            var result = await _service.UpdateStatusAsync(id, dto.Status);
-            return result is null
-                ? NotFound(new ApiResponse<object>(false, "Không tìm thấy booking.", null))
-                : Ok(new ApiResponse<BookingDto>(true, "Cập nhật trạng thái thành công.", result));
-        }
-
-        [HttpPatch("{id}/cancel")]
-        [Authorize]
-        public async Task<IActionResult> Cancel(string id)
-        {
-            var success = await _service.CancelAsync(id);
-            return success
-                ? Ok(new ApiResponse<object>(true, "Hủy booking thành công.", null))
-                : NotFound(new ApiResponse<object>(false, "Không tìm thấy booking.", null));
-        }
     }
 }
