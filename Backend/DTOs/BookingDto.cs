@@ -11,7 +11,6 @@ namespace RoomManagement.DTOs
         DateOnly? EndDate,
         int? DurationInDays,
         decimal? TotalPrice,
-        string? Status,
         int? GuestCount,
         string? SpecialRequest,
         DateTime? CreatedAt
@@ -26,7 +25,6 @@ namespace RoomManagement.DTOs
         DateOnly? EndDate,
         int? DurationInDays,
         decimal? TotalPrice,
-        string? Status,
         int? GuestCount,
         string? SpecialRequest,
         DateTime? CreatedAt,
@@ -43,5 +41,4 @@ namespace RoomManagement.DTOs
         string? SpecialRequest
     );
 
-    public record UpdateBookingStatusDto(string Status);
 }

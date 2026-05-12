@@ -17,6 +17,7 @@ public class AuthController : ControllerBase
         _authRepository = authRepository;
     }
 
+    //đăng kí
     [HttpPost("register")]
     public async Task<IActionResult> Register(RegisterDto registerDto)
     {
@@ -34,6 +35,7 @@ public class AuthController : ControllerBase
         }
     }
 
+    //đăng nhập
     [HttpPost("login")]
     public async Task<IActionResult> Login(LoginDto loginDto)
     {
@@ -46,6 +48,7 @@ public class AuthController : ControllerBase
         return Ok(ResponseApi<AuthResponseDto>.Success(result));
     }
 
+    //đăng xuất
     [HttpPost("logout")]
     [Authorize]
     public async Task<IActionResult> Logout()
@@ -59,7 +62,8 @@ public class AuthController : ControllerBase
         
         return Ok(ResponseApi<AuthResponseDto>.Success(null));
     }
-    
+
+    //làm mới token
     [HttpPost("refreshtoken")]
     [Authorize]
     public async Task<IActionResult> RefeshToken(TokenRequestDto  tokenRequestDto)

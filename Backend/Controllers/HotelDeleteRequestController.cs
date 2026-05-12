@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using RoomManagement.DTOs;
 using RoomManagement.Repositories.Interfaces;
@@ -38,16 +38,16 @@ namespace RoomManagement.Controllers
         public async Task<IActionResult> Create([FromBody] CreateHotelDeleteRequestDto dto)
         {
             var ownerId = await GetCurrentOwnerId();
-            if (ownerId == null) return Unauthorized(new ApiResponse<object>(false, "Không tìm thấy thông tin chủ khách sạn.", null));
+            if (ownerId == null) return Unauthorized(ResponseApi<object>.Failure(401, "Không tìm thấy thông tin chủ khách sạn."));
 
             try
             {
                 var result = await _service.CreateAsync(ownerId, dto);
-                return Ok(new ApiResponse<HotelDeleteRequestDto>(true, "Gửi yêu cầu xóa thành công. Đang chờ duyệt.", result));
+                return Ok(ResponseApi<HotelDeleteRequestDto>.Success(result, "Gửi yêu cầu xóa thành công. Đang chờ duyệt."));
             }
             catch (Exception ex)
             {
-                return BadRequest(new ApiResponse<object>(false, ex.Message, null));
+                return BadRequest(ResponseApi<object>.Failure(400, ex.Message));
             }
         }
 
@@ -56,10 +56,10 @@ namespace RoomManagement.Controllers
         public async Task<IActionResult> GetMyRequests()
         {
             var ownerId = await GetCurrentOwnerId();
-            if (ownerId == null) return Unauthorized(new ApiResponse<object>(false, "Không tìm thấy thông tin chủ khách sạn.", null));
+            if (ownerId == null) return Unauthorized(ResponseApi<object>.Failure(401, "Không tìm thấy thông tin chủ khách sạn."));
 
             var result = await _service.GetByOwnerAsync(ownerId);
-            return Ok(new ApiResponse<IEnumerable<HotelDeleteRequestDto>>(true, null, result));
+            return Ok(ResponseApi<IEnumerable<HotelDeleteRequestDto>>.Success(result));
         }
 
         [HttpPatch("{id}/cancel")]
@@ -67,12 +67,12 @@ namespace RoomManagement.Controllers
         public async Task<IActionResult> Cancel(string id)
         {
             var ownerId = await GetCurrentOwnerId();
-            if (ownerId == null) return Unauthorized(new ApiResponse<object>(false, "Không tìm thấy thông tin chủ khách sạn.", null));
+            if (ownerId == null) return Unauthorized(ResponseApi<object>.Failure(401, "Không tìm thấy thông tin chủ khách sạn."));
 
             var success = await _service.CancelAsync(id, ownerId);
             return success
-                ? Ok(new ApiResponse<object>(true, "Hủy yêu cầu thành công.", null))
-                : BadRequest(new ApiResponse<object>(false, "Không thể hủy yêu cầu này.", null));
+                ? Ok(ResponseApi<object>.Success(null, "Hủy yêu cầu thành công."))
+                : BadRequest(ResponseApi<object>.Failure(400, "Không thể hủy yêu cầu này."));
         }
 
         // ── Admin Endpoints ────────────────────────────────────────────────
@@ -82,7 +82,7 @@ namespace RoomManagement.Controllers
         public async Task<IActionResult> GetAll([FromQuery] string? status)
         {
             var result = await _service.GetAllAsync(status);
-            return Ok(new ApiResponse<IEnumerable<HotelDeleteRequestDto>>(true, null, result));
+            return Ok(ResponseApi<IEnumerable<HotelDeleteRequestDto>>.Success(result));
         }
 
         [HttpGet("{id}")]
@@ -91,8 +91,8 @@ namespace RoomManagement.Controllers
         {
             var result = await _service.GetByIdAsync(id);
             return result == null
-                ? NotFound(new ApiResponse<object>(false, "Không tìm thấy yêu cầu.", null))
-                : Ok(new ApiResponse<HotelDeleteRequestDto>(true, null, result));
+                ? NotFound(ResponseApi<object>.Failure(404, "Không tìm thấy yêu cầu."))
+                : Ok(ResponseApi<HotelDeleteRequestDto>.Success(result));
         }
 
         [HttpGet("pending-count")]
@@ -100,7 +100,7 @@ namespace RoomManagement.Controllers
         public async Task<IActionResult> GetPendingCount()
         {
             var count = await _service.GetPendingCountAsync();
-            return Ok(new ApiResponse<int>(true, null, count));
+            return Ok(ResponseApi<int>.Success(count));
         }
 
         [HttpPatch("{id}/review")]
@@ -109,8 +109,8 @@ namespace RoomManagement.Controllers
         {
             var success = await _service.ReviewAsync(id, dto);
             return success
-                ? Ok(new ApiResponse<object>(true, "Xử lý yêu cầu thành công.", null))
-                : BadRequest(new ApiResponse<object>(false, "Không thể xử lý yêu cầu này.", null));
+                ? Ok(ResponseApi<object>.Success(null, "Xử lý yêu cầu thành công."))
+                : BadRequest(ResponseApi<object>.Failure(400, "Không thể xử lý yêu cầu này."));
         }
     }
 }

@@ -45,11 +45,11 @@ namespace RoomManagement.Repositories.Implementations
             var result = await _userManager.CreateAsync(user, registerDto.Password);
             if (result.Succeeded)
             {
-                if (!await _roleManager.RoleExistsAsync(AppRoles.Admin))
+                if (!await _roleManager.RoleExistsAsync(AppRoles.Customer))
                 {
-                    await _roleManager.CreateAsync(new IdentityRole(AppRoles.Admin));
+                    await _roleManager.CreateAsync(new IdentityRole(AppRoles.Customer));
                 }
-                await _userManager.AddToRoleAsync(user, AppRoles.Admin);
+                await _userManager.AddToRoleAsync(user, AppRoles.Customer);
             }
             
             return result;
