@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using RoomManagement.DTOs;
 using RoomManagement.Services.Interfaces;
 
@@ -14,15 +14,15 @@ namespace RoomManagement.Controllers
 
         [HttpGet]
         public async Task<IActionResult> GetAll()
-            => Ok(new ApiResponse<IEnumerable<CustomerDto>>(true, null, await _service.GetAllAsync()));
+            => Ok(ResponseApi<IEnumerable<CustomerDto>>.Success(await _service.GetAllAsync()));
 
         [HttpGet("{id}")]
         public async Task<IActionResult> GetById(string id)
         {
             var result = await _service.GetByIdAsync(id);
             return result is null
-                ? NotFound(new ApiResponse<CustomerDto>(false, "Không tìm thấy khách hàng.", null))
-                : Ok(new ApiResponse<CustomerDto>(true, null, result));
+                ? NotFound(ResponseApi<CustomerDto>.Failure(404, "Không tìm thấy khách hàng."))
+                : Ok(ResponseApi<CustomerDto>.Success(result));
         }
 
         [HttpPost]
@@ -30,7 +30,7 @@ namespace RoomManagement.Controllers
         {
             var result = await _service.CreateAsync(dto);
             return CreatedAtAction(nameof(GetById), new { id = result.Id },
-                new ApiResponse<CustomerDto>(true, "Tạo khách hàng thành công.", result));
+                ResponseApi<CustomerDto>.Success(result, "Tạo khách hàng thành công.", 201));
         }
 
         [HttpPut("{id}")]
@@ -38,8 +38,8 @@ namespace RoomManagement.Controllers
         {
             var result = await _service.UpdateAsync(id, dto);
             return result is null
-                ? NotFound(new ApiResponse<CustomerDto>(false, "Không tìm thấy khách hàng.", null))
-                : Ok(new ApiResponse<CustomerDto>(true, "Cập nhật thành công.", result));
+                ? NotFound(ResponseApi<CustomerDto>.Failure(404, "Không tìm thấy khách hàng."))
+                : Ok(ResponseApi<CustomerDto>.Success(result, "Cập nhật thành công."));
         }
 
         [HttpDelete("{id}")]
@@ -47,8 +47,8 @@ namespace RoomManagement.Controllers
         {
             var success = await _service.DeleteAsync(id);
             return success
-                ? Ok(new ApiResponse<object>(true, "Xóa thành công.", null))
-                : NotFound(new ApiResponse<object>(false, "Không tìm thấy khách hàng.", null));
+                ? Ok(ResponseApi<object>.Success(null, "Xóa thành công."))
+                : NotFound(ResponseApi<object>.Failure(404, "Không tìm thấy khách hàng."));
         }
     }
 }

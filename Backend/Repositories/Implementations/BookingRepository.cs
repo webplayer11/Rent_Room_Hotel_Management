@@ -34,7 +34,6 @@ namespace RoomManagement.Repositories.Implementations
             string? excludeBookingId = null)
             => await _dbSet.AnyAsync(b =>
                 b.RoomId == roomId &&
-                b.Status != "Cancelled" &&
                 b.Id != excludeBookingId &&
                 b.StartDate < endDate &&
                 b.EndDate > startDate);

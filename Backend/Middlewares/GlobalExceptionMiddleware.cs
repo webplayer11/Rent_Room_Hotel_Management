@@ -1,4 +1,4 @@
-﻿using RoomManagement.DTOs;
+using RoomManagement.DTOs;
 using System.Net;
 using System.Text.Json;
 
@@ -53,10 +53,9 @@ namespace RoomManagement.Middlewares
 
             context.Response.StatusCode = (int)statusCode;
 
-            var response = new ApiResponse<object>(
-                Success: false,
-                Message: message,
-                Data: null
+            var response = ResponseApi<object>.Failure(
+                code: (int)statusCode,
+                message: message
             );
 
             var json = JsonSerializer.Serialize(response, new JsonSerializerOptions

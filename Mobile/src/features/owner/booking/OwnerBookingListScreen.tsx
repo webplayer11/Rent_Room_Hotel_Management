@@ -10,10 +10,10 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { AppCard } from '../../shared/components/AppCard';
-import { colors } from '../../shared/constants/colors';
-import { ownerBookingsMockData } from './ownerMockData';
-import type { BookingStatus, OwnerBooking } from './ownerTypes';
+import { AppCard } from '../../../shared/components/AppCard';
+import { colors } from '../../../shared/constants/colors';
+import { ownerBookingsMockData } from '../data/ownerMockData';
+import type { BookingStatus, OwnerBooking } from '../types/ownerTypes';
 
 // ---------------------------------------------------------------------------
 // Helpers

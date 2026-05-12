@@ -2,10 +2,10 @@ import React from 'react';
 import { useRouter } from 'expo-router';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { AppCard } from '../../shared/components/AppCard';
-import { colors } from '../../shared/constants/colors';
-import { ownerDashboardMockData } from './ownerMockData';
-import type { AlertAction, BookingStatus, HotelStatus } from './ownerTypes';
+import { AppCard } from '../../../shared/components/AppCard';
+import { colors } from '../../../shared/constants/colors';
+import { ownerDashboardMockData } from '../data/ownerMockData';
+import type { AlertAction, BookingStatus, HotelStatus } from '../types/ownerTypes';
 
 // ---------------------------------------------------------------------------
 // Helpers

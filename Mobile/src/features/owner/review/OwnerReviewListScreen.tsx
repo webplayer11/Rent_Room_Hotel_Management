@@ -2,11 +2,11 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, Pressable, TextInput, Alert } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { AppCard } from '../../shared/components/AppCard';
-import { AppButton } from '../../shared/components/AppButton';
-import { colors } from '../../shared/constants/colors';
-import { ownerReviewsMockData } from './ownerMockData';
-import type { ReviewFilter, OwnerReview } from './ownerTypes';
+import { AppCard } from '../../../shared/components/AppCard';
+import { AppButton } from '../../../shared/components/AppButton';
+import { colors } from '../../../shared/constants/colors';
+import { ownerReviewsMockData } from '../data/ownerMockData';
+import type { ReviewFilter, OwnerReview } from '../types/ownerTypes';
 
 export function OwnerReviewListScreen() {
   const router = useRouter();
