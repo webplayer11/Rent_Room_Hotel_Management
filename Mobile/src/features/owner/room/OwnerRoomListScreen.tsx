@@ -2,11 +2,11 @@ import React, { useState } from 'react';
 import { useRouter } from 'expo-router';
 import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { AppButton } from '../../shared/components/AppButton';
-import { AppCard } from '../../shared/components/AppCard';
-import { colors } from '../../shared/constants/colors';
-import { ownerDashboardMockData, ownerRoomsMockData } from './ownerMockData';
-import type { RoomStatus } from './ownerTypes';
+import { AppButton } from '../../../shared/components/AppButton';
+import { AppCard } from '../../../shared/components/AppCard';
+import { colors } from '../../../shared/constants/colors';
+import { ownerDashboardMockData, ownerRoomsMockData } from '../data/ownerMockData';
+import type { RoomStatus, OwnerRoom } from '../types/ownerTypes';
 
 const roomStatusMap: Record<RoomStatus, { label: string; bg: string; fg: string }> = {
   available: { label: 'Còn trống', bg: '#DCFCE7', fg: colors.success },

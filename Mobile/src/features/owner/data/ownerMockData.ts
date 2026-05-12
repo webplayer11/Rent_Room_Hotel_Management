@@ -1,4 +1,4 @@
-import type { HotelAmenity, HotelFormData, HotelLegalDocument, OwnerDashboardData } from './ownerTypes';
+import type { HotelAmenity, HotelFormData, HotelLegalDocument, OwnerDashboardData } from '../types/ownerTypes';
 
 // ---------------------------------------------------------------------------
 // Dashboard mock data
@@ -141,7 +141,7 @@ export const ownerDashboardMockData: OwnerDashboardData = {
 // Booking list mock data (full list with all statuses)
 // ---------------------------------------------------------------------------
 
-export const ownerBookingsMockData: import('./ownerTypes').OwnerBooking[] = [
+export const ownerBookingsMockData: import('../types/ownerTypes').OwnerBooking[] = [
   {
     id: 'booking-1',
     code: 'BK001',
@@ -288,7 +288,7 @@ export const sampleFileNames = {
 // Revenue Report mock data
 // ---------------------------------------------------------------------------
 
-export const revenueReportMockData: import('./ownerTypes').OwnerRevenueReportData = {
+export const revenueReportMockData: import('../types/ownerTypes').OwnerRevenueReportData = {
   netRevenue: '74.2M',
   totalBookings: 128,
   completedBookings: 96,
@@ -357,7 +357,7 @@ export const revenueReportMockData: import('./ownerTypes').OwnerRevenueReportDat
 // Room list mock data
 // ---------------------------------------------------------------------------
 
-export const ownerRoomsMockData: import('./ownerTypes').OwnerRoom[] = [
+export const ownerRoomsMockData: import('../types/ownerTypes').OwnerRoom[] = [
   {
     id: 'room-1',
     name: 'Phòng 101',
@@ -409,7 +409,7 @@ export const ownerRoomsMockData: import('./ownerTypes').OwnerRoom[] = [
 // Profile mock data
 // ---------------------------------------------------------------------------
 
-export const ownerProfileMockData: import('./ownerTypes').OwnerProfile = {
+export const ownerProfileMockData: import('../types/ownerTypes').OwnerProfile = {
   fullName: 'Nguyễn Văn An',
   phone: '0901234567',
   email: 'an.nguyen@bienxanh.com',
@@ -427,7 +427,7 @@ export const ownerProfileMockData: import('./ownerTypes').OwnerProfile = {
 // Reviews mock data
 // ---------------------------------------------------------------------------
 
-export const ownerReviewsMockData: import('./ownerTypes').OwnerReview[] = [
+export const ownerReviewsMockData: import('../types/ownerTypes').OwnerReview[] = [
   {
     id: 'rev-1',
     hotelId: 'hotel-1',
@@ -465,7 +465,7 @@ export const ownerReviewsMockData: import('./ownerTypes').OwnerReview[] = [
 // Promotions mock data
 // ---------------------------------------------------------------------------
 
-export const ownerPromotionsMockData: import('./ownerTypes').OwnerPromotion[] = [
+export const ownerPromotionsMockData: import('../types/ownerTypes').OwnerPromotion[] = [
   {
     id: 'promo-1',
     hotelId: 'hotel-1',
@@ -513,7 +513,7 @@ export const ownerPromotionsMockData: import('./ownerTypes').OwnerPromotion[] = 
 // Notifications mock data
 // ---------------------------------------------------------------------------
 
-export const ownerNotificationsMockData: import('./ownerTypes').OwnerNotification[] = [
+export const ownerNotificationsMockData: import('../types/ownerTypes').OwnerNotification[] = [
   {
     id: 'notif-1',
     type: 'booking',

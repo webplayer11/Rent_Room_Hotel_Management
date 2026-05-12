@@ -2,10 +2,12 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, Pressable, TextInput, Alert, KeyboardAvoidingView, Platform } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { AppCard } from '../../shared/components/AppCard';
-import { AppButton } from '../../shared/components/AppButton';
-import { colors } from '../../shared/constants/colors';
-import { ownerDashboardMockData, ownerPromotionsMockData } from './ownerMockData';
+import { AppCard } from '../../../shared/components/AppCard';
+import { AppButton } from '../../../shared/components/AppButton';
+import { colors } from '../../../shared/constants/colors';
+import { ownerDashboardMockData } from '../data/ownerMockData';
+import type { OwnerPromotion } from '../types/ownerTypes';
+import { ownerPromotionsMockData } from '../data/ownerMockData';
 
 export function OwnerPromotionFormScreen() {
   const router = useRouter();

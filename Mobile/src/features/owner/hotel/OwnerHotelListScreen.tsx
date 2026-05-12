@@ -2,11 +2,11 @@ import React, { useState } from 'react';
 import { Alert, Pressable, ScrollView, StyleSheet, Text, View, TextInput } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
-import { AppButton } from '../../shared/components/AppButton';
-import { AppCard } from '../../shared/components/AppCard';
-import { colors } from '../../shared/constants/colors';
-import { ownerDashboardMockData } from './ownerMockData';
-import type { HotelStatus } from './ownerTypes';
+import { AppButton } from '../../../shared/components/AppButton';
+import { AppCard } from '../../../shared/components/AppCard';
+import { colors } from '../../../shared/constants/colors';
+import { ownerDashboardMockData } from '../data/ownerMockData';
+import type { OwnerHotel } from '../types/ownerTypes';
 
 // ---------------------------------------------------------------------------
 // Helpers

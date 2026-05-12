@@ -2,10 +2,10 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, Pressable, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { AppCard } from '../../shared/components/AppCard';
-import { colors } from '../../shared/constants/colors';
-import { ownerPromotionsMockData } from './ownerMockData';
-import type { PromotionFilter, OwnerPromotion, PromotionStatus } from './ownerTypes';
+import { AppCard } from '../../../shared/components/AppCard';
+import { colors } from '../../../shared/constants/colors';
+import { ownerPromotionsMockData } from '../data/ownerMockData';
+import type { PromotionFilter, OwnerPromotion, PromotionStatus } from '../types/ownerTypes';
 
 const statusMap: Record<PromotionStatus, { label: string; bg: string; fg: string }> = {
   active: { label: 'Đang chạy', bg: '#DCFCE7', fg: colors.success },

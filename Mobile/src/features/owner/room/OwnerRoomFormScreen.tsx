@@ -3,10 +3,11 @@ import { View, Text, StyleSheet, ScrollView, Pressable, TextInput, Alert, Keyboa
 import * as ImagePicker from 'expo-image-picker';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { AppCard } from '../../shared/components/AppCard';
-import { AppButton } from '../../shared/components/AppButton';
-import { colors } from '../../shared/constants/colors';
-import { ownerDashboardMockData } from './ownerMockData';
+import { AppCard } from '../../../shared/components/AppCard';
+import { AppButton } from '../../../shared/components/AppButton';
+import { colors } from '../../../shared/constants/colors';
+import { ownerDashboardMockData } from '../data/ownerMockData';
+import type { OwnerRoom } from '../types/ownerTypes';
 
 export function OwnerRoomFormScreen() {
   const router = useRouter();
