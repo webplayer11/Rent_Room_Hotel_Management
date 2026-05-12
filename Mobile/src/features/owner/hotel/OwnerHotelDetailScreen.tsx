@@ -2,11 +2,11 @@ import React from 'react';
 import { Alert, Pressable, ScrollView, StyleSheet, Text, View, Image } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
-import { AppButton } from '../../shared/components/AppButton';
-import { AppCard } from '../../shared/components/AppCard';
-import { colors } from '../../shared/constants/colors';
-import { ownerDashboardMockData, amenityOptions, ownerReviewsMockData } from './ownerMockData';
-import type { HotelStatus } from './ownerTypes';
+import { AppButton } from '../../../shared/components/AppButton';
+import { AppCard } from '../../../shared/components/AppCard';
+import { colors } from '../../../shared/constants/colors';
+import { ownerDashboardMockData, amenityOptions, ownerReviewsMockData } from '../data/ownerMockData';
+import type { HotelStatus } from '../types/ownerTypes';
 
 const hotelStatusMap: Record<HotelStatus, { label: string; bg: string; fg: string }> = {
   approved: { label: 'Đã duyệt', bg: '#DCFCE7', fg: colors.success },

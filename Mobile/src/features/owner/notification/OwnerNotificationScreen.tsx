@@ -2,10 +2,10 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, Pressable } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { AppCard } from '../../shared/components/AppCard';
-import { colors } from '../../shared/constants/colors';
-import { ownerNotificationsMockData } from './ownerMockData';
-import type { NotificationFilter, OwnerNotification, NotificationType } from './ownerTypes';
+import { AppCard } from '../../../shared/components/AppCard';
+import { colors } from '../../../shared/constants/colors';
+import { ownerNotificationsMockData } from '../data/ownerMockData';
+import type { NotificationFilter, OwnerNotification, NotificationType } from '../types/ownerTypes';
 
 const typeMap: Record<NotificationType, { icon: keyof typeof Ionicons.glyphMap; bg: string; color: string }> = {
   booking: { icon: 'calendar-outline', bg: '#E0F2FE', color: '#0284C7' },

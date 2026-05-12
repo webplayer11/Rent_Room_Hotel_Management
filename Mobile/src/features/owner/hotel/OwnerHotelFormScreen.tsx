@@ -13,15 +13,15 @@ import * as ImagePicker from 'expo-image-picker';
 import * as DocumentPicker from 'expo-document-picker';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { AppButton } from '../../shared/components/AppButton';
-import { AppCard } from '../../shared/components/AppCard';
-import { colors } from '../../shared/constants/colors';
+import { AppButton } from '../../../shared/components/AppButton';
+import { AppCard } from '../../../shared/components/AppCard';
+import { colors } from '../../../shared/constants/colors';
 import {
   amenityOptions,
   defaultHotelFormData,
   sampleFileNames,
-} from './ownerMockData';
-import type { HotelFormData, HotelImageUpload } from './ownerTypes';
+} from '../data/ownerMockData';
+import type { HotelFormData, HotelImageUpload } from '../types/ownerTypes';
 
 // ---------------------------------------------------------------------------
 // Component

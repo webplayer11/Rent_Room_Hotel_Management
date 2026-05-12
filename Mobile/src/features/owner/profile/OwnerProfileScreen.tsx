@@ -3,10 +3,11 @@ import { useRouter } from 'expo-router';
 import { Alert, Pressable, ScrollView, StyleSheet, Text, TextInput, View, KeyboardAvoidingView, Platform, Image } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { Ionicons } from '@expo/vector-icons';
-import { AppButton } from '../../shared/components/AppButton';
-import { AppCard } from '../../shared/components/AppCard';
-import { colors } from '../../shared/constants/colors';
-import { ownerProfileMockData } from './ownerMockData';
+import { AppButton } from '../../../shared/components/AppButton';
+import { AppCard } from '../../../shared/components/AppCard';
+import { colors } from '../../../shared/constants/colors';
+import { ownerProfileMockData } from '../data/ownerMockData';
+import type { OwnerProfile } from '../types/ownerTypes';
 
 export function OwnerProfileScreen() {
   const router = useRouter();
