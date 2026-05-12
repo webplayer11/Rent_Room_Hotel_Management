@@ -34,7 +34,7 @@ namespace RoomManagement.Controllers
         // ── HotelOwner Endpoints ───────────────────────────────────────────
 
         [HttpPost]
-        [Authorize(Roles = "HotelOwner")]
+        [Authorize(Roles = "Owner")]
         public async Task<IActionResult> Create([FromBody] CreateHotelDeleteRequestDto dto)
         {
             var ownerId = await GetCurrentOwnerId();
@@ -52,7 +52,7 @@ namespace RoomManagement.Controllers
         }
 
         [HttpGet("my-requests")]
-        [Authorize(Roles = "HotelOwner")]
+        [Authorize(Roles = "Owner")]
         public async Task<IActionResult> GetMyRequests()
         {
             var ownerId = await GetCurrentOwnerId();
@@ -63,7 +63,7 @@ namespace RoomManagement.Controllers
         }
 
         [HttpPatch("{id}/cancel")]
-        [Authorize(Roles = "HotelOwner")]
+        [Authorize(Roles = "Owner")]
         public async Task<IActionResult> Cancel(string id)
         {
             var ownerId = await GetCurrentOwnerId();
