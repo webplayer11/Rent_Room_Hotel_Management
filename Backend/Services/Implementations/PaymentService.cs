@@ -1,4 +1,6 @@
-﻿using RoomManagement.DTOs;
+﻿using System.Security.Cryptography;
+using System.Text;
+using RoomManagement.DTOs;
 using RoomManagement.Models;
 using RoomManagement.Repositories.Interfaces;
 using RoomManagement.Services.Interfaces;
@@ -38,5 +40,51 @@ namespace RoomManagement.Services.Implementations
         private static PaymentDto MapToDto(Payment p) => new(
             p.Id, p.BookingId, p.Amount, p.Method,
             p.Status, p.TransactionId, p.PaidAt, p.RefundedAt);
+        
+        
+        public string GenerateHmacSha256(string data, string secretKey)
+        {
+            var keyBytes = Encoding.UTF8.GetBytes(secretKey);
+            var dataBytes = Encoding.UTF8.GetBytes(data);
+            using var hmac = new HMACSHA256(keyBytes);
+            var hashBytes = hmac.ComputeHash(dataBytes);
+            return Convert.ToHexString(hashBytes).ToLower();
+        }
+        private string BuildVietQrUrl(string bankId, string accountNo, string accountName,
+            decimal amount, int orderId)
+        {
+            var addInfo = Uri.EscapeDataString($"Thanh toan {orderId}");
+            var encodedName = Uri.EscapeDataString(accountName);
+            var url =
+                $"https://img.vietqr.io/image/{bankId}-{accountNo}-compact2.png" +
+                $"?amount={amount}" +
+                $"&addInfo={addInfo}" +
+                $"&accountName={encodedName}";
+            return url;
+        }
+
+        
+        public async Task<PaymentResponseDto> CreateQrUrlAsync(PaymentRequestDto paymentRequestDto, ResponseApi<PayGateResponseDto> paygateResponse)
+        {
+            var payget = new PayGateResponseDto
+            {
+                BuilId = paygateResponse.Data.BuilId,
+                BankAccount =  paygateResponse.Data.BankAccount,
+                NameAccount =   paygateResponse.Data.NameAccount,
+                BankId =  paygateResponse.Data.BankId,
+
+            };
+            var url = BuildVietQrUrl(payget.BankId, payget.BankAccount, payget.NameAccount,
+                paymentRequestDto.price, paymentRequestDto.idBooking);
+
+            return new PaymentResponseDto
+            {
+                IdBooking = paymentRequestDto.idBooking,
+                BuilId = payget.BuilId,
+                QrUrl = url
+            };
+
+        }
+        
     }
 }

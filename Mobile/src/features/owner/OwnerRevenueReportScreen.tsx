@@ -344,7 +344,7 @@ export function OwnerRevenueReportScreen() {
               style={styles.navTab}
               onPress={() => {
                 if (!isActive) {
-                  router.push(tab.route as any);
+                  router.replace(tab.route as any);
                 }
               }}
             >
