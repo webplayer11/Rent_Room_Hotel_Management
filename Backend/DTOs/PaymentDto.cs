@@ -25,9 +25,13 @@ namespace RoomManagement.DTOs
     {
         public int idBooking { get; set; }
         public decimal price { get; set; }
+    }
+    public class PaymentRequestGwDto
+    {
+        public int idBooking { get; set; }
+        public decimal price { get; set; }
         public string?  timestamp { get; set; }
         public string? callBackUrl { get; set; }
-       
     }
     public class PaymentResponseDto
     {

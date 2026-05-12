@@ -53,10 +53,18 @@ namespace RoomManagement.Controllers
                 HttpMethod.Post,
                 "http://localhost:5193/api/paymentgate/createbuiltpayment"
             );
-            var data = $"{paymentRequestDto.idBooking}|{paymentRequestDto.price}|{paymentRequestDto.timestamp}";
+            var timestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds().ToString();
+            var data = $"{paymentRequestDto.idBooking}|{paymentRequestDto.price}|{timestamp}";
             var signature = _service.GenerateHmacSha256(data, AppRoles.Key);
+            var paymenRequest = new PaymentRequestGwDto
+            {
+                idBooking = paymentRequestDto.idBooking,
+                price = paymentRequestDto.price,
+                timestamp = timestamp,
+                callBackUrl = "http://localhost:5204/api/pay/callbackbe"
+            };
             request.Headers.Add("X-Signature", signature);
-            request.Content = JsonContent.Create(paymentRequestDto);
+            request.Content = JsonContent.Create(paymenRequest);
             var response = await _httpClient.SendAsync(request);
             var datas = await response.Content.ReadAsStringAsync();
             
