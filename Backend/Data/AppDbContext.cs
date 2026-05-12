@@ -31,6 +31,7 @@ namespace RoomManagement.Data
         public DbSet<Notification> Notifications { get; set; }
         public DbSet<Promotion> Promotions { get; set; }
         public DbSet<RevenueReport> RevenueReports { get; set; }
+        public DbSet<HotelDeleteRequest> HotelDeleteRequests { get; set; }
 
         // ── Fluent API Configuration ─────────────────────────────────────────
         protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -118,6 +119,31 @@ namespace RoomManagement.Data
                       .UsingEntity(j => j.ToTable("Hotel_Amenity"));
             });
 
+            // ── HotelDeleteRequest ───────────────────────────────────────────
+            modelBuilder.Entity<HotelDeleteRequest>(entity =>
+            {
+                entity.ToTable("HotelDeleteRequest");
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.Id).HasMaxLength(50);
+                entity.Property(e => e.HotelId).HasMaxLength(50);
+                entity.Property(e => e.OwnerId).HasMaxLength(50);
+                entity.Property(e => e.Reason).HasMaxLength(500);
+                entity.Property(e => e.Status).HasMaxLength(20);
+                entity.Property(e => e.AdminNote).HasMaxLength(500);
+                entity.Property(e => e.CreatedAt).HasColumnType("datetime2");
+                entity.Property(e => e.UpdatedAt).HasColumnType("datetime2");
+
+                entity.HasOne(e => e.Hotel)
+                      .WithMany()
+                      .HasForeignKey(e => e.HotelId)
+                      .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(e => e.Owner)
+                      .WithMany()
+                      .HasForeignKey(e => e.OwnerId)
+                      .OnDelete(DeleteBehavior.Restrict);
+            });
+
             // ── Room ──────────────────────────────────────────────────────────
             modelBuilder.Entity<Room>(entity =>
             {
@@ -184,7 +210,6 @@ namespace RoomManagement.Data
                 entity.Property(e => e.RoomId).HasMaxLength(50);
                 entity.Property(e => e.ReservationNumber).HasMaxLength(100);
                 entity.Property(e => e.TotalPrice).HasColumnType("decimal(18,2)");
-                entity.Property(e => e.Status).HasMaxLength(20);
                 entity.Property(e => e.CreatedAt).HasColumnType("datetime2");
 
                 entity.HasOne(e => e.CustomerNav)
