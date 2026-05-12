@@ -87,14 +87,12 @@ namespace RoomManagement.Controllers
                 }
 
                 var qrUrl = await _service.CreateQrUrlAsync(paymentRequestDto, result);
-                return Ok(qrUrl);
+                return Ok(ResponseApi<PaymentResponseDto>.Success(qrUrl));
             }
             catch (Exception ex)
             {
                 return StatusCode(500,ResponseApi<string>.Failure(500,"Tạo build thành toán thất bại!"));
             }
-            var qrUrl = await _service.CreateQrUrlAsync(paymentRequestDto, result);
-             return Ok(ResponseApi<PaymentResponseDto>.Success(qrUrl));
         }
 
         [HttpPost("callback")]
