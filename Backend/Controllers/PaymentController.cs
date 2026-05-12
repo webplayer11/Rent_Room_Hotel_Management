@@ -1,4 +1,4 @@
-﻿using System.Text.Json;
+using System.Text.Json;
 using Microsoft.AspNetCore.Mvc;
 using RoomManagement.DTOs;
 using RoomManagement.Services.Interfaces;
@@ -26,16 +26,15 @@ namespace RoomManagement.Controllers
 
         [HttpGet("booking/{bookingId}")]
         public async Task<IActionResult> GetByBooking(string bookingId)
-            => Ok(new ApiResponse<IEnumerable<PaymentDto>>(true, null,
-                await _service.GetByBookingAsync(bookingId)));
+            => Ok(ResponseApi<IEnumerable<PaymentDto>>.Success(await _service.GetByBookingAsync(bookingId)));
 
         [HttpGet("transaction/{transactionId}")]
         public async Task<IActionResult> GetByTransaction(string transactionId)
         {
             var result = await _service.GetByTransactionIdAsync(transactionId);
             return result is null
-                ? NotFound(new ApiResponse<PaymentDto>(false, "Không tìm thấy giao dịch.", null))
-                : Ok(new ApiResponse<PaymentDto>(true, null, result));
+                ? NotFound(ResponseApi<PaymentDto>.Failure(404, "Không tìm thấy giao dịch."))
+                : Ok(ResponseApi<PaymentDto>.Success(result));
         }
 
         [HttpPost]
@@ -44,7 +43,7 @@ namespace RoomManagement.Controllers
             var result = await _service.CreateAsync(dto);
             return CreatedAtAction(nameof(GetByTransaction),
                 new { transactionId = result.TransactionId },
-                new ApiResponse<PaymentDto>(true, "Tạo thanh toán thành công.", result));
+                ResponseApi<PaymentDto>.Success(result, "Thanh toán thành công.", 201));
         }
         [HttpPost ("createpayment")]
         public async Task<IActionResult> CreatePayment(PaymentRequestDto paymentRequestDto)
@@ -94,6 +93,8 @@ namespace RoomManagement.Controllers
             {
                 return StatusCode(500,ResponseApi<string>.Failure(500,"Tạo build thành toán thất bại!"));
             }
+            var qrUrl = await _service.CreateQrUrlAsync(paymentRequestDto, result);
+             return Ok(ResponseApi<PaymentResponseDto>.Success(qrUrl));
         }
         
         

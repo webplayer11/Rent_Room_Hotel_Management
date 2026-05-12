@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using RoomManagement.DTOs;
 using RoomManagement.Services.Interfaces;
 
@@ -14,15 +14,15 @@ namespace RoomManagement.Controllers
 
         [HttpGet("hotel/{hotelId}")]
         public async Task<IActionResult> GetByHotel(string hotelId)
-            => Ok(new ApiResponse<IEnumerable<RoomDto>>(true, null, await _service.GetByHotelAsync(hotelId)));
+            => Ok(ResponseApi<IEnumerable<RoomDto>>.Success(await _service.GetByHotelAsync(hotelId)));
 
         [HttpGet("{id}")]
         public async Task<IActionResult> GetById(string id)
         {
             var result = await _service.GetByIdAsync(id);
             return result is null
-                ? NotFound(new ApiResponse<RoomDto>(false, "Không tìm thấy phòng.", null))
-                : Ok(new ApiResponse<RoomDto>(true, null, result));
+                ? NotFound(ResponseApi<RoomDto>.Failure(404, "Không tìm thấy phòng."))
+                : Ok(ResponseApi<RoomDto>.Success(result));
         }
 
         [HttpGet("available")]
@@ -32,8 +32,8 @@ namespace RoomManagement.Controllers
             [FromQuery] DateOnly endDate)
         {
             if (startDate >= endDate)
-                return BadRequest(new ApiResponse<object>(false, "Ngày bắt đầu phải trước ngày kết thúc.", null));
-            return Ok(new ApiResponse<IEnumerable<RoomDto>>(true, null,
+                return BadRequest(ResponseApi<object>.Failure(400, "Ngày bắt đầu phải trước ngày kết thúc."));
+            return Ok(ResponseApi<IEnumerable<RoomDto>>.Success(
                 await _service.GetAvailableAsync(hotelId, startDate, endDate)));
         }
 
@@ -42,7 +42,7 @@ namespace RoomManagement.Controllers
         {
             var result = await _service.CreateAsync(dto);
             return CreatedAtAction(nameof(GetById), new { id = result.Id },
-                new ApiResponse<RoomDto>(true, "Tạo phòng thành công.", result));
+                ResponseApi<RoomDto>.Success(result, "Tạo phòng thành công.", 201));
         }
 
         [HttpPut("{id}")]
@@ -50,8 +50,8 @@ namespace RoomManagement.Controllers
         {
             var result = await _service.UpdateAsync(id, dto);
             return result is null
-                ? NotFound(new ApiResponse<RoomDto>(false, "Không tìm thấy phòng.", null))
-                : Ok(new ApiResponse<RoomDto>(true, "Cập nhật thành công.", result));
+                ? NotFound(ResponseApi<RoomDto>.Failure(404, "Không tìm thấy phòng."))
+                : Ok(ResponseApi<RoomDto>.Success(result, "Cập nhật thành công."));
         }
 
         [HttpDelete("{id}")]
@@ -59,8 +59,8 @@ namespace RoomManagement.Controllers
         {
             var success = await _service.DeleteAsync(id);
             return success
-                ? Ok(new ApiResponse<object>(true, "Xóa thành công.", null))
-                : NotFound(new ApiResponse<object>(false, "Không tìm thấy phòng.", null));
+                ? Ok(ResponseApi<object>.Success(null, "Xóa thành công."))
+                : NotFound(ResponseApi<object>.Failure(404, "Không tìm thấy phòng."));
         }
     }
 }

@@ -48,7 +48,7 @@ namespace RoomManagement.Services.Implementations
                 EndDate = dto.EndDate,
                 DurationInDays = duration,
                 TotalPrice = total,
-                Status = "Pending",
+
                 GuestCount = dto.GuestCount,
                 SpecialRequest = dto.SpecialRequest,
                 CreatedAt = DateTime.UtcNow
@@ -57,27 +57,12 @@ namespace RoomManagement.Services.Implementations
             return MapToDto(await _bookingRepo.CreateAsync(entity));
         }
 
-        public async Task<BookingDto?> UpdateStatusAsync(string id, string status)
-        {
-            var entity = await _bookingRepo.GetByIdAsync(id);
-            if (entity is null) return null;
-            entity.Status = status;
-            return MapToDto(await _bookingRepo.UpdateAsync(entity));
-        }
 
-        public async Task<bool> CancelAsync(string id)
-        {
-            var entity = await _bookingRepo.GetByIdAsync(id);
-            if (entity is null) return false;
-            entity.Status = "Cancelled";
-            await _bookingRepo.UpdateAsync(entity);
-            return true;
-        }
 
         private static BookingDto MapToDto(Booking b) => new(
             b.Id, b.CustomerId, b.RoomId, b.ReservationNumber,
             b.StartDate, b.EndDate, b.DurationInDays,
-            b.TotalPrice, b.Status, b.GuestCount, b.SpecialRequest, b.CreatedAt);
+            b.TotalPrice, b.GuestCount, b.SpecialRequest, b.CreatedAt);
 
         private static BookingDetailDto MapToDetailDto(Booking b) => new(
             b.Id,
@@ -89,7 +74,7 @@ namespace RoomManagement.Services.Implementations
                 b.RoomNav.Capacity, b.RoomNav.PricePerNight, b.RoomNav.Status,
                 b.RoomNav.Description, b.RoomNav.IsSmokingAllowed, Enumerable.Empty<RoomImageDto>()),
             b.ReservationNumber, b.StartDate, b.EndDate, b.DurationInDays,
-            b.TotalPrice, b.Status, b.GuestCount, b.SpecialRequest, b.CreatedAt,
+            b.TotalPrice, b.GuestCount, b.SpecialRequest, b.CreatedAt,
             b.Payments.Select(p => new PaymentDto(
                 p.Id, p.BookingId, p.Amount, p.Method,
                 p.Status, p.TransactionId, p.PaidAt, p.RefundedAt)));

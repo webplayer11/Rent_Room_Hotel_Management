@@ -1,4 +1,4 @@
-﻿namespace RoomManagement.DTOs
+namespace RoomManagement.DTOs
 {
     public record HotelDeleteRequestDto(
         string Id,

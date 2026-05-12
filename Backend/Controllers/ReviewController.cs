@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using RoomManagement.DTOs;
 using RoomManagement.Services.Interfaces;
 
@@ -14,23 +14,21 @@ namespace RoomManagement.Controllers
 
         [HttpGet("hotel/{hotelId}")]
         public async Task<IActionResult> GetByHotel(string hotelId)
-            => Ok(new ApiResponse<IEnumerable<ReviewDto>>(true, null,
-                await _service.GetByHotelAsync(hotelId)));
+            => Ok(ResponseApi<IEnumerable<ReviewDto>>.Success(await _service.GetByHotelAsync(hotelId)));
 
         [HttpGet("customer/{customerId}")]
         public async Task<IActionResult> GetByCustomer(string customerId)
-            => Ok(new ApiResponse<IEnumerable<ReviewDto>>(true, null,
-                await _service.GetByCustomerAsync(customerId)));
+            => Ok(ResponseApi<IEnumerable<ReviewDto>>.Success(await _service.GetByCustomerAsync(customerId)));
 
         [HttpGet("hotel/{hotelId}/rating")]
         public async Task<IActionResult> GetAverageRating(string hotelId)
-            => Ok(new ApiResponse<double>(true, null, await _service.GetAverageRatingAsync(hotelId)));
+            => Ok(ResponseApi<double>.Success(await _service.GetAverageRatingAsync(hotelId)));
 
         [HttpPost]
         public async Task<IActionResult> Create([FromBody] CreateReviewDto dto)
         {
             var result = await _service.CreateAsync(dto);
-            return Ok(new ApiResponse<ReviewDto>(true, "Đánh giá thành công.", result));
+            return Ok(ResponseApi<ReviewDto>.Success(result, "Đánh giá thành công."));
         }
 
         [HttpDelete("{id}")]
@@ -38,8 +36,8 @@ namespace RoomManagement.Controllers
         {
             var success = await _service.DeleteAsync(id);
             return success
-                ? Ok(new ApiResponse<object>(true, "Xóa đánh giá thành công.", null))
-                : NotFound(new ApiResponse<object>(false, "Không tìm thấy đánh giá.", null));
+                ? Ok(ResponseApi<object>.Success(null, "Xóa đánh giá thành công."))
+                : NotFound(ResponseApi<object>.Failure(404, "Không tìm thấy đánh giá."));
         }
     }
 }

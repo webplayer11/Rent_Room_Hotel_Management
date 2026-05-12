@@ -28,12 +28,12 @@ namespace RoomManagement.Models
         [Column(TypeName = "decimal(18,2)")]
         public decimal? TotalPrice { get; set; }
 
-        [MaxLength(20)]
-        public string? Status { get; set; }
-
         public int? GuestCount { get; set; }
 
         public string? SpecialRequest { get; set; }
+
+        [MaxLength(20)]
+        public string? Status { get; set; }
 
         [Column(TypeName = "datetime2")]
         public DateTime? CreatedAt { get; set; }

@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using RoomManagement.DTOs;
 using RoomManagement.Services.Interfaces;
 
@@ -14,27 +14,27 @@ namespace RoomManagement.Controllers
 
         [HttpGet]
         public async Task<IActionResult> GetAll()
-            => Ok(new ApiResponse<IEnumerable<HotelDto>>(true, null, await _service.GetAllApprovedAsync()));
+            => Ok(ResponseApi<IEnumerable<HotelDto>>.Success(await _service.GetAllApprovedAsync()));
 
         [HttpGet("{id}")]
         public async Task<IActionResult> GetDetail(string id)
         {
             var result = await _service.GetDetailAsync(id);
             return result is null
-                ? NotFound(new ApiResponse<HotelDetailDto>(false, "Không tìm thấy khách sạn.", null))
-                : Ok(new ApiResponse<HotelDetailDto>(true, null, result));
+                ? NotFound(ResponseApi<HotelDetailDto>.Failure(404, "Không tìm thấy khách sạn."))
+                : Ok(ResponseApi<HotelDetailDto>.Success(result));
         }
 
         [HttpGet("owner/{ownerId}")]
         public async Task<IActionResult> GetByOwner(string ownerId)
-            => Ok(new ApiResponse<IEnumerable<HotelDto>>(true, null, await _service.GetByOwnerAsync(ownerId)));
+            => Ok(ResponseApi<IEnumerable<HotelDto>>.Success(await _service.GetByOwnerAsync(ownerId)));
 
         [HttpGet("search")]
         public async Task<IActionResult> Search([FromQuery] string keyword)
         {
             if (string.IsNullOrWhiteSpace(keyword))
-                return BadRequest(new ApiResponse<object>(false, "Từ khóa không được để trống.", null));
-            return Ok(new ApiResponse<IEnumerable<HotelDto>>(true, null, await _service.SearchAsync(keyword)));
+                return BadRequest(ResponseApi<object>.Failure(400, "Từ khóa không được để trống."));
+            return Ok(ResponseApi<IEnumerable<HotelDto>>.Success(await _service.SearchAsync(keyword)));
         }
 
         [HttpPost]
@@ -42,7 +42,7 @@ namespace RoomManagement.Controllers
         {
             var result = await _service.CreateAsync(dto);
             return CreatedAtAction(nameof(GetDetail), new { id = result.Id },
-                new ApiResponse<HotelDto>(true, "Tạo khách sạn thành công.", result));
+                ResponseApi<HotelDto>.Success(result, "Tạo khách sạn thành công.", 201));
         }
 
         [HttpPut("{id}")]
@@ -50,8 +50,8 @@ namespace RoomManagement.Controllers
         {
             var result = await _service.UpdateAsync(id, dto);
             return result is null
-                ? NotFound(new ApiResponse<HotelDto>(false, "Không tìm thấy khách sạn.", null))
-                : Ok(new ApiResponse<HotelDto>(true, "Cập nhật thành công.", result));
+                ? NotFound(ResponseApi<HotelDto>.Failure(404, "Không tìm thấy khách sạn."))
+                : Ok(ResponseApi<HotelDto>.Success(result, "Cập nhật thành công."));
         }
 
         [HttpPatch("{id}/approve")]
@@ -59,8 +59,8 @@ namespace RoomManagement.Controllers
         {
             var success = await _service.ApproveAsync(id);
             return success
-                ? Ok(new ApiResponse<object>(true, "Duyệt khách sạn thành công.", null))
-                : NotFound(new ApiResponse<object>(false, "Không tìm thấy khách sạn.", null));
+                ? Ok(ResponseApi<object>.Success(null, "Duyệt khách sạn thành công."))
+                : NotFound(ResponseApi<object>.Failure(404, "Không tìm thấy khách sạn."));
         }
 
         [HttpDelete("{id}")]
@@ -68,8 +68,8 @@ namespace RoomManagement.Controllers
         {
             var success = await _service.DeleteAsync(id);
             return success
-                ? Ok(new ApiResponse<object>(true, "Xóa thành công.", null))
-                : NotFound(new ApiResponse<object>(false, "Không tìm thấy khách sạn.", null));
+                ? Ok(ResponseApi<object>.Success(null, "Xóa thành công."))
+                : NotFound(ResponseApi<object>.Failure(404, "Không tìm thấy khách sạn."));
         }
     }
 }
