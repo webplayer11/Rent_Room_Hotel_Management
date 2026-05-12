@@ -54,5 +54,14 @@ namespace RoomManagement.DTOs
         [JsonPropertyName("bankId")]
         public string? BankId { get; set; }
     }
+
+    public class PayGateRequestDto
+    {
+        public int Idbooking { get; set; }
+        public decimal price { get; set; }
+        public string? timestamp { get; set; }
+        public string Build { get; set; }
+        public string status { get; set; }
+    }
       
 }

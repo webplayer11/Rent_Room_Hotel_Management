@@ -49,5 +49,13 @@ namespace RoomManagement.Controllers
             }
         }
 
+        [HttpGet("{idbooking}/status")]
+        [Authorize]
+        public async Task<IActionResult> GetStatus(string idbooking)
+        {
+            
+            return Ok();
+        }
+
     }
 }

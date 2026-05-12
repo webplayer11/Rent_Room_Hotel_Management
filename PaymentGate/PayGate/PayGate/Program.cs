@@ -8,7 +8,11 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddOpenApi();
 builder.Services.AddControllers();
 builder.Services.AddScoped<IPayGateService, PayGateService>();
+builder.Services.AddHttpClient();
 
+builder.Services.AddCors(opt =>
+    opt.AddPolicy("AllowAll", p =>
+        p.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod()));
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -16,7 +20,7 @@ if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
 }
-
+app.UseCors("AllowAll");
 app.UseHttpsRedirection();
 app.MapControllers();
 

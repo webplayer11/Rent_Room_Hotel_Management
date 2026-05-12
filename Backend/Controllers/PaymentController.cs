@@ -95,6 +95,19 @@ namespace RoomManagement.Controllers
                 return StatusCode(500,ResponseApi<string>.Failure(500,"Tạo build thành toán thất bại!"));
             }
         }
+
+        [HttpPost("callback")]
+        public async Task<IActionResult> CallBack(PayGateRequestDto payGateRequestDto)
+        {
+            var signature = Request.Headers["X-Signature"].ToString();
+            var result = await _service.CallBackPaymentAsync(payGateRequestDto, signature);
+            if (!result)
+            {
+                return BadRequest();
+            }
+            return Ok();
+        }
+        
         
         
     }

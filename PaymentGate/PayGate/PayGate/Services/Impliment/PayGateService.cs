@@ -10,6 +10,8 @@ namespace PayGate.Services.Impliment
     {
         private static List<BuildDto> _buildDtos = new List<BuildDto>();
         
+        
+
         public  async Task<PaymentResponseDto> CreateBuiltPayment(PaymentRequestDto paymentRequestDto, string signature)
         {
             
@@ -46,9 +48,23 @@ namespace PayGate.Services.Impliment
             };
         }
 
-        public Task<string> CallBackBackEnd()
+        public async Task<PayGateRequestDto> CallBackBackEnd(int idBooking)
         {
-            return null;
+            var build =  _buildDtos.FirstOrDefault(b => b.idBooking == idBooking);
+            if (build == null)
+                //throw new Exception("Không tìm thấy Build payment");
+                return null;
+            build.status = "SUCCESS";
+            var timestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds().ToString();
+            
+            return new PayGateRequestDto
+            {
+                Build = build.buildID,
+                Idbooking = build.idBooking,
+                price = build.price,
+                timestamp = timestamp,
+                status = build.status,
+            } ;
         }
 
         public string GenerateHmacSha256(string data, string secretKey)
