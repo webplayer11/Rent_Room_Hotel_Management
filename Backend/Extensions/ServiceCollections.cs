@@ -30,6 +30,7 @@ namespace RoomManagement.Extensions
             services.AddScoped<INotificationRepository, NotificationRepository>();
             services.AddScoped<IInvoiceRepository, InvoiceRepository>();
             services.AddScoped<IRevenueReportRepository, RevenueReportRepository>();
+            services.AddScoped<IHotelDeleteRequestRepository, HotelDeleteRequestRepository>();
 
             // ── Services ──────────────────────────────────────────────────────
             services.AddScoped<ICustomerService, CustomerService>();
@@ -42,7 +43,7 @@ namespace RoomManagement.Extensions
             services.AddScoped<IVoucherService, VoucherService>();
             services.AddScoped<INotificationService, NotificationService>();
             services.AddScoped<IInvoiceService, InvoiceService>();
-            
+            services.AddScoped<IHotelDeleteRequestService, HotelDeleteRequestService>();
 
             return services;
         }
