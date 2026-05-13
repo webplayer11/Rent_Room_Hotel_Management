@@ -114,15 +114,6 @@ builder.Services.AddAuthentication(options =>
         };
     });
 
-// ═══════════════════════════════════════════════════════════════
-//  5. CORS
-// ═══════════════════════════════════════════════════════════════
-builder.Services.AddCors(opt =>
-    opt.AddPolicy("AllowAll", p =>
-        p.WithOrigins("http://localhost:3000", "http://localhost:5173") // Thay đổi theo frontend URL
-         .AllowAnyHeader()
-         .AllowAnyMethod()
-         .AllowCredentials())); // Cho phép gửi cookies
 
 // ═══════════════════════════════════════════════════════════════
 //  6. BUILD + MIDDLEWARE
@@ -144,7 +135,6 @@ if (app.Environment.IsDevelopment())
 }
 
 //app.UseHttpsRedirection();
-app.UseCors("AllowAll");
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();   
