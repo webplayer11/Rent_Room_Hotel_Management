@@ -1,19 +1,21 @@
-import { Stack } from 'expo-router';
+// app/_layout.tsx
+// Root layout của Expo Router.
+// Bọc toàn bộ app trong AuthProvider.
+// Việc điều hướng theo role được xử lý tại:
+//   - app/index.tsx (entry redirect)
+//   - app/auth/_layout.tsx (AuthStack)
+//   - app/admin/_layout.tsx (AdminStack + guard)
+//   - app/owner/_layout.tsx (OwnerStack + guard)
+//   - app/customer/_layout.tsx (CustomerStack + guard)
+
+import React from 'react';
+import { Slot } from 'expo-router';
+import { AuthProvider } from '../src/context/AuthContext';
 
 export default function RootLayout() {
   return (
-    <Stack screenOptions={{ headerShown: false }}>
-      <Stack.Screen name="customer" options={{ headerShown: false }} />
-      {/* Owner tab screens – no animation on tab switch */}
-      <Stack.Screen name="owner/index" options={{ animation: 'none' }} />
-      <Stack.Screen name="owner/hotels" options={{ animation: 'none' }} />
-      <Stack.Screen name="owner/bookings" options={{ animation: 'none' }} />
-      <Stack.Screen name="owner/reports" options={{ animation: 'none' }} />
-      {/* Admin tab screens – no animation on tab switch */}
-      <Stack.Screen name="admin/index" options={{ animation: 'none' }} />
-      <Stack.Screen name="admin/hotels" options={{ animation: 'none' }} />
-      <Stack.Screen name="admin/accounts" options={{ animation: 'none' }} />
-      <Stack.Screen name="admin/reports" options={{ animation: 'none' }} />
-    </Stack>
+    <AuthProvider>
+      <Slot />
+    </AuthProvider>
   );
 }
