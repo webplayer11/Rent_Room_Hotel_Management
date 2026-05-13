@@ -4,6 +4,7 @@ using RoomManagement.DTOs;
 using RoomManagement.Models;
 using RoomManagement.Repositories.Interfaces;
 using RoomManagement.Services.Interfaces;
+using RoomManagement.Utils;
 
 namespace RoomManagement.Services.Implementations
 {
@@ -85,6 +86,19 @@ namespace RoomManagement.Services.Implementations
             };
 
         }
-        
+
+        public async Task<bool> CallBackPaymentAsync(PayGateRequestDto payGateRequestDto, string secretKey)
+        {
+            var dataTosign = $"{payGateRequestDto.Build}|{payGateRequestDto.Idbooking}|{payGateRequestDto.price}|{payGateRequestDto.timestamp}";
+            var checkSign = GenerateHmacSha256(dataTosign, AppRoles.Key);
+            var timestampCreat = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+            if (checkSign != secretKey || timestampCreat - long.Parse(payGateRequestDto.timestamp) > 300 )
+            {
+                return false;
+            }
+            // cập nhật lại status của booking  = Paid
+            
+            return true;
+        }
     }
 }

@@ -1,4 +1,4 @@
-import { OwnerRevenueReportScreen } from '../../src/features/owner/OwnerRevenueReportScreen';
+import { OwnerRevenueReportScreen } from '../../src/features/owner/revenue/OwnerRevenueReportScreen';
 
 export default function Reports() {
   return <OwnerRevenueReportScreen />;

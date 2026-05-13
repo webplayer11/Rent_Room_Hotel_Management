@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 using RoomManagement.DTOs;
 
@@ -21,10 +21,10 @@ namespace RoomManagement.Filters
                         kvp => kvp.Value!.Errors.Select(e => e.ErrorMessage).ToArray()
                     );
 
-                var response = new ApiResponse<Dictionary<string, string[]>>(
-                    Success: false,
-                    Message: "Dữ liệu đầu vào không hợp lệ.",
-                    Data: errors
+                var response = ResponseApi<Dictionary<string, string[]>>.Failure(
+                    code: 400,
+                    message: "Dữ liệu đầu vào không hợp lệ.",
+                    data: errors
                 );
 
                 context.Result = new BadRequestObjectResult(response);

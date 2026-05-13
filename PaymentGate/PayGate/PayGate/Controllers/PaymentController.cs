@@ -12,10 +12,12 @@ public class PaymentController : ControllerBase
 {
     
     private readonly IPayGateService _payGateService;
+    private readonly HttpClient _httpClient;
 
-    public PaymentController(IPayGateService payGateService)
+    public PaymentController(IPayGateService payGateService,  HttpClient httpClient)
     {
         _payGateService = payGateService;
+        _httpClient = httpClient;
     }
     
     [HttpPost("createbuiltpayment")]
@@ -35,8 +37,29 @@ public class PaymentController : ControllerBase
     }
 
     [HttpPost("callback")]
-    public async Task<IActionResult> CallbackPayment()
+    public async Task<IActionResult> CallbackPayment(int idBooking)
     {
+        var result = await _payGateService.CallBackBackEnd(idBooking);
+        if (result == null) return BadRequest();
+        var data = $"{result.Build}|{result.Idbooking}|{result.price}|{result.timestamp}";
+        var signature = _payGateService.GenerateHmacSha256(data, an.Key);
+        var request = new HttpRequestMessage(
+            HttpMethod.Post,
+            "http://localhost:5204/api/pay/callback"
+        );
+        request.Headers.Add("X-Signature", signature);
+        request.Content = JsonContent.Create(result);
+        var response = await _httpClient.SendAsync(request);
+        if (!response.IsSuccessStatusCode)
+        {
+            return StatusCode(
+                (int)response.StatusCode,
+                ResponseApi<string>.Failure(
+                    (int)response.StatusCode,
+                    $"Callback thất bại:"
+                )
+            );
+        }
         return Ok();
     }
     

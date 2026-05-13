@@ -16,7 +16,6 @@ namespace RoomManagement.Data
         public DbSet<Account> Accounts { get; set; }
         public DbSet<Customer> Customers { get; set; }
         public DbSet<HotelOwner> HotelOwners { get; set; }
-        public DbSet<Admin> Admins { get; set; }
         public DbSet<Hotel> Hotels { get; set; }
         public DbSet<Room> Rooms { get; set; }
         public DbSet<HotelImage> HotelImages { get; set; }
@@ -85,19 +84,6 @@ namespace RoomManagement.Data
                       .OnDelete(DeleteBehavior.Restrict);
             });
 
-            // ── Admin ─────────────────────────────────────────────────────────
-            modelBuilder.Entity<Admin>(entity =>
-            {
-                entity.ToTable("Admin");
-                entity.HasKey(e => e.Id);
-                entity.Property(e => e.Id).HasMaxLength(50);
-                entity.Property(e => e.AccountId).HasMaxLength(50);
-
-                entity.HasOne(e => e.Account)
-                      .WithMany()
-                      .HasForeignKey(e => e.AccountId)
-                      .OnDelete(DeleteBehavior.Restrict);
-            });
 
             // ── Hotel ─────────────────────────────────────────────────────────
             modelBuilder.Entity<Hotel>(entity =>

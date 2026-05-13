@@ -7,7 +7,6 @@ namespace RoomManagement.Services.Interfaces
         Task<IEnumerable<BookingDto>> GetByCustomerAsync(string customerId);
         Task<BookingDetailDto?> GetDetailAsync(string id);
         Task<BookingDto> CreateAsync(CreateBookingDto dto);
-        Task<BookingDto?> UpdateStatusAsync(string id, string status);
-        Task<bool> CancelAsync(string id);
+
     }
 }

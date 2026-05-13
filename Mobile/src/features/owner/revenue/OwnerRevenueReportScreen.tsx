@@ -9,11 +9,11 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { AppCard } from '../../shared/components/AppCard';
-import { AppButton } from '../../shared/components/AppButton';
-import { colors } from '../../shared/constants/colors';
-import { revenueReportMockData } from './ownerMockData';
-import type { RevenueTimeFilter } from './ownerTypes';
+import { AppCard } from '../../../shared/components/AppCard';
+import { AppButton } from '../../../shared/components/AppButton';
+import { colors } from '../../../shared/constants/colors';
+import { revenueReportMockData } from '../data/ownerMockData';
+import type { RevenueTimeFilter } from '../types/ownerTypes';
 
 export function OwnerRevenueReportScreen() {
   const router = useRouter();

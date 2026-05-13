@@ -9,22 +9,34 @@ namespace RoomManagement.Services.Implementations
     {
         private readonly IHotelRepository _repo;
 
-        public HotelService(IHotelRepository repo) => _repo = repo;
+        public HotelService(IHotelRepository repo)
+        {
+            _repo = repo;
+        }
 
         public async Task<IEnumerable<HotelDto>> GetAllApprovedAsync()
-            => (await _repo.GetApprovedHotelsAsync()).Select(MapToDto);
+        {
+            var hotels = await _repo.GetApprovedHotelsAsync();
+            return hotels.Select(MapToDto);
+        }
 
         public async Task<HotelDetailDto?> GetDetailAsync(string id)
         {
-            var h = await _repo.GetWithDetailsAsync(id);
-            return h is null ? null : MapToDetailDto(h);
+            var hotel = await _repo.GetWithDetailsAsync(id);
+            return hotel is null ? null : MapToDetailDto(hotel);
         }
 
         public async Task<IEnumerable<HotelDto>> GetByOwnerAsync(string ownerId)
-            => (await _repo.GetByOwnerIdAsync(ownerId)).Select(MapToDto);
+        {
+            var hotels = await _repo.GetByOwnerIdAsync(ownerId);
+            return hotels.Select(MapToDto);
+        }
 
         public async Task<IEnumerable<HotelDto>> SearchAsync(string keyword)
-            => (await _repo.SearchAsync(keyword)).Select(MapToDto);
+        {
+            var hotels = await _repo.SearchAsync(keyword);
+            return hotels.Select(MapToDto);
+        }
 
         public async Task<HotelDto> CreateAsync(CreateHotelDto dto)
         {
@@ -37,49 +49,131 @@ namespace RoomManagement.Services.Implementations
                 OwnerId = dto.OwnerId,
                 IsApproved = false
             };
-            return MapToDto(await _repo.CreateAsync(entity));
+
+            var createdHotel = await _repo.CreateAsync(entity);
+
+            return MapToDto(createdHotel);
         }
 
         public async Task<HotelDto?> UpdateAsync(string id, UpdateHotelDto dto)
         {
             var entity = await _repo.GetByIdAsync(id);
-            if (entity is null) return null;
+
+            if (entity is null)
+            {
+                return null;
+            }
 
             entity.Name = dto.Name ?? entity.Name;
             entity.Address = dto.Address ?? entity.Address;
             entity.Description = dto.Description ?? entity.Description;
 
-            return MapToDto(await _repo.UpdateAsync(entity));
+            var updatedHotel = await _repo.UpdateAsync(entity);
+
+            return MapToDto(updatedHotel);
         }
 
         public async Task<bool> ApproveAsync(string id)
         {
             var entity = await _repo.GetByIdAsync(id);
-            if (entity is null) return false;
+
+            if (entity is null)
+            {
+                return false;
+            }
+
             entity.IsApproved = true;
+
             await _repo.UpdateAsync(entity);
+
             return true;
         }
 
-        public Task<bool> DeleteAsync(string id) => _repo.DeleteAsync(id);
+        public Task<bool> DeleteAsync(string id)
+        {
+            return _repo.DeleteAsync(id);
+        }
 
-        private static HotelDto MapToDto(Hotel h) => new(
-            h.Id, h.Name, h.Address, h.Description, h.IsApproved, h.OwnerId,
-            h.Images.Select(i => new HotelImageDto(i.Id, i.Url, i.Caption)),
-            h.Amenities.Select(a => new HotelAmenityDto(a.Id, a.Name, a.Description, a.Icon)));
+        private static HotelDto MapToDto(Hotel hotel)
+        {
+            return new HotelDto(
+                hotel.Id,
+                hotel.Name,
+                hotel.Address,
+                hotel.Description,
+                hotel.IsApproved,
+                hotel.OwnerId,
+                hotel.Images?.Select(image => new HotelImageDto(
+                    image.Id,
+                    image.Url,
+                    image.Caption
+                )) ?? Enumerable.Empty<HotelImageDto>(),
+                hotel.Amenities?.Select(amenity => new HotelAmenityDto(
+                    amenity.Id,
+                    amenity.Name,
+                    amenity.Description,
+                    amenity.Icon
+                )) ?? Enumerable.Empty<HotelAmenityDto>()
+            );
+        }
 
-        private static HotelDetailDto MapToDetailDto(Hotel h) => new(
-            h.Id, h.Name, h.Address, h.Description, h.IsApproved,
-            h.Owner is null ? null : new HotelOwnerDto(
-                h.Owner.Id, h.Owner.AccountId, h.Owner.CompanyName, h.Owner.TaxCode, h.Owner.Phone),
-            h.Rooms.Select(r => new RoomDto(
-                r.Id, r.HotelId, r.RoomNumber, r.RoomType, r.Capacity,
-                r.PricePerNight, r.Status, r.Description, r.IsSmokingAllowed,
-                r.Images.Select(i => new RoomImageDto(i.Id, i.Url, i.Caption)))),
-            h.Images.Select(i => new HotelImageDto(i.Id, i.Url, i.Caption)),
-            h.Amenities.Select(a => new HotelAmenityDto(a.Id, a.Name, a.Description, a.Icon)),
-            h.Reviews.Select(r => new ReviewDto(
-                r.Id, r.HotelId, r.CustomerId, r.Customer?.Name, r.Rating, r.Comment, r.CreatedAt)),
-            h.Reviews.Any() ? h.Reviews.Average(r => r.Rating ?? 0) : 0);
+        private static HotelDetailDto MapToDetailDto(Hotel hotel)
+        {
+            return new HotelDetailDto(
+                hotel.Id,
+                hotel.Name,
+                hotel.Address,
+                hotel.Description,
+                hotel.IsApproved,
+                hotel.Owner is null
+                    ? null
+                    : new HotelOwnerDto(
+                        hotel.Owner.Id,
+                        hotel.Owner.AccountId,
+                        hotel.Owner.CompanyName,
+                        hotel.Owner.TaxCode,
+                        hotel.Owner.Phone
+                    ),
+                hotel.Rooms?.Select(room => new RoomDto(
+                    room.Id,
+                    room.HotelId,
+                    room.RoomNumber,
+                    room.RoomType,
+                    room.Capacity,
+                    room.PricePerNight,
+                    room.Status,
+                    room.Description,
+                    room.IsSmokingAllowed,
+                    room.Images?.Select(image => new RoomImageDto(
+                        image.Id,
+                        image.Url,
+                        image.Caption
+                    )) ?? Enumerable.Empty<RoomImageDto>()
+                )) ?? Enumerable.Empty<RoomDto>(),
+                hotel.Images?.Select(image => new HotelImageDto(
+                    image.Id,
+                    image.Url,
+                    image.Caption
+                )) ?? Enumerable.Empty<HotelImageDto>(),
+                hotel.Amenities?.Select(amenity => new HotelAmenityDto(
+                    amenity.Id,
+                    amenity.Name,
+                    amenity.Description,
+                    amenity.Icon
+                )) ?? Enumerable.Empty<HotelAmenityDto>(),
+                hotel.Reviews?.Select(review => new ReviewDto(
+                    review.Id,
+                    review.HotelId,
+                    review.CustomerId,
+                    review.Customer?.Name,
+                    review.Rating,
+                    review.Comment,
+                    review.CreatedAt
+                )) ?? Enumerable.Empty<ReviewDto>(),
+                hotel.Reviews != null && hotel.Reviews.Any()
+                    ? hotel.Reviews.Average(review => review.Rating ?? 0)
+                    : 0
+            );
+        }
     }
 }

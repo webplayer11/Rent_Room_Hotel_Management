@@ -201,26 +201,6 @@ namespace RoomManagement.Migrations
                     b.ToTable("Account", (string)null);
                 });
 
-            modelBuilder.Entity("RoomManagement.Models.Admin", b =>
-                {
-                    b.Property<string>("Id")
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
-
-                    b.Property<string>("AccountId")
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
-
-                    b.Property<int?>("AdminLevel")
-                        .HasColumnType("int");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("AccountId");
-
-                    b.ToTable("Admin", (string)null);
-                });
-
             modelBuilder.Entity("RoomManagement.Models.ApplicationUser", b =>
                 {
                     b.Property<string>("Id")
@@ -912,16 +892,6 @@ namespace RoomManagement.Migrations
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-                });
-
-            modelBuilder.Entity("RoomManagement.Models.Admin", b =>
-                {
-                    b.HasOne("RoomManagement.Models.Account", "Account")
-                        .WithMany()
-                        .HasForeignKey("AccountId")
-                        .OnDelete(DeleteBehavior.Restrict);
-
-                    b.Navigation("Account");
                 });
 
             modelBuilder.Entity("RoomManagement.Models.Booking", b =>

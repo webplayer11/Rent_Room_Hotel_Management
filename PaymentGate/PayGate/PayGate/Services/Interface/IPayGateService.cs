@@ -5,5 +5,6 @@ namespace PayGate.Services.Interface;
 public interface IPayGateService
 {
     Task<PaymentResponseDto>  CreateBuiltPayment(PaymentRequestDto paymentRequestDto, string signature);
-    Task<string> CallBackBackEnd();
+    Task<PayGateRequestDto> CallBackBackEnd(int idBooking);
+    string GenerateHmacSha256(string data, string secretKey);
 }

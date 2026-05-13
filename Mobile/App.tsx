@@ -1,8 +1,8 @@
 import React, { useRef, useState } from 'react';
-import { OwnerBookingListScreen } from './src/features/owner/OwnerBookingListScreen';
-import { OwnerDashboardScreen } from './src/features/owner/OwnerDashboardScreen';
-import { OwnerHotelFormScreen } from './src/features/owner/OwnerHotelFormScreen';
-import { OwnerHotelListScreen } from './src/features/owner/OwnerHotelListScreen';
+import { OwnerBookingListScreen } from './src/features/owner/booking/OwnerBookingListScreen';
+import { OwnerDashboardScreen } from './src/features/owner/dashboard/OwnerDashboardScreen';
+import { OwnerHotelFormScreen } from './src/features/owner/hotel/OwnerHotelFormScreen';
+import { OwnerHotelListScreen } from './src/features/owner/hotel/OwnerHotelListScreen';
 
 type Screen = 'dashboard' | 'hotelForm' | 'hotelList' | 'bookings';
 

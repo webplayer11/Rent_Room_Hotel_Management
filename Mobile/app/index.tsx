@@ -29,6 +29,7 @@ export default function Index() {
     default:
       return <Redirect href="/customer" />;
   }
+  return <Redirect href="/customer" />; // thay đổi nếu muốn test màn khác 
 }
 
 const styles = StyleSheet.create({

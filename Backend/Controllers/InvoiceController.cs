@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using RoomManagement.DTOs;
 using RoomManagement.Services.Interfaces;
 
@@ -17,8 +17,8 @@ namespace RoomManagement.Controllers
         {
             var result = await _service.GetByIdAsync(id);
             return result is null
-                ? NotFound(new ApiResponse<InvoiceDto>(false, "Không tìm thấy hóa đơn.", null))
-                : Ok(new ApiResponse<InvoiceDto>(true, null, result));
+                ? NotFound(ResponseApi<InvoiceDto>.Failure(404, "Không tìm thấy hóa đơn."))
+                : Ok(ResponseApi<InvoiceDto>.Success(result));
         }
 
         [HttpGet("booking/{bookingId}")]
@@ -26,8 +26,8 @@ namespace RoomManagement.Controllers
         {
             var result = await _service.GetByBookingAsync(bookingId);
             return result is null
-                ? NotFound(new ApiResponse<InvoiceDto>(false, "Không tìm thấy hóa đơn.", null))
-                : Ok(new ApiResponse<InvoiceDto>(true, null, result));
+                ? NotFound(ResponseApi<InvoiceDto>.Failure(404, "Không tìm thấy hóa đơn."))
+                : Ok(ResponseApi<InvoiceDto>.Success(result));
         }
     }
 }

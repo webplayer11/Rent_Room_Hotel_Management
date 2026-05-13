@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using RoomManagement.DTOs;
 using RoomManagement.Services.Interfaces;
 
@@ -14,17 +14,16 @@ namespace YourProject.Controllers
 
         [HttpGet("customer/{customerId}")]
         public async Task<IActionResult> GetByCustomer(string customerId)
-            => Ok(new ApiResponse<IEnumerable<WishlistDto>>(true, null,
-                await _service.GetByCustomerAsync(customerId)));
+            => Ok(ResponseApi<IEnumerable<WishlistDto>>.Success(await _service.GetByCustomerAsync(customerId)));
 
         [HttpPost]
         public async Task<IActionResult> Add([FromBody] CreateWishlistDto dto)
         {
             if (await _service.ExistsAsync(dto.CustomerId, dto.HotelId))
-                return Conflict(new ApiResponse<object>(false, "Khách sạn đã có trong danh sách yêu thích.", null));
+                return Conflict(ResponseApi<object>.Failure(409, "Khách sạn đã có trong danh sách yêu thích."));
 
             var result = await _service.AddAsync(dto);
-            return Ok(new ApiResponse<WishlistDto>(true, "Thêm vào yêu thích thành công.", result));
+            return Ok(ResponseApi<WishlistDto>.Success(result, "Thêm vào yêu thích thành công."));
         }
 
         [HttpDelete]
@@ -32,8 +31,8 @@ namespace YourProject.Controllers
         {
             var success = await _service.RemoveAsync(customerId, hotelId);
             return success
-                ? Ok(new ApiResponse<object>(true, "Xóa khỏi yêu thích thành công.", null))
-                : NotFound(new ApiResponse<object>(false, "Không tìm thấy mục yêu thích.", null));
+                ? Ok(ResponseApi<object>.Success(null, "Xóa khỏi yêu thích thành công."))
+                : NotFound(ResponseApi<object>.Failure(404, "Không tìm thấy mục yêu thích."));
         }
     }
 }
