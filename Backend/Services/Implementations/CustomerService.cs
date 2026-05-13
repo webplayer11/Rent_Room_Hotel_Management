@@ -25,7 +25,6 @@ namespace RoomManagement.Services.Implementations
             var entity = new Customer
             {
                 Id = dto.Id,
-                AccountId = dto.AccountId,
                 Name = dto.Name,
                 Phone = dto.Phone,
                 Address = dto.Address,
@@ -50,6 +49,6 @@ namespace RoomManagement.Services.Implementations
         public Task<bool> DeleteAsync(string id) => _repo.DeleteAsync(id);
 
         private static CustomerDto MapToDto(Customer c) =>
-            new(c.Id, c.AccountId, c.Name, c.Phone, c.Address, c.IdentityDoc);
+            new(c.Id, c.Name, c.Phone, c.Address, c.IdentityDoc);
     }
 }

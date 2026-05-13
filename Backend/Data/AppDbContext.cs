@@ -13,7 +13,6 @@ namespace RoomManagement.Data
         }
 
         // ── DbSets ──────────────────────────────────────────────────────────
-        public DbSet<Account> Accounts { get; set; }
         public DbSet<Customer> Customers { get; set; }
         public DbSet<HotelOwner> HotelOwners { get; set; }
         public DbSet<Hotel> Hotels { get; set; }
@@ -37,34 +36,15 @@ namespace RoomManagement.Data
         {
             base.OnModelCreating(modelBuilder);
 
-            // ── Account ──────────────────────────────────────────────────────
-            modelBuilder.Entity<Account>(entity =>
-            {
-                entity.ToTable("Account");
-                entity.HasKey(e => e.Id);
-                entity.Property(e => e.Id).HasMaxLength(50);
-                entity.HasIndex(e => e.Email).IsUnique();
-                entity.Property(e => e.Email).HasMaxLength(100);
-                entity.Property(e => e.Password).HasMaxLength(255);
-                entity.Property(e => e.Status).HasMaxLength(20);
-                entity.Property(e => e.Role).HasMaxLength(20);
-            });
-
             // ── Customer ──────────────────────────────────────────────────────
             modelBuilder.Entity<Customer>(entity =>
             {
                 entity.ToTable("Customer");
                 entity.HasKey(e => e.Id);
                 entity.Property(e => e.Id).HasMaxLength(50);
-                entity.Property(e => e.AccountId).HasMaxLength(50);
                 entity.Property(e => e.Name).HasMaxLength(100);
                 entity.Property(e => e.Phone).HasMaxLength(20);
                 entity.Property(e => e.IdentityDoc).HasMaxLength(100);
-
-                entity.HasOne(e => e.Account)
-                      .WithMany()
-                      .HasForeignKey(e => e.AccountId)
-                      .OnDelete(DeleteBehavior.Restrict);
             });
 
             // ── HotelOwner ────────────────────────────────────────────────────
@@ -73,15 +53,9 @@ namespace RoomManagement.Data
                 entity.ToTable("HotelOwner");
                 entity.HasKey(e => e.Id);
                 entity.Property(e => e.Id).HasMaxLength(50);
-                entity.Property(e => e.AccountId).HasMaxLength(50);
                 entity.Property(e => e.CompanyName).HasMaxLength(100);
                 entity.Property(e => e.TaxCode).HasMaxLength(50);
                 entity.Property(e => e.Phone).HasMaxLength(20);
-
-                entity.HasOne(e => e.Account)
-                      .WithMany()
-                      .HasForeignKey(e => e.AccountId)
-                      .OnDelete(DeleteBehavior.Restrict);
             });
 
 
@@ -148,19 +122,6 @@ namespace RoomManagement.Data
                       .OnDelete(DeleteBehavior.Restrict);
             });
 
-            // ── HotelImage ────────────────────────────────────────────────────
-            modelBuilder.Entity<HotelImage>(entity =>
-            {
-                entity.ToTable("HotelImage");
-                entity.HasKey(e => e.Id);
-                entity.Property(e => e.Id).HasMaxLength(50);
-                entity.Property(e => e.HotelId).HasMaxLength(50);
-
-                entity.HasOne(e => e.Hotel)
-                      .WithMany(h => h.Images)
-                      .HasForeignKey(e => e.HotelId)
-                      .OnDelete(DeleteBehavior.Cascade);
-            });
 
             // ── RoomImage ─────────────────────────────────────────────────────
             modelBuilder.Entity<RoomImage>(entity =>
