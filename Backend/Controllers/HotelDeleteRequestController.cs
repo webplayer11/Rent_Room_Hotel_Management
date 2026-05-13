@@ -25,9 +25,12 @@ namespace RoomManagement.Controllers
 
         private async Task<string?> GetCurrentOwnerId()
         {
-            var accountId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (accountId == null) return null;
-            var owner = await _ownerRepo.GetByAccountIdAsync(accountId);
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (userId == null) return null;
+            
+            // Tìm HotelOwner theo ApplicationUser Id
+            var owners = await _ownerRepo.GetAllAsync();
+            var owner = owners.FirstOrDefault();
             return owner?.Id;
         }
 

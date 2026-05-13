@@ -129,7 +129,6 @@ namespace RoomManagement.Services.Implementations
                     ? null
                     : new HotelOwnerDto(
                         hotel.Owner.Id,
-                        hotel.Owner.AccountId,
                         hotel.Owner.CompanyName,
                         hotel.Owner.TaxCode,
                         hotel.Owner.Phone

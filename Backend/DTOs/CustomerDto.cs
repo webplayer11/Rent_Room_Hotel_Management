@@ -2,7 +2,6 @@
 {
     public record CustomerDto(
         string Id,
-        string? AccountId,
         string? Name,
         string? Phone,
         string? Address,
@@ -11,7 +10,6 @@
 
     public record CreateCustomerDto(
         string Id,
-        string AccountId,
         string? Name,
         string? Phone,
         string? Address,
