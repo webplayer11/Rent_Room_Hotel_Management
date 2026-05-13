@@ -75,4 +75,51 @@ public class AuthController : ControllerBase
         }
         return  Ok(ResponseApi<AuthResponseDto>.Success(result));
     }
+
+    //yêu cầu đặt lại mật khẩu
+    [HttpPost("forgot-password")]
+    public async Task<IActionResult> ForgotPassword(ForgotPasswordDto forgotPasswordDto)
+    {
+        try
+        {
+            var token = await _authRepository.ForgotPasswordAsync(forgotPasswordDto);
+            
+        
+            if (token == null)
+            {
+                return Ok(ResponseApi<string>.Success(null!, 
+                    "Nếu email tồn tại trong hệ thống, bạn sẽ nhận được hướng dẫn đặt lại mật khẩu."));
+            }
+
+            return Ok(ResponseApi<object>.Success(
+                new { resetToken = token }, 
+                "Token đặt lại mật khẩu đã được tạo thành công."));
+        }
+        catch (Exception)
+        {
+            return StatusCode(500, ResponseApi<string>.Failure(500, "Đã xảy ra lỗi khi xử lý yêu cầu."));
+        }
+    }
+
+    //đặt lại mật khẩu
+    [HttpPost("reset-password")]
+    public async Task<IActionResult> ResetPassword(ResetPasswordDto resetPasswordDto)
+    {
+        try
+        {
+            var result = await _authRepository.ResetPasswordAsync(resetPasswordDto);
+
+            if (result.Succeeded)
+            {
+                return Ok(ResponseApi<string>.Success(null!, "Đặt lại mật khẩu thành công. Vui lòng đăng nhập lại."));
+            }
+            var errors = result.Errors.Select(e => e.Description).ToList();
+            return BadRequest(ResponseApi<List<string>>.Failure(400, 
+                "Đặt lại mật khẩu thất bại.", errors));
+        }
+        catch (Exception)
+        {
+            return StatusCode(500, ResponseApi<string>.Failure(500, "Đã xảy ra lỗi khi xử lý yêu cầu."));
+        }
+    }
 }

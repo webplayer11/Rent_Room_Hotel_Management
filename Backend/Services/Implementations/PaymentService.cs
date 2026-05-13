@@ -100,5 +100,11 @@ namespace RoomManagement.Services.Implementations
             
             return true;
         }
+
+        public async Task<string> GetStatusAsync(string idbooking)
+        {
+            
+            return null ;
+        }
     }
 }

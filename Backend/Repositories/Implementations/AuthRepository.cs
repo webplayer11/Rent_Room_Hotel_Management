@@ -177,6 +177,46 @@ namespace RoomManagement.Repositories.Implementations
             return principal;
         }
 
+
+        public async Task<string?> ForgotPasswordAsync(ForgotPasswordDto forgotPasswordDto)
+        {
+            var user = await _userManager.FindByEmailAsync(forgotPasswordDto.Email);
+            if (user == null)
+            {
+              
+                return null;
+            }
+            var resetToken = await _userManager.GeneratePasswordResetTokenAsync(user);
+
+            return resetToken;
+        }
+
+        
+        public async Task<IdentityResult> ResetPasswordAsync(ResetPasswordDto resetPasswordDto)
+        {
+            var user = await _userManager.FindByEmailAsync(resetPasswordDto.Email);
+            if (user == null)
+            {
+                
+                return IdentityResult.Failed(new IdentityError
+                {
+                    Code = "UserNotFound",
+                    Description = "Yêu cầu đặt lại mật khẩu không hợp lệ."
+                });
+            }
+            
+            var result = await _userManager.ResetPasswordAsync(user, resetPasswordDto.Token, resetPasswordDto.NewPassword);
+
+            if (result.Succeeded)
+            {
+                user.RefreshToken = null;
+                user.RefreshTokenExpiryTime = DateTime.UtcNow;
+                await _userManager.UpdateAsync(user);
+            }
+
+            return result;
+        }
+
     }
     
     

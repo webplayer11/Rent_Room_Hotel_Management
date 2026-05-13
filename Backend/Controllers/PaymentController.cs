@@ -106,6 +106,17 @@ namespace RoomManagement.Controllers
             }
             return Ok();
         }
+
+        [HttpGet("{idbooking}/status")]
+        public async Task<IActionResult> GetStatus(string idbooking)
+        {
+            var result = await _service.GetStatusAsync(idbooking);
+            if (result == null)
+            {
+                return Ok();
+            }
+            return Ok();
+        }
         
         
         

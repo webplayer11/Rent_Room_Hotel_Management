@@ -11,4 +11,8 @@ public interface IAuthRepository
     Task<AuthResponseDto> LoginAsync(LoginDto loginDto);
     Task<AuthResponseDto> RefreshTokenAsync(TokenRequestDto tokenRequestDto);
     Task<bool> LogoutAsync(string token);
+    
+  
+    Task<string?> ForgotPasswordAsync(ForgotPasswordDto forgotPasswordDto);
+    Task<IdentityResult> ResetPasswordAsync(ResetPasswordDto resetPasswordDto);
 }
