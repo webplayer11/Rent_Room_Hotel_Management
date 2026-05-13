@@ -114,6 +114,12 @@ builder.Services.AddAuthentication(options =>
         };
     });
 
+// ═══════════════════════════════════════════════════════════════
+//  5. CORS
+// ═══════════════════════════════════════════════════════════════
+builder.Services.AddCors(opt =>
+    opt.AddPolicy("AllowAll", p =>
+        p.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod()));
 
 // ═══════════════════════════════════════════════════════════════
 //  6. BUILD + MIDDLEWARE
@@ -135,6 +141,7 @@ if (app.Environment.IsDevelopment())
 }
 
 //app.UseHttpsRedirection();
+app.UseCors();
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();   
