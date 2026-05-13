@@ -45,7 +45,32 @@ public class AuthController : ControllerBase
             return BadRequest(ResponseApi<AuthResponseDto>.Failure(400, "Email hoặc mật khẩu không chính xác"));
         }
         
-        return Ok(ResponseApi<AuthResponseDto>.Success(result));
+        // Lưu token vào HttpOnly cookie
+        if (!string.IsNullOrEmpty(result.Token))
+        {
+            Response.Cookies.Append("accessToken", result.Token, new Microsoft.AspNetCore.Http.CookieOptions
+            {
+                HttpOnly = true,
+                Secure = true,
+                SameSite = Microsoft.AspNetCore.Http.SameSiteMode.Strict,
+                Expires = DateTimeOffset.UtcNow.AddMinutes(15)
+            });
+        }
+
+        // Lưu refresh token vào HttpOnly cookie
+        if (!string.IsNullOrEmpty(result.RefreshToken))
+        {
+            Response.Cookies.Append("refreshToken", result.RefreshToken, new Microsoft.AspNetCore.Http.CookieOptions
+            {
+                HttpOnly = true,
+                Secure = true,
+                SameSite = Microsoft.AspNetCore.Http.SameSiteMode.Strict,
+                Expires = DateTimeOffset.UtcNow.AddDays(7)
+            });
+        }
+
+        // Trả về response mà không chứa token (vì đã lưu trong cookie)
+        return Ok(ResponseApi<object>.Success(null, "Đăng nhập thành công"));
     }
 
     //đăng xuất
@@ -58,22 +83,64 @@ public class AuthController : ControllerBase
             .Replace("Bearer ", "");
         var result = await _authRepository.LogoutAsync(token);
         if (!result)
-            return  BadRequest(ResponseApi<AuthResponseDto>.Failure(400,"Đăng xuất thất bại!"));
+            return BadRequest(ResponseApi<AuthResponseDto>.Failure(400, "Đăng xuất thất bại!"));
         
-        return Ok(ResponseApi<AuthResponseDto>.Success(null));
+        // Xóa cookies
+        Response.Cookies.Delete("accessToken");
+        Response.Cookies.Delete("refreshToken");
+        
+        return Ok(ResponseApi<AuthResponseDto>.Success(null, "Đăng xuất thành công"));
     }
 
     //làm mới token
     [HttpPost("refreshtoken")]
     [Authorize]
-    public async Task<IActionResult> RefeshToken(TokenRequestDto  tokenRequestDto)
+    public async Task<IActionResult> RefeshToken(TokenRequestDto tokenRequestDto)
     {
-        var result = await _authRepository.RefreshTokenAsync(tokenRequestDto);
+        // Lấy refresh token từ cookie
+        if (!Request.Cookies.TryGetValue("refreshToken", out var refreshToken) || string.IsNullOrEmpty(refreshToken))
+        {
+            return BadRequest(ResponseApi<string>.Failure(400, "Refresh token không tìm thấy"));
+        }
+
+        // Tạo TokenRequestDto với refresh token từ cookie
+        var tokenRequest = new TokenRequestDto
+        {
+            AccessToken = tokenRequestDto.AccessToken,
+            RefreshToken = refreshToken
+        };
+
+        var result = await _authRepository.RefreshTokenAsync(tokenRequest);
         if (result == null)
         {
-            return BadRequest(ResponseApi<string>.Failure(400,"RefeshToken Failed"));
+            return BadRequest(ResponseApi<string>.Failure(400, "Refresh token không hợp lệ hoặc đã hết hạn"));
         }
-        return  Ok(ResponseApi<AuthResponseDto>.Success(result));
+
+        // Cập nhật access token trong cookie
+        if (!string.IsNullOrEmpty(result.Token))
+        {
+            Response.Cookies.Append("accessToken", result.Token, new Microsoft.AspNetCore.Http.CookieOptions
+            {
+                HttpOnly = true,
+                Secure = true,
+                SameSite = Microsoft.AspNetCore.Http.SameSiteMode.Strict,
+                Expires = DateTimeOffset.UtcNow.AddMinutes(15)
+            });
+        }
+
+        // Cập nhật refresh token trong cookie
+        if (!string.IsNullOrEmpty(result.RefreshToken))
+        {
+            Response.Cookies.Append("refreshToken", result.RefreshToken, new Microsoft.AspNetCore.Http.CookieOptions
+            {
+                HttpOnly = true,
+                Secure = true,
+                SameSite = Microsoft.AspNetCore.Http.SameSiteMode.Strict,
+                Expires = DateTimeOffset.UtcNow.AddDays(7)
+            });
+        }
+
+        return Ok(ResponseApi<object>.Success(null, "Token đã được làm mới"));
     }
 
     //yêu cầu đặt lại mật khẩu
