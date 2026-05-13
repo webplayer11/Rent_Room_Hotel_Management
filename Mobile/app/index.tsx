@@ -1,5 +1,3 @@
-// app/index.tsx
-// Entry point — redirect dựa trên trạng thái đăng nhập
 import { Redirect } from 'expo-router';
 import { useAuth } from '../src/context/AuthContext';
 import { ActivityIndicator, View, StyleSheet } from 'react-native';
@@ -15,28 +13,25 @@ export default function Index() {
     );
   }
 
-  // Chưa đăng nhập → AuthStack
   if (!userToken) {
     return <Redirect href="/auth/login" />;
   }
 
-  // Đã đăng nhập → redirect theo role
-  switch (userRole) {
-    case 'Admin':
-      return <Redirect href="/admin" />;
-    case 'Owner':
-      return <Redirect href="/owner" />;
-    default:
-      return <Redirect href="/customer" />;
+  if (userRole === 'admin') {
+    return <Redirect href="/admin" />;
   }
-  return <Redirect href="/customer" />; // thay đổi nếu muốn test màn khác 
+
+  if (userRole === 'owner') {
+    return <Redirect href="/owner" />;
+  }
+
+  return <Redirect href="/customer" />;
 }
 
 const styles = StyleSheet.create({
   loader: {
     flex: 1,
-    justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#F0F4F8',
+    justifyContent: 'center',
   },
 });

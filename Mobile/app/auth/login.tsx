@@ -1,4 +1,5 @@
-// app/auth/login.tsx
-// Entry point cho Expo Router → load LoginScreen
-import LoginScreen from './LoginScreen';
-export default LoginScreen;
+import LoginScreen from '../../src/features/auth/LoginScreen';
+
+export default function LoginRoute() {
+  return <LoginScreen />;
+}
