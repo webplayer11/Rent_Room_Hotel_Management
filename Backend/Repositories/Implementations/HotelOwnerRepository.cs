@@ -13,9 +13,5 @@ namespace RoomManagement.Repositories.Implementations
             => await _dbSet.AsNoTracking()
                            .Include(o => o.Hotels)
                            .FirstOrDefaultAsync(o => o.Id == id);
-
-        public async Task<HotelOwner?> GetByAccountIdAsync(string accountId)
-            => await _dbSet.AsNoTracking()
-                           .FirstOrDefaultAsync(o => o.AccountId == accountId);
     }
 }

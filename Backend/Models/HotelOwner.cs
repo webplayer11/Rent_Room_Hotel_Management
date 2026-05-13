@@ -10,9 +10,6 @@ namespace RoomManagement.Models
         [MaxLength(50)]
         public string Id { get; set; } = default!;
 
-        [MaxLength(50)]
-        public string? AccountId { get; set; }
-
         [MaxLength(100)]
         public string? CompanyName { get; set; }
 
@@ -23,8 +20,6 @@ namespace RoomManagement.Models
         public string? Phone { get; set; }
 
         // Navigation
-        [ForeignKey(nameof(AccountId))]
-        public Account? Account { get; set; }
 
         public ICollection<Hotel> Hotels { get; set; } = new List<Hotel>();
     }

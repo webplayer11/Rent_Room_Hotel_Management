@@ -1,3 +1,4 @@
+import { ownerHotelApi } from './ownerHotelApi';
 import React, { useState } from 'react';
 import {
   Alert,
@@ -38,6 +39,7 @@ export function OwnerHotelFormScreen({ onBack }: OwnerHotelFormProps) {
     legalDocuments: defaultHotelFormData.legalDocuments.map((d) => ({ ...d })),
   });
   const [submitted, setSubmitted] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
 
   // ---- Field updater ----
   function updateField<K extends keyof HotelFormData>(key: K, value: HotelFormData[K]) {
@@ -131,7 +133,7 @@ export function OwnerHotelFormScreen({ onBack }: OwnerHotelFormProps) {
   }
 
   // ---- Validation & submit ----
-  function handleSubmit() {
+  async function handleSubmit() {
     const errors: string[] = [];
     if (!form.name.trim()) errors.push('Tên khách sạn');
     if (!form.street.trim()) errors.push('Số nhà / đường');
@@ -155,15 +157,39 @@ export function OwnerHotelFormScreen({ onBack }: OwnerHotelFormProps) {
       return;
     }
 
-    Alert.alert(
-      'Hồ sơ đã được chọn đầy đủ. Khi Backend hỗ trợ upload, app sẽ gửi ảnh và giấy tờ lên server.',
-      'Khách sạn đang chờ admin xét duyệt.',
-      [{ text: 'OK', onPress: () => setSubmitted(true) }],
-    );
-    // TODO: After navigation is wired, navigate back to OwnerHotelListScreen
-    // and show the new hotel with status = 'pending'
-  }
+    try {
+  setSubmitting(true);
 
+  const address = [form.street, form.district, form.city]
+    .filter(Boolean)
+    .join(', ');
+
+  const newHotel = await ownerHotelApi.createHotel({
+  id: `hotel-${Date.now()}`,
+  name: form.name.trim(),
+  address,
+  description: form.description.trim(),
+  ownerId: 'owner_001',
+});
+
+  console.log('Created hotel:', newHotel);
+
+  Alert.alert(
+    'Gửi hồ sơ thành công',
+    'Khách sạn đã được gửi lên Backend và đang chờ admin duyệt.',
+    [{ text: 'OK', onPress: () => setSubmitted(true) }],
+  );
+} catch (error: any) {
+  console.log('Create hotel error:', error);
+
+  Alert.alert(
+    'Không thể gửi hồ sơ',
+    error?.message || 'Vui lòng kiểm tra Backend hoặc kết nối mạng.',
+  );
+} finally {
+  setSubmitting(false);
+}
+  }
   function handleSaveDraft() {
     Alert.alert('Lưu nháp', 'Đã lưu nháp hồ sơ khách sạn.');
   }
@@ -548,10 +574,10 @@ export function OwnerHotelFormScreen({ onBack }: OwnerHotelFormProps) {
             onPress={handleSaveDraft}
           />
           <AppButton
-            title="Gửi duyệt"
-            style={styles.btnHalf}
-            onPress={handleSubmit}
-          />
+  title={submitting ? 'Đang gửi...' : 'Gửi duyệt'}
+  style={styles.btnHalf}
+  onPress={submitting ? undefined : handleSubmit}
+/>
         </View>
       </ScrollView>
     </View>
