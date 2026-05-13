@@ -97,7 +97,20 @@ builder.Services.AddAuthentication(options =>
             ValidateAudience = true,
             ValidAudience = builder.Configuration["Jwt:Audience"],
             ValidIssuer = builder.Configuration["Jwt:Issuer"],
-            IssuerSigningKey =  new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"])),
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"])),
+        };
+        
+        // Đọc token từ cookie nếu không có trong Authorization header
+        options.Events = new JwtBearerEvents
+        {
+            OnMessageReceived = context =>
+            {
+                if (context.Request.Cookies.TryGetValue("accessToken", out var token))
+                {
+                    context.Token = token;
+                }
+                return Task.CompletedTask;
+            }
         };
     });
 
@@ -106,7 +119,10 @@ builder.Services.AddAuthentication(options =>
 // ═══════════════════════════════════════════════════════════════
 builder.Services.AddCors(opt =>
     opt.AddPolicy("AllowAll", p =>
-        p.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod()));
+        p.WithOrigins("http://localhost:3000", "http://localhost:5173") // Thay đổi theo frontend URL
+         .AllowAnyHeader()
+         .AllowAnyMethod()
+         .AllowCredentials())); // Cho phép gửi cookies
 
 // ═══════════════════════════════════════════════════════════════
 //  6. BUILD + MIDDLEWARE
