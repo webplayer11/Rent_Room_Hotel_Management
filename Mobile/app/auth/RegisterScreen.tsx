@@ -1,9 +1,11 @@
+// app/auth/RegisterScreen.tsx
 import React, { useState } from 'react';
 import {
     View, Text, TextInput, Pressable,
     ScrollView, StyleSheet, KeyboardAvoidingView,
-    Platform, ActivityIndicator, Modal, Animated,
+    Platform, ActivityIndicator, Modal,
 } from 'react-native';
+import { Link, useRouter } from 'expo-router';
 import Colors from '../../shared/constants/colors';
 
 type AccountType = 'customer' | 'hotel_owner';
@@ -24,7 +26,9 @@ function validateIdentifier(value: string): string {
     return '';
 }
 
-export default function RegisterScreen({ navigation }: any) {
+export default function RegisterScreen() {
+    const router = useRouter();
+
     const [fullName, setFullName] = useState('');
     const [identifier, setIdentifier] = useState('');
     const [password, setPassword] = useState('');
@@ -212,9 +216,11 @@ export default function RegisterScreen({ navigation }: any) {
                 {/* Footer link */}
                 <View style={styles.footer}>
                     <Text style={styles.footerText}>Đã có tài khoản? </Text>
-                    <Pressable onPress={() => navigation?.navigate('Login')}>
-                        <Text style={styles.linkText}>Đăng nhập</Text>
-                    </Pressable>
+                    <Link href="/auth/login" asChild>
+                        <Pressable>
+                            <Text style={styles.linkText}>Đăng nhập</Text>
+                        </Pressable>
+                    </Link>
                 </View>
             </ScrollView>
 
@@ -239,7 +245,7 @@ export default function RegisterScreen({ navigation }: any) {
                             style={({ pressed }) => [styles.modalBtn, pressed && styles.modalBtnPressed]}
                             onPress={() => {
                                 setShowSuccess(false);
-                                navigation?.navigate('Login');
+                                router.replace('/auth/login');
                             }}
                         >
                             <Text style={styles.modalBtnText}>Đăng nhập ngay</Text>

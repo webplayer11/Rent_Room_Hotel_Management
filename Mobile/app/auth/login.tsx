@@ -1,10 +1,4 @@
-import React from 'react';
-import { View, Text } from 'react-native';
-
-export default function AuthLogin() {
-  return (
-    <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-      <Text>Login Placeholder</Text>
-    </View>
-  );
-}
+// app/auth/login.tsx
+// Entry point cho Expo Router → load LoginScreen
+import LoginScreen from './LoginScreen';
+export default LoginScreen;

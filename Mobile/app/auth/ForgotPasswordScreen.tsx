@@ -1,10 +1,11 @@
-// Mobile/src/app/auth/ForgotPasswordScreen.tsx
+// app/auth/ForgotPasswordScreen.tsx
 import React, { useState } from 'react';
 import {
     View, Text, TextInput, Pressable,
     ScrollView, StyleSheet, KeyboardAvoidingView,
     Platform, ActivityIndicator,
 } from 'react-native';
+import { Link } from 'expo-router';
 import Colors from '../../shared/constants/colors';
 
 function validateIdentifier(value: string): string {
@@ -23,7 +24,7 @@ function validateIdentifier(value: string): string {
     return '';
 }
 
-export default function ForgotPasswordScreen({ navigation }: any) {
+export default function ForgotPasswordScreen() {
     const [identifier, setIdentifier] = useState('');
     const [loading, setLoading] = useState(false);
     const [sent, setSent] = useState(false);
@@ -109,9 +110,11 @@ export default function ForgotPasswordScreen({ navigation }: any) {
                 </View>
 
                 <View style={styles.footer}>
-                    <Pressable onPress={() => navigation?.navigate('Login')}>
-                        <Text style={styles.linkText}>← Quay lại đăng nhập</Text>
-                    </Pressable>
+                    <Link href="/auth/login" asChild>
+                        <Pressable>
+                            <Text style={styles.linkText}>← Quay lại đăng nhập</Text>
+                        </Pressable>
+                    </Link>
                 </View>
             </ScrollView>
         </KeyboardAvoidingView>
