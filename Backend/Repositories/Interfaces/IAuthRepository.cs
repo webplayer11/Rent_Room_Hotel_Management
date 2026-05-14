@@ -1,18 +1,15 @@
-using Microsoft.AspNetCore.Identity;
 using RoomManagement.DTOs;
-using RoomManagement.Models;
+using Microsoft.AspNetCore.Identity;
 
-
-namespace RoomManagement.Services.Interfaces;
+namespace RoomManagement.Repositories.Interfaces;
 
 public interface IAuthRepository
 {
     Task<IdentityResult> RegisterAsync(RegisterDto registerDto);
-    Task<AuthResponseDto> LoginAsync(LoginDto loginDto);
-    Task<AuthResponseDto> RefreshTokenAsync(TokenRequestDto tokenRequestDto);
+    Task<IdentityResult> UpgradeToHostAsync(string userId, UpgradeToHostDto dto);
+    Task<AuthResponseDto?> LoginAsync(LoginDto loginDto);
+    Task<AuthResponseDto?> RefreshTokenAsync(TokenRequestDto tokenRequestDto);
     Task<bool> LogoutAsync(string token);
-    
-  
     Task<string?> ForgotPasswordAsync(ForgotPasswordDto forgotPasswordDto);
     Task<IdentityResult> ResetPasswordAsync(ResetPasswordDto resetPasswordDto);
 }

@@ -1,66 +1,111 @@
-﻿using RoomManagement.DTOs;
+using RoomManagement.DTOs;
 using RoomManagement.Models;
 using RoomManagement.Repositories.Interfaces;
 using RoomManagement.Services.Interfaces;
 
-namespace RoomManagement.Services.Implementations
+namespace RoomManagement.Services.Implementations;
+
+public class RoomService : IRoomService
 {
-    public class RoomService : IRoomService
+    private readonly IRoomRepository _roomRepository;
+    private readonly IHotelRepository _hotelRepository;
+
+    public RoomService(IRoomRepository roomRepository, IHotelRepository hotelRepository)
     {
-        private readonly IRoomRepository _repo;
+        _roomRepository = roomRepository;
+        _hotelRepository = hotelRepository;
+    }
 
-        public RoomService(IRoomRepository repo) => _repo = repo;
+    public async Task<IEnumerable<RoomDto>> GetByHotelIdAsync(string hotelId)
+    {
+        var rooms = await _roomRepository.GetByHotelIdAsync(hotelId);
+        return rooms.Select(MapToDto);
+    }
 
-        public async Task<IEnumerable<RoomDto>> GetByHotelAsync(string hotelId)
-            => (await _repo.GetByHotelIdAsync(hotelId)).Select(MapToDto);
+    public async Task<RoomDto?> GetByIdAsync(string id)
+    {
+        var room = await _roomRepository.GetByIdAsync(id);
+        return room != null ? MapToDto(room) : null;
+    }
 
-        public async Task<RoomDto?> GetByIdAsync(string id)
+    public async Task<RoomDto?> CreateAsync(string hostId, CreateRoomDto dto)
+    {
+        var hotel = await _hotelRepository.GetByIdAsync(dto.HotelId);
+        if (hotel == null || hotel.HostId != hostId) return null;
+
+        var room = new Room
         {
-            var r = await _repo.GetWithImagesAsync(id);
-            return r is null ? null : MapToDto(r);
-        }
+            HotelId = dto.HotelId,
+            RoomNumber = dto.RoomNumber,
+            RoomType = dto.RoomType,
+            Description = dto.Description,
+            Capacity = dto.Capacity,
+            BedCount = dto.BedCount,
+            BedType = dto.BedType,
+            PricePerNight = dto.PricePerNight,
+            DiscountPrice = dto.DiscountPrice,
+            RoomSize = dto.RoomSize,
+            IsSmokingAllowed = dto.IsSmokingAllowed,
+            Status = "Available",
+            IsActive = true
+        };
 
-        public async Task<IEnumerable<RoomDto>> GetAvailableAsync(
-            string hotelId, DateOnly startDate, DateOnly endDate)
-            => (await _repo.GetAvailableRoomsAsync(hotelId, startDate, endDate)).Select(MapToDto);
+        var created = await _roomRepository.CreateAsync(room);
+        return MapToDto(created);
+    }
 
-        public async Task<RoomDto> CreateAsync(CreateRoomDto dto)
+    public async Task<RoomDto?> UpdateAsync(string hostId, string id, CreateRoomDto dto)
+    {
+        var room = await _roomRepository.GetByIdAsync(id);
+        if (room == null) return null;
+
+        var hotel = await _hotelRepository.GetByIdAsync(room.HotelId!);
+        if (hotel == null || hotel.HostId != hostId) return null;
+
+        room.RoomNumber = dto.RoomNumber;
+        room.RoomType = dto.RoomType;
+        room.Description = dto.Description;
+        room.Capacity = dto.Capacity;
+        room.BedCount = dto.BedCount;
+        room.BedType = dto.BedType;
+        room.PricePerNight = dto.PricePerNight;
+        room.DiscountPrice = dto.DiscountPrice;
+        room.RoomSize = dto.RoomSize;
+        room.IsSmokingAllowed = dto.IsSmokingAllowed;
+
+        var updated = await _roomRepository.UpdateAsync(room);
+        return MapToDto(updated);
+    }
+
+    public async Task<bool> DeleteAsync(string hostId, string id)
+    {
+        var room = await _roomRepository.GetByIdAsync(id);
+        if (room == null) return false;
+
+        var hotel = await _hotelRepository.GetByIdAsync(room.HotelId!);
+        if (hotel == null || hotel.HostId != hostId) return false;
+
+        return await _roomRepository.DeleteAsync(id);
+    }
+
+    private static RoomDto MapToDto(Room room)
+    {
+        return new RoomDto
         {
-            var entity = new Room
-            {
-                Id = dto.Id,
-                HotelId = dto.HotelId,
-                RoomNumber = dto.RoomNumber,
-                RoomType = dto.RoomType,
-                Capacity = dto.Capacity,
-                PricePerNight = dto.PricePerNight ?? 0,
-                Status = "Available",
-                Description = dto.Description,
-                IsSmokingAllowed = dto.IsSmokingAllowed
-            };
-            return MapToDto(await _repo.CreateAsync(entity));
-        }
-
-        public async Task<RoomDto?> UpdateAsync(string id, UpdateRoomDto dto)
-        {
-            var entity = await _repo.GetByIdAsync(id);
-            if (entity is null) return null;
-
-            entity.RoomType = dto.RoomType ?? entity.RoomType;
-            entity.Capacity = dto.Capacity ?? entity.Capacity;
-            entity.PricePerNight = dto.PricePerNight ?? entity.PricePerNight;
-            entity.Status = dto.Status ?? entity.Status;
-            entity.Description = dto.Description ?? entity.Description;
-            entity.IsSmokingAllowed = dto.IsSmokingAllowed ?? entity.IsSmokingAllowed;
-
-            return MapToDto(await _repo.UpdateAsync(entity));
-        }
-
-        public Task<bool> DeleteAsync(string id) => _repo.DeleteAsync(id);
-
-        private static RoomDto MapToDto(Room r) => new(
-            r.Id, r.HotelId, r.RoomNumber, r.RoomType, r.Capacity,
-            r.PricePerNight, r.Status, r.Description, r.IsSmokingAllowed,
-            r.Images.Select(i => new RoomImageDto(i.Id, i.Url, i.Caption)));
+            Id = room.Id,
+            HotelId = room.HotelId,
+            RoomNumber = room.RoomNumber,
+            RoomType = room.RoomType,
+            Description = room.Description,
+            Capacity = room.Capacity,
+            BedCount = room.BedCount,
+            BedType = room.BedType,
+            PricePerNight = room.PricePerNight,
+            DiscountPrice = room.DiscountPrice,
+            RoomSize = room.RoomSize,
+            Status = room.Status,
+            IsSmokingAllowed = room.IsSmokingAllowed,
+            IsActive = room.IsActive
+        };
     }
 }

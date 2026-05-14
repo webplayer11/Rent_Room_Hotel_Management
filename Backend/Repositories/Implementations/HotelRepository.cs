@@ -1,46 +1,56 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
+using RoomManagement.Data;
 using RoomManagement.Models;
 using RoomManagement.Repositories.Interfaces;
-using RoomManagement.Data;
 
-namespace RoomManagement.Repositories.Implementations
+namespace RoomManagement.Repositories.Implementations;
+
+public class HotelRepository : IHotelRepository
 {
-    public class HotelRepository : GenericRepository<Hotel>, IHotelRepository
+    private readonly AppDbContext _context;
+
+    public HotelRepository(AppDbContext context)
     {
-        public HotelRepository(AppDbContext context) : base(context) { }
+        _context = context;
+    }
 
-        public async Task<IEnumerable<Hotel>> GetApprovedHotelsAsync()
-            => await _dbSet.AsNoTracking()
-                           .Where(h => h.IsApproved == true)
-                           .Include(h => h.Images)
-                           .Include(h => h.Amenities)
-                           .ToListAsync();
+    public async Task<IEnumerable<Hotel>> GetAllAsync()
+    {
+        return await _context.Hotels.ToListAsync();
+    }
 
-        public async Task<Hotel?> GetWithDetailsAsync(string id)
-            => await _dbSet.AsNoTracking()
-                           .Include(h => h.Owner)
-                           .Include(h => h.Rooms).ThenInclude(r => r.Images)
-                           .Include(h => h.Images)
-                           .Include(h => h.Amenities)
-                           .Include(h => h.Reviews)
-                           .FirstOrDefaultAsync(h => h.Id == id);
+    public async Task<IEnumerable<Hotel>> GetByHostIdAsync(string hostId)
+    {
+        return await _context.Hotels.Where(h => h.HostId == hostId).ToListAsync();
+    }
 
-        public async Task<IEnumerable<Hotel>> GetByOwnerIdAsync(string ownerId)
-            => await _dbSet.AsNoTracking()
-                           .Where(h => h.OwnerId == ownerId)
-                           .Include(h => h.Images)
-                           .ToListAsync();
+    public async Task<Hotel?> GetByIdAsync(string id)
+    {
+        return await _context.Hotels.FirstOrDefaultAsync(h => h.Id == id);
+    }
 
-        public async Task<IEnumerable<Hotel>> SearchAsync(string keyword)
-        {
-            var lower = keyword.ToLower();
-            return await _dbSet.AsNoTracking()
-                               .Where(h => h.IsApproved == true &&
-                                           (h.Name!.ToLower().Contains(lower) ||
-                                            h.Address!.ToLower().Contains(lower)))
-                               .Include(h => h.Images)
-                               .Include(h => h.Amenities)
-                               .ToListAsync();
-        }
+    public async Task<Hotel> CreateAsync(Hotel hotel)
+    {
+        hotel.Id = Guid.NewGuid().ToString();
+        _context.Hotels.Add(hotel);
+        await _context.SaveChangesAsync();
+        return hotel;
+    }
+
+    public async Task<Hotel> UpdateAsync(Hotel hotel)
+    {
+        _context.Hotels.Update(hotel);
+        await _context.SaveChangesAsync();
+        return hotel;
+    }
+
+    public async Task<bool> DeleteAsync(string id)
+    {
+        var hotel = await GetByIdAsync(id);
+        if (hotel == null) return false;
+        
+        _context.Hotels.Remove(hotel);
+        await _context.SaveChangesAsync();
+        return true;
     }
 }

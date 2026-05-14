@@ -1,7 +1,7 @@
-﻿using RoomManagement.Repositories.Implementations;
 using RoomManagement.Repositories.Interfaces;
-using RoomManagement.Services.Implementations;
+using RoomManagement.Repositories.Implementations;
 using RoomManagement.Services.Interfaces;
+using RoomManagement.Services.Implementations;
 
 namespace RoomManagement.Extensions
 {
@@ -16,31 +16,21 @@ namespace RoomManagement.Extensions
         {
             // ── Repositories ──────────────────────────────────────────────────
             services.AddScoped<IAuthRepository, AuthRepository>();
-            services.AddScoped<IHotelOwnerRepository, HotelOwnerRepository>();
+            services.AddScoped<IHostProfileRepository, HostProfileRepository>();
             services.AddScoped<IHotelRepository, HotelRepository>();
             services.AddScoped<IRoomRepository, RoomRepository>();
             services.AddScoped<IBookingRepository, BookingRepository>();
             services.AddScoped<IPaymentRepository, PaymentRepository>();
-            services.AddScoped<IReviewRepository, ReviewRepository>();
-            services.AddScoped<IHotelAmenityRepository, HotelAmenityRepository>();
-            services.AddScoped<IWishlistRepository, WishlistRepository>();
-            services.AddScoped<IVoucherRepository, VoucherRepository>();
-            services.AddScoped<INotificationRepository, NotificationRepository>();
-            services.AddScoped<IInvoiceRepository, InvoiceRepository>();
-            services.AddScoped<IRevenueReportRepository, RevenueReportRepository>();
-            services.AddScoped<IHotelDeleteRequestRepository, HotelDeleteRequestRepository>();
+            // Add other repositories here...
 
             // ── Services ──────────────────────────────────────────────────────
+            services.AddScoped<IHostProfileService, HostProfileService>();
             services.AddScoped<IHotelService, HotelService>();
             services.AddScoped<IRoomService, RoomService>();
             services.AddScoped<IBookingService, BookingService>();
             services.AddScoped<IPaymentService, PaymentService>();
-            services.AddScoped<IReviewService, ReviewService>();
-            services.AddScoped<IWishlistService, WishlistService>();
-            services.AddScoped<IVoucherService, VoucherService>();
-            services.AddScoped<INotificationService, NotificationService>();
-            services.AddScoped<IInvoiceService, InvoiceService>();
-            services.AddScoped<IHotelDeleteRequestService, HotelDeleteRequestService>();
+            // services.AddScoped<ICustomerService, CustomerService>();
+            // Add other services here...
 
             return services;
         }

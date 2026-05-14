@@ -1,21 +1,62 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
+using RoomManagement.Data;
 using RoomManagement.Models;
 using RoomManagement.Repositories.Interfaces;
-using RoomManagement.Data;
 
-namespace RoomManagement.Repositories.Implementations
+namespace RoomManagement.Repositories.Implementations;
+
+public class PaymentRepository : IPaymentRepository
 {
-    public class PaymentRepository : GenericRepository<Payment>, IPaymentRepository
+    private readonly AppDbContext _context;
+
+    public PaymentRepository(AppDbContext context)
     {
-        public PaymentRepository(AppDbContext context) : base(context) { }
+        _context = context;
+    }
 
-        public async Task<IEnumerable<Payment>> GetByBookingIdAsync(string bookingId)
-            => await _dbSet.AsNoTracking()
-                           .Where(p => p.BookingId == bookingId)
-                           .ToListAsync();
+    public async Task<IEnumerable<Payment>> GetByBookingIdAsync(string bookingId)
+    {
+        return await _context.Payments
+            .Where(p => p.BookingId == bookingId)
+            .OrderByDescending(p => p.PaidAt ?? DateTime.MaxValue)
+            .ToListAsync();
+    }
 
-        public async Task<Payment?> GetByTransactionIdAsync(string transactionId)
-            => await _dbSet.AsNoTracking()
-                           .FirstOrDefaultAsync(p => p.TransactionId == transactionId);
+    public async Task<Payment?> GetByIdAsync(string id)
+    {
+        return await _context.Payments
+            .Include(p => p.Booking)
+            .FirstOrDefaultAsync(p => p.Id == id);
+    }
+
+    public async Task<Payment> CreateAsync(Payment payment)
+    {
+        payment.Id = Guid.NewGuid().ToString();
+        _context.Payments.Add(payment);
+        await _context.SaveChangesAsync();
+        return payment;
+    }
+
+    public async Task<Payment> UpdateAsync(Payment payment)
+    {
+        _context.Payments.Update(payment);
+        await _context.SaveChangesAsync();
+        return payment;
+    }
+    
+    
+    
+
+    public async Task<bool> UpdateStatusAsync(string paymentBuild)
+    {
+        var payment =  await _context.Payments.FirstOrDefaultAsync(p => p.Id == paymentBuild);
+        if (payment == null)
+        {
+            return false;
+        }
+        payment.Status = "SUCCESS";
+        _context.Payments.Update(payment);
+        await _context.SaveChangesAsync();
+        return true;
     }
 }

@@ -1,16 +1,13 @@
-﻿using RoomManagement.DTOs;
+using RoomManagement.DTOs;
 
-namespace RoomManagement.Services.Interfaces
+namespace RoomManagement.Services.Interfaces;
+
+public interface IHotelService
 {
-    public interface IHotelService
-    {
-        Task<IEnumerable<HotelDto>> GetAllApprovedAsync();
-        Task<HotelDetailDto?> GetDetailAsync(string id);
-        Task<IEnumerable<HotelDto>> GetByOwnerAsync(string ownerId);
-        Task<IEnumerable<HotelDto>> SearchAsync(string keyword);
-        Task<HotelDto> CreateAsync(CreateHotelDto dto);
-        Task<HotelDto?> UpdateAsync(string id, UpdateHotelDto dto);
-        Task<bool> ApproveAsync(string id);
-        Task<bool> DeleteAsync(string id);
-    }
+    Task<IEnumerable<HotelDto>> GetAllAsync();
+    Task<IEnumerable<HotelDto>> GetByHostIdAsync(string hostId);
+    Task<HotelDto?> GetByIdAsync(string id);
+    Task<HotelDto> CreateAsync(string hostId, CreateHotelDto dto);
+    Task<HotelDto?> UpdateAsync(string hostId, string id, UpdateHotelDto dto);
+    Task<bool> DeleteAsync(string hostId, string id);
 }

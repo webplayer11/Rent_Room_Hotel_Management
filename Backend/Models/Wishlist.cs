@@ -1,23 +1,28 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace RoomManagement.Models
+namespace RoomManagement.Models;
+
+[Table("Wishlist")]
+public class Wishlist
 {
-    [Table("Wishlist")]
-    public class Wishlist
-    {
-        [Key]
-        [MaxLength(50)]
-        public string Id { get; set; } = default!;
+    [Key]
+    [MaxLength(50)]
+    public string Id { get; set; } = default!;
 
-        [MaxLength(50)]
-        public string? CustomerId { get; set; }
+    [MaxLength(450)]
+    public string UserId { get; set; } = default!;
 
-        [MaxLength(50)]
-        public string? HotelId { get; set; }
+    [MaxLength(50)]
+    public string HotelId { get; set; } = default!;
 
-        // Navigation
-        [ForeignKey(nameof(HotelId))]
-        public Hotel? Hotel { get; set; }
-    }
+    [Column(TypeName = "datetime2")]
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+
+    // Navigation
+    [ForeignKey(nameof(UserId))]
+    public ApplicationUser User { get; set; } = default!;
+
+    [ForeignKey(nameof(HotelId))]
+    public Hotel Hotel { get; set; } = default!;
 }

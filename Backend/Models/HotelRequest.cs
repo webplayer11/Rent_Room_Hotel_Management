@@ -3,27 +3,28 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace RoomManagement.Models;
 
-[Table("Review")]
-public class Review
+[Table("HotelRequest")]
+public class HotelRequest
 {
     [Key]
     [MaxLength(50)]
     public string Id { get; set; } = default!;
 
-    [MaxLength(450)]
-    public string UserId { get; set; } = default!;
-
     [MaxLength(50)]
     public string HotelId { get; set; } = default!;
 
+    [MaxLength(450)]
+    public string HostId { get; set; } = default!;
+
     [MaxLength(50)]
-    public string? BookingId { get; set; }
+    public string RequestType { get; set; } = default!; // Delete, Update, Deactivate
 
-    public int Rating { get; set; } // 1-5
+    public string Reason { get; set; } = default!;
 
-    public string? Comment { get; set; }
+    [MaxLength(50)]
+    public string Status { get; set; } = "Pending"; // Pending, Approved, Rejected
 
-    public string? HostReply { get; set; }
+    public string? AdminNote { get; set; }
 
     [Column(TypeName = "datetime2")]
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
@@ -32,12 +33,9 @@ public class Review
     public DateTime? UpdatedAt { get; set; }
 
     // Navigation
-    [ForeignKey(nameof(UserId))]
-    public ApplicationUser User { get; set; } = default!;
-
     [ForeignKey(nameof(HotelId))]
     public Hotel Hotel { get; set; } = default!;
 
-    [ForeignKey(nameof(BookingId))]
-    public Booking? Booking { get; set; }
+    [ForeignKey(nameof(HostId))]
+    public HostProfile Host { get; set; } = default!;
 }

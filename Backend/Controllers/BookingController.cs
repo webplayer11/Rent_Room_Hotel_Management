@@ -1,66 +1,74 @@
+using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using RoomManagement.DTOs;
 using RoomManagement.Services.Interfaces;
 
-namespace RoomManagement.Controllers
+namespace RoomManagement.Controllers;
+
+[ApiController]
+[Route("api/bookings")]
+[Authorize]
+public class BookingController : ControllerBase
 {
-    [ApiController]
-    [Route("api/booking")]
-    public class BookingController : ControllerBase
+    private readonly IBookingService _service;
+
+    public BookingController(IBookingService service)
     {
-        private readonly IBookingService _service;
+        _service = service;
+    }
 
-        public BookingController(IBookingService service) => _service = service;
+    [HttpPost]
+    public async Task<IActionResult> CreateBooking([FromBody] CreateBookingDto dto)
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (userId == null) return Unauthorized();
 
-        //lấy danh sách booking bằng id khách hàng
-        [HttpGet("customer/{customerId}")]
-        [Authorize]
-        public async Task<IActionResult> GetByCustomer(string customerId) {
-            var data = await _service.GetByCustomerAsync(customerId);
-            return Ok(ResponseApi<IEnumerable<BookingDto>>.Success(data));
-        }
+        var result = await _service.CreateBookingAsync(userId, dto);
+        if (result == null) return BadRequest(ResponseApi<string>.Failure(400, "Phòng không khả dụng hoặc ngày đặt không hợp lệ"));
 
-        //lấy chi tiết booking bằng id của booking
-        [HttpGet("{id}")]
-        [Authorize]
-        public async Task<IActionResult> GetDetail(string id)
-        {
-            var result = await _service.GetDetailAsync(id);
-            return result is null
-                ? NotFound(ResponseApi<BookingDetailDto>.Failure(404, "Không tìm thấy booking."))
-                : Ok(ResponseApi<BookingDetailDto>.Success(result));
-        }
+        return Ok(ResponseApi<BookingDto>.Success(result, "Tạo đơn đặt phòng thành công", 201));
+    }
 
-        //tạo booking mới
-        [HttpPost]
-        [Authorize]
-        public async Task<IActionResult> Create([FromBody] CreateBookingDto dto)
-        {
-            try
-            {
-                var result = await _service.CreateAsync(dto);
-                return CreatedAtAction(nameof(GetDetail), new { id = result.Id },
-                    ResponseApi<BookingDto>.Success(result, "Đặt phòng thành công.", 201));
-            }
-            catch (InvalidOperationException ex)
-            {
-                return Conflict(ResponseApi<object>.Failure(409, ex.Message));
-            }
-            catch (KeyNotFoundException ex)
-            {
-                return NotFound(ResponseApi<object>.Failure(404, ex.Message));
-            }
-        }
+    [HttpGet("my-bookings")]
+    public async Task<IActionResult> GetMyBookings()
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (userId == null) return Unauthorized();
 
-        [HttpGet("{idbooking}/status")]
-        [Authorize]
-        public async Task<IActionResult> GetStatus(string idbooking)
-        {
-            
-            return Ok();
-        }
+        var result = await _service.GetMyBookingsAsync(userId);
+        return Ok(ResponseApi<IEnumerable<BookingDto>>.Success(result));
+    }
 
+    [HttpGet("host-bookings")]
+    [Authorize(Roles = "Host")]
+    public async Task<IActionResult> GetHostBookings()
+    {
+        var hostId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (hostId == null) return Unauthorized();
+
+        var result = await _service.GetHostBookingsAsync(hostId);
+        return Ok(ResponseApi<IEnumerable<BookingDto>>.Success(result));
+    }
+
+    [HttpGet("{id}")]
+    public async Task<IActionResult> GetById(string id)
+    {
+        var result = await _service.GetByIdAsync(id);
+        if (result == null) return NotFound(ResponseApi<string>.Failure(404, "Không tìm thấy đơn đặt phòng"));
+        return Ok(ResponseApi<BookingDto>.Success(result));
+    }
+
+    [HttpPut("{id}/status")]
+    [Authorize(Roles = "Host")]
+    public async Task<IActionResult> UpdateStatus(string id, [FromBody] UpdateBookingStatusDto dto)
+    {
+        var hostId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (hostId == null) return Unauthorized();
+
+        var result = await _service.UpdateBookingStatusAsync(hostId, id, dto);
+        if (result == null) return NotFound(ResponseApi<string>.Failure(404, "Không tìm thấy đơn đặt phòng hoặc bạn không có quyền"));
+
+        return Ok(ResponseApi<BookingDto>.Success(result, "Cập nhật trạng thái thành công"));
     }
 }

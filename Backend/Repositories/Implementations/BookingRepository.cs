@@ -1,44 +1,62 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
+using RoomManagement.Data;
 using RoomManagement.Models;
 using RoomManagement.Repositories.Interfaces;
-using RoomManagement.Data;
 
-namespace RoomManagement.Repositories.Implementations
+namespace RoomManagement.Repositories.Implementations;
+
+public class BookingRepository : IBookingRepository
 {
-    public class BookingRepository : GenericRepository<Booking>, IBookingRepository
+    private readonly AppDbContext _context;
+
+    public BookingRepository(AppDbContext context)
     {
-        public BookingRepository(AppDbContext context) : base(context) { }
+        _context = context;
+    }
 
-        public async Task<IEnumerable<Booking>> GetByCustomerIdAsync(string customerId)
-            => await _dbSet.AsNoTracking()
-                           .Where(b => b.CustomerId == customerId)
-                           .Include(b => b.RoomNav).ThenInclude(r => r!.Hotel)
-                           .OrderByDescending(b => b.CreatedAt)
-                           .ToListAsync();
+    public async Task<IEnumerable<Booking>> GetByUserIdAsync(string userId)
+    {
+        return await _context.Bookings
+            .Include(b => b.Room)
+            .ThenInclude(r => r.Hotel)
+            .Where(b => b.UserId == userId)
+            .OrderByDescending(b => b.CreatedAt)
+            .ToListAsync();
+    }
 
-        public async Task<IEnumerable<Booking>> GetByRoomIdAsync(string roomId)
-            => await _dbSet.AsNoTracking()
-                           .Where(b => b.RoomId == roomId)
-                           .ToListAsync();
+    public async Task<IEnumerable<Booking>> GetByHostIdAsync(string hostId)
+    {
+        // Find all bookings for rooms that belong to hotels owned by the host
+        return await _context.Bookings
+            .Include(b => b.Room)
+            .ThenInclude(r => r.Hotel)
+            .Include(b => b.User)
+            .Where(b => b.Room.Hotel!.HostId == hostId)
+            .OrderByDescending(b => b.CreatedAt)
+            .ToListAsync();
+    }
 
-        public async Task<Booking?> GetWithDetailsAsync(string id)
-            => await _dbSet.AsNoTracking()
-                           .Include(b => b.RoomNav).ThenInclude(r => r!.Hotel)
-                           .Include(b => b.Payments)
-                           .Include(b => b.Invoices)
-                           .FirstOrDefaultAsync(b => b.Id == id);
+    public async Task<Booking?> GetByIdAsync(string id)
+    {
+        return await _context.Bookings
+            .Include(b => b.Room)
+            .ThenInclude(r => r.Hotel)
+            .Include(b => b.User)
+            .FirstOrDefaultAsync(b => b.Id == id);
+    }
 
-        public async Task<bool> HasOverlappingBookingAsync(
-            string roomId, DateOnly startDate, DateOnly endDate,
-            string? excludeBookingId = null)
-            => await _dbSet.AnyAsync(b =>
-                b.RoomId == roomId &&
-                b.Id != excludeBookingId &&
-                b.StartDate < endDate &&
-                b.EndDate > startDate);
-        public async Task<bool> HasActiveBookingByHotelAsync(string hotelId)
-            => await _dbSet.Include(b => b.RoomNav).AnyAsync(b => b.RoomNav != null && 
-            b.RoomNav.HotelId == hotelId &&
-            (b.Status == "Confirmed" || b.Status == "CheckedIn"));
+    public async Task<Booking> CreateAsync(Booking booking)
+    {
+        booking.Id = Guid.NewGuid().ToString();
+        _context.Bookings.Add(booking);
+        await _context.SaveChangesAsync();
+        return booking;
+    }
+
+    public async Task<Booking> UpdateAsync(Booking booking)
+    {
+        _context.Bookings.Update(booking);
+        await _context.SaveChangesAsync();
+        return booking;
     }
 }

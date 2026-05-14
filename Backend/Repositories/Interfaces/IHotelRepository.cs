@@ -1,12 +1,13 @@
-﻿using RoomManagement.Models;
+using RoomManagement.Models;
 
-namespace RoomManagement.Repositories.Interfaces
+namespace RoomManagement.Repositories.Interfaces;
+
+public interface IHotelRepository
 {
-    public interface IHotelRepository : IGenericRepository<Hotel>
-    {
-        Task<IEnumerable<Hotel>> GetApprovedHotelsAsync();
-        Task<Hotel?> GetWithDetailsAsync(string id);
-        Task<IEnumerable<Hotel>> GetByOwnerIdAsync(string ownerId);
-        Task<IEnumerable<Hotel>> SearchAsync(string keyword);
-    }
+    Task<IEnumerable<Hotel>> GetAllAsync();
+    Task<IEnumerable<Hotel>> GetByHostIdAsync(string hostId);
+    Task<Hotel?> GetByIdAsync(string id);
+    Task<Hotel> CreateAsync(Hotel hotel);
+    Task<Hotel> UpdateAsync(Hotel hotel);
+    Task<bool> DeleteAsync(string id);
 }

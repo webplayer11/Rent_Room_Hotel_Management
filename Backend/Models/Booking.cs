@@ -1,47 +1,71 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace RoomManagement.Models
+namespace RoomManagement.Models;
+
+[Table("Booking")]
+public class Booking
 {
-    [Table("Booking")]
-    public class Booking
-    {
-        [Key]
-        [MaxLength(50)]
-        public string Id { get; set; } = default!;
+    [Key]
+    [MaxLength(50)]
+    public string Id { get; set; } = default!;
 
-        [MaxLength(50)]
-        public string? CustomerId { get; set; }
+    [MaxLength(450)]
+    public string UserId { get; set; } = default!;
 
-        [MaxLength(50)]
-        public string? RoomId { get; set; }
+    [MaxLength(50)]
+    public string RoomId { get; set; } = default!;
 
-        [MaxLength(100)]
-        public string? ReservationNumber { get; set; }
+    [MaxLength(50)]
+    public string? VoucherId { get; set; }
 
-        public DateOnly? StartDate { get; set; }
+    [MaxLength(50)]
+    public string BookingCode { get; set; } = default!;
 
-        public DateOnly? EndDate { get; set; }
+    public DateOnly CheckInDate { get; set; }
 
-        public int? DurationInDays { get; set; }
+    public DateOnly CheckOutDate { get; set; }
 
-        [Column(TypeName = "decimal(18,2)")]
-        public decimal? TotalPrice { get; set; }
+    public int NumberOfNights { get; set; }
 
-        public int? GuestCount { get; set; }
+    public int GuestCount { get; set; }
 
-        public string? SpecialRequest { get; set; }
+    [Column(TypeName = "decimal(18,2)")]
+    public decimal UnitPrice { get; set; }
 
-        [MaxLength(20)]
-        public string? Status { get; set; }
+    [Column(TypeName = "decimal(18,2)")]
+    public decimal TotalPrice { get; set; }
 
-        [Column(TypeName = "datetime2")]
-        public DateTime? CreatedAt { get; set; }
+    [Column(TypeName = "decimal(18,2)")]
+    public decimal? DiscountAmount { get; set; }
 
-        // Navigation
-        public Room? RoomNav { get; set; }
+    [Column(TypeName = "decimal(18,2)")]
+    public decimal FinalPrice { get; set; }
 
-        public ICollection<Payment> Payments { get; set; } = new List<Payment>();
-        public ICollection<Invoice> Invoices { get; set; } = new List<Invoice>();
-    }
+    public string? SpecialRequest { get; set; }
+
+    [MaxLength(50)]
+    public string Status { get; set; } = "Pending"; // Pending, Confirmed, CheckedIn, Completed, Cancelled
+
+    public string? CancellationReason { get; set; }
+
+    [Column(TypeName = "datetime2")]
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+
+    [Column(TypeName = "datetime2")]
+    public DateTime? UpdatedAt { get; set; }
+
+    // Navigation
+    [ForeignKey(nameof(UserId))]
+    public ApplicationUser User { get; set; } = default!;
+
+    [ForeignKey(nameof(RoomId))]
+    public Room Room { get; set; } = default!;
+
+    [ForeignKey(nameof(VoucherId))]
+    public Voucher? Voucher { get; set; }
+
+    public ICollection<Payment> Payments { get; set; } = new List<Payment>();
+    public Invoice? Invoice { get; set; }
+    public Review? Review { get; set; }
 }

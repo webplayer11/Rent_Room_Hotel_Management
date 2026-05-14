@@ -1,47 +1,32 @@
-﻿using RoomManagement.DTOs;
+namespace RoomManagement.DTOs;
 
-namespace RoomManagement.DTOs
+public class HotelDto
 {
-    public record HotelDto(
-        string Id,
-        string? Name,
-        string? Address,
-        string? Description,
-        bool? IsApproved,
-        string? OwnerId,
-        IEnumerable<HotelImageDto>? Images,
-        IEnumerable<HotelAmenityDto>? Amenities
-    );
+    public string Id { get; set; } = default!;
+    public string? Name { get; set; }
+    public string? Description { get; set; }
+    public string? Address { get; set; }
+    public double? Latitude { get; set; }
+    public double? Longitude { get; set; }
+    public int? StarRating { get; set; }
+    public string? CheckInTime { get; set; }
+    public string? CheckOutTime { get; set; }
+    public bool IsActive { get; set; }
+    public bool IsApproved { get; set; }
+    public string HostId { get; set; } = default!;
+}
 
-    public record HotelDetailDto(
-        string Id,
-        string? Name,
-        string? Address,
-        string? Description,
-        bool? IsApproved,
-        HotelOwnerDto? Owner,
-        IEnumerable<RoomDto>? Rooms,
-        IEnumerable<HotelImageDto>? Images,
-        IEnumerable<HotelAmenityDto>? Amenities,
-        IEnumerable<ReviewDto>? Reviews,
-        double AverageRating
-    );
+public class CreateHotelDto
+{
+    public string? Name { get; set; }
+    public string? Description { get; set; }
+    public string? Address { get; set; }
+    public int? StarRating { get; set; }
+    public string? CheckInTime { get; set; }
+    public string? CheckOutTime { get; set; }
+}
 
-    public record CreateHotelDto(
-        string Id,
-        string? Name,
-        string? Address,
-        string? Description,
-        string OwnerId
-    );
-
-    public record UpdateHotelDto(
-        string? Name,
-        string? Address,
-        string? Description
-    );
-
-    public record HotelImageDto(string Id, string? Url, string? Caption);
-
-    public record HotelAmenityDto(string Id, string? Name, string? Description, string? Icon);
+public class UpdateHotelDto : CreateHotelDto
+{
+    public bool IsActive { get; set; } = true;
 }

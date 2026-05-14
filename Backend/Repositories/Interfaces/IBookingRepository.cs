@@ -1,13 +1,12 @@
-﻿using RoomManagement.Models;
+using RoomManagement.Models;
 
-namespace RoomManagement.Repositories.Interfaces
+namespace RoomManagement.Repositories.Interfaces;
+
+public interface IBookingRepository
 {
-    public interface IBookingRepository : IGenericRepository<Booking>
-    {
-        Task<IEnumerable<Booking>> GetByCustomerIdAsync(string customerId);
-        Task<IEnumerable<Booking>> GetByRoomIdAsync(string roomId);
-        Task<Booking?> GetWithDetailsAsync(string id);
-        Task<bool> HasOverlappingBookingAsync(string roomId, DateOnly startDate, DateOnly endDate, string? excludeBookingId = null);
-        Task<bool> HasActiveBookingByHotelAsync(string hotelId);
-    }
+    Task<IEnumerable<Booking>> GetByUserIdAsync(string userId);
+    Task<IEnumerable<Booking>> GetByHostIdAsync(string hostId);
+    Task<Booking?> GetByIdAsync(string id);
+    Task<Booking> CreateAsync(Booking booking);
+    Task<Booking> UpdateAsync(Booking booking);
 }

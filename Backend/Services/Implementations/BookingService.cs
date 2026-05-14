@@ -1,79 +1,122 @@
-﻿using RoomManagement.DTOs;
+using RoomManagement.DTOs;
 using RoomManagement.Models;
 using RoomManagement.Repositories.Interfaces;
 using RoomManagement.Services.Interfaces;
 
-namespace RoomManagement.Services.Implementations
+namespace RoomManagement.Services.Implementations;
+
+public class BookingService : IBookingService
 {
-    public class BookingService : IBookingService
+    private readonly IBookingRepository _bookingRepository;
+    private readonly IRoomRepository _roomRepository;
+
+    public BookingService(IBookingRepository bookingRepository, IRoomRepository roomRepository)
     {
-        private readonly IBookingRepository _bookingRepo;
-        private readonly IRoomRepository _roomRepo;
+        _bookingRepository = bookingRepository;
+        _roomRepository = roomRepository;
+    }
 
-        public BookingService(IBookingRepository bookingRepo, IRoomRepository roomRepo)
+    public async Task<IEnumerable<BookingDto>> GetMyBookingsAsync(string userId)
+    {
+        var bookings = await _bookingRepository.GetByUserIdAsync(userId);
+        return bookings.Select(MapToDto);
+    }
+
+    public async Task<IEnumerable<BookingDto>> GetHostBookingsAsync(string hostId)
+    {
+        var bookings = await _bookingRepository.GetByHostIdAsync(hostId);
+        return bookings.Select(MapToDto);
+    }
+
+    public async Task<BookingDto?> GetByIdAsync(string id)
+    {
+        var booking = await _bookingRepository.GetByIdAsync(id);
+        return booking == null ? null : MapToDto(booking);
+    }
+
+    public async Task<BookingDto?> CreateBookingAsync(string userId, CreateBookingDto dto)
+    {
+        var room = await _roomRepository.GetByIdAsync(dto.RoomId);
+        if (room == null || room.Status != "Available") return null;
+
+        int nights = (dto.CheckOutDate.DayNumber - dto.CheckInDate.DayNumber);
+        if (nights <= 0) return null;
+
+        var booking = new Booking
         {
-            _bookingRepo = bookingRepo;
-            _roomRepo = roomRepo;
+            UserId = userId,
+            RoomId = dto.RoomId,
+            VoucherId = dto.VoucherId,
+            BookingCode = GenerateBookingCode(),
+            CheckInDate = dto.CheckInDate,
+            CheckOutDate = dto.CheckOutDate,
+            NumberOfNights = nights,
+            GuestCount = dto.GuestCount,
+            UnitPrice = room.PricePerNight,
+            TotalPrice = room.PricePerNight * nights,
+            DiscountAmount = 0, // Placeholder for voucher calculation
+            FinalPrice = room.PricePerNight * nights, // Minus discount
+            SpecialRequest = dto.SpecialRequest,
+            Status = "Pending"
+        };
+
+        var created = await _bookingRepository.CreateAsync(booking);
+        return MapToDto(created);
+    }
+
+    public async Task<BookingDto?> UpdateBookingStatusAsync(string hostId, string bookingId, UpdateBookingStatusDto dto)
+    {
+        var booking = await _bookingRepository.GetByIdAsync(bookingId);
+        if (booking == null) return null;
+
+        // Verify host owns this booking's room
+        if (booking.Room.Hotel?.HostId != hostId) return null;
+
+        booking.Status = dto.Status;
+        if (!string.IsNullOrEmpty(dto.CancellationReason))
+        {
+            booking.CancellationReason = dto.CancellationReason;
         }
 
-        public async Task<IEnumerable<BookingDto>> GetByCustomerAsync(string customerId)
-            => (await _bookingRepo.GetByCustomerIdAsync(customerId)).Select(MapToDto);
+        booking.UpdatedAt = DateTime.UtcNow;
 
-        public async Task<BookingDetailDto?> GetDetailAsync(string id)
+        var updated = await _bookingRepository.UpdateAsync(booking);
+        return MapToDto(updated);
+    }
+
+    private static BookingDto MapToDto(Booking booking)
+    {
+        return new BookingDto
         {
-            var b = await _bookingRepo.GetWithDetailsAsync(id);
-            return b is null ? null : MapToDetailDto(b);
+            Id = booking.Id,
+            UserId = booking.UserId,
+            RoomId = booking.RoomId,
+            VoucherId = booking.VoucherId,
+            BookingCode = booking.BookingCode,
+            CheckInDate = booking.CheckInDate,
+            CheckOutDate = booking.CheckOutDate,
+            NumberOfNights = booking.NumberOfNights,
+            GuestCount = booking.GuestCount,
+            UnitPrice = booking.UnitPrice,
+            TotalPrice = booking.TotalPrice,
+            DiscountAmount = booking.DiscountAmount,
+            FinalPrice = booking.FinalPrice,
+            SpecialRequest = booking.SpecialRequest,
+            Status = booking.Status
+        };
+    }
+
+    private string GenerateBookingCode()
+    {
+        var chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+        var stringChars = new char[8];
+        var random = new Random();
+
+        for (int i = 0; i < stringChars.Length; i++)
+        {
+            stringChars[i] = chars[random.Next(chars.Length)];
         }
 
-        public async Task<BookingDto> CreateAsync(CreateBookingDto dto)
-        {
-            var hasOverlap = await _bookingRepo.HasOverlappingBookingAsync(
-                dto.RoomId, dto.StartDate, dto.EndDate);
-            if (hasOverlap)
-                throw new InvalidOperationException("Phòng đã được đặt trong khoảng thời gian này.");
-
-            var room = await _roomRepo.GetByIdAsync(dto.RoomId)
-                ?? throw new KeyNotFoundException("Không tìm thấy phòng.");
-
-            var duration = dto.EndDate.DayNumber - dto.StartDate.DayNumber;
-            var total = (room.PricePerNight) * duration;
-
-            var entity = new Booking
-            {
-                Id = dto.Id,
-                CustomerId = dto.CustomerId,
-                RoomId = dto.RoomId,
-                ReservationNumber = Guid.NewGuid().ToString("N")[..10].ToUpper(),
-                StartDate = dto.StartDate,
-                EndDate = dto.EndDate,
-                DurationInDays = duration,
-                TotalPrice = total,
-
-                GuestCount = dto.GuestCount,
-                SpecialRequest = dto.SpecialRequest,
-                CreatedAt = DateTime.UtcNow
-            };
-
-            return MapToDto(await _bookingRepo.CreateAsync(entity));
-        }
-
-
-
-        private static BookingDto MapToDto(Booking b) => new(
-            b.Id, b.CustomerId, b.RoomId, b.ReservationNumber,
-            b.StartDate, b.EndDate, b.DurationInDays,
-            b.TotalPrice, b.GuestCount, b.SpecialRequest, b.CreatedAt);
-
-        private static BookingDetailDto MapToDetailDto(Booking b) => new(
-            b.Id,
-            b.RoomNav is null ? null : new RoomDto(
-                b.RoomNav.Id, b.RoomNav.HotelId, b.RoomNav.RoomNumber, b.RoomNav.RoomType,
-                b.RoomNav.Capacity, b.RoomNav.PricePerNight, b.RoomNav.Status,
-                b.RoomNav.Description, b.RoomNav.IsSmokingAllowed, Enumerable.Empty<RoomImageDto>()),
-            b.ReservationNumber, b.StartDate, b.EndDate, b.DurationInDays,
-            b.TotalPrice, b.GuestCount, b.SpecialRequest, b.CreatedAt,
-            b.Payments.Select(p => new PaymentDto(
-                p.Id, p.BookingId, p.Amount, p.Method,
-                p.Status, p.TransactionId, p.PaidAt, p.RefundedAt)));
+        return new string(stringChars);
     }
 }

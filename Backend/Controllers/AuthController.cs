@@ -1,125 +1,99 @@
+using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using RoomManagement.DTOs;
-using RoomManagement.Models;
-using RoomManagement.Services.Interfaces;
+using RoomManagement.Repositories.Interfaces;
 
 namespace RoomManagement.Controllers;
 
 [ApiController]
 [Route("api/auth")]
-public class AuthController : ControllerBase 
+public class AuthController : ControllerBase
 {
     private readonly IAuthRepository _authRepository;
-    
+
     public AuthController(IAuthRepository authRepository)
     {
         _authRepository = authRepository;
     }
 
-    //đăng kí
     [HttpPost("register")]
-    public async Task<IActionResult> Register(RegisterDto registerDto)
+    public async Task<IActionResult> Register([FromBody] RegisterDto registerDto)
     {
-        try
-        {
-            var result = await _authRepository.RegisterAsync(registerDto);
-            if (result.Succeeded)
-                return Ok(ResponseApi<string>.Success("null","Success",201));
-            return BadRequest(401);
+        var result = await _authRepository.RegisterAsync(registerDto);
+        if (result.Succeeded)
+            return Ok(ResponseApi<string>.Success(null!, "Đăng ký thành công", 201));
 
-        }
-        catch (Exception)
-        {
-            return StatusCode(500);
-        }
+        var errors = result.Errors.Select(e => e.Description).ToList();
+        return BadRequest(ResponseApi<List<string>>.Failure(400, "Đăng ký thất bại", errors));
     }
 
-    //đăng nhập
+    [HttpPost("upgrade-to-host")]
+    [Authorize]
+    public async Task<IActionResult> UpgradeToHost([FromBody] UpgradeToHostDto dto)
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (userId == null) return Unauthorized();
+
+        var result = await _authRepository.UpgradeToHostAsync(userId, dto);
+        if (result.Succeeded)
+            return Ok(ResponseApi<string>.Success(null!, "Nâng cấp tài khoản chủ nhà thành công", 200));
+
+        var errors = result.Errors.Select(e => e.Description).ToList();
+        return BadRequest(ResponseApi<List<string>>.Failure(400, "Nâng cấp chủ nhà thất bại", errors));
+    }
+
     [HttpPost("login")]
-    public async Task<IActionResult> Login(LoginDto loginDto)
+    public async Task<IActionResult> Login([FromBody] LoginDto loginDto)
     {
         var result = await _authRepository.LoginAsync(loginDto);
         if (result == null)
-        {
-            return BadRequest(ResponseApi<AuthResponseDto>.Failure(400, "Email hoặc mật khẩu không chính xác"));
-        }
-        
-        return Ok(ResponseApi<AuthResponseDto>.Success(result));
+            return Unauthorized(ResponseApi<string>.Failure(401, "Email hoặc mật khẩu không chính xác"));
+
+        return Ok(ResponseApi<AuthResponseDto>.Success(result, "Đăng nhập thành công"));
     }
 
-    //đăng xuất
+    [HttpPost("refresh-token")]
+    public async Task<IActionResult> RefreshToken([FromBody] TokenRequestDto tokenRequestDto)
+    {
+        var result = await _authRepository.RefreshTokenAsync(tokenRequestDto);
+        if (result == null)
+            return BadRequest(ResponseApi<string>.Failure(400, "Refresh Token không hợp lệ hoặc đã hết hạn"));
+
+        return Ok(ResponseApi<AuthResponseDto>.Success(result, "Làm mới Token thành công"));
+    }
+
     [HttpPost("logout")]
     [Authorize]
     public async Task<IActionResult> Logout()
     {
-        var token = Request.Headers["Authorization"]
-            .ToString()
-            .Replace("Bearer ", "");
+        var token = Request.Headers["Authorization"].ToString().Replace("Bearer ", "");
         var result = await _authRepository.LogoutAsync(token);
+
         if (!result)
-            return  BadRequest(ResponseApi<AuthResponseDto>.Failure(400,"Đăng xuất thất bại!"));
-        
-        return Ok(ResponseApi<AuthResponseDto>.Success(null));
+            return BadRequest(ResponseApi<string>.Failure(400, "Đăng xuất thất bại"));
+
+        return Ok(ResponseApi<string>.Success(null!, "Đăng xuất thành công"));
     }
 
-    //làm mới token
-    [HttpPost("refreshtoken")]
-    [Authorize]
-    public async Task<IActionResult> RefeshToken(TokenRequestDto  tokenRequestDto)
-    {
-        var result = await _authRepository.RefreshTokenAsync(tokenRequestDto);
-        if (result == null)
-        {
-            return BadRequest(ResponseApi<string>.Failure(400,"RefeshToken Failed"));
-        }
-        return  Ok(ResponseApi<AuthResponseDto>.Success(result));
-    }
-
-    //yêu cầu đặt lại mật khẩu
     [HttpPost("forgot-password")]
-    public async Task<IActionResult> ForgotPassword(ForgotPasswordDto forgotPasswordDto)
+    public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordDto forgotPasswordDto)
     {
-        try
-        {
-            var token = await _authRepository.ForgotPasswordAsync(forgotPasswordDto);
-            
-        
-            if (token == null)
-            {
-                return Ok(ResponseApi<string>.Success(null!, 
-                    "Nếu email tồn tại trong hệ thống, bạn sẽ nhận được hướng dẫn đặt lại mật khẩu."));
-            }
+        var token = await _authRepository.ForgotPasswordAsync(forgotPasswordDto);
+        if (token == null)
+            return Ok(ResponseApi<string>.Success(null!, "Nếu email tồn tại, bạn sẽ nhận được hướng dẫn"));
 
-            return Ok(ResponseApi<object>.Success(
-                new { resetToken = token }, 
-                "Token đặt lại mật khẩu đã được tạo thành công."));
-        }
-        catch (Exception)
-        {
-            return StatusCode(500, ResponseApi<string>.Failure(500, "Đã xảy ra lỗi khi xử lý yêu cầu."));
-        }
+        return Ok(ResponseApi<object>.Success(new { resetToken = token }, "Token đặt lại mật khẩu đã được tạo (môi trường dev)"));
     }
 
-    //đặt lại mật khẩu
     [HttpPost("reset-password")]
-    public async Task<IActionResult> ResetPassword(ResetPasswordDto resetPasswordDto)
+    public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordDto resetPasswordDto)
     {
-        try
-        {
-            var result = await _authRepository.ResetPasswordAsync(resetPasswordDto);
+        var result = await _authRepository.ResetPasswordAsync(resetPasswordDto);
+        if (result.Succeeded)
+            return Ok(ResponseApi<string>.Success(null!, "Đặt lại mật khẩu thành công"));
 
-            if (result.Succeeded)
-            {
-                return Ok(ResponseApi<string>.Success(null!, "Đặt lại mật khẩu thành công. Vui lòng đăng nhập lại."));
-            }
-            var errors = result.Errors.Select(e => e.Description).ToList();
-            return BadRequest(ResponseApi<List<string>>.Failure(400, 
-                "Đặt lại mật khẩu thất bại.", errors));
-        }
-        catch (Exception)
-        {
-            return StatusCode(500, ResponseApi<string>.Failure(500, "Đã xảy ra lỗi khi xử lý yêu cầu."));
-        }
+        var errors = result.Errors.Select(e => e.Description).ToList();
+        return BadRequest(ResponseApi<List<string>>.Failure(400, "Đặt lại mật khẩu thất bại", errors));
     }
 }

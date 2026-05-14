@@ -1,53 +1,50 @@
+using System.Security.Claims;
 using System.Text.Json;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using RoomManagement.DTOs;
 using RoomManagement.Services.Interfaces;
 using RoomManagement.Utils;
 
-namespace RoomManagement.Controllers
+namespace RoomManagement.Controllers;
+
+[ApiController]
+[Route("api/payments")]
+
+public class PaymentController : ControllerBase
 {
-    [ApiController]
-    [Route("api/pay")]
-    public class PaymentController : ControllerBase
+    private readonly IPaymentService _service;
+    private readonly HttpClient _httpClient;
+
+    public PaymentController(IPaymentService service,  HttpClient httpClient)
     {
-        private readonly IPaymentService _service;
-        
-        
-        private readonly HttpClient _httpClient;
+        _service = service;
+        _httpClient = httpClient;
+    }
 
- 
+    [HttpPost("process")]
+    public async Task<IActionResult> ProcessPayment([FromBody] ProcessPaymentDto dto)
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (userId == null) return Unauthorized();
 
-        public PaymentController(IPaymentService service, HttpClient httpClient) 
-        {
-            _service = service;
-            _httpClient = httpClient;
-        
-        }    
+        var result = await _service.ProcessPaymentAsync(userId, dto);
+        if (result == null) return BadRequest(ResponseApi<string>.Failure(400, "Thanh toán thất bại hoặc đơn đặt phòng không tồn tại"));
 
-        [HttpGet("booking/{bookingId}")]
-        public async Task<IActionResult> GetByBooking(string bookingId)
-            => Ok(ResponseApi<IEnumerable<PaymentDto>>.Success(await _service.GetByBookingAsync(bookingId)));
+        return Ok(ResponseApi<PaymentDto>.Success(result, "Thanh toán thành công"));
+    }
 
-        [HttpGet("transaction/{transactionId}")]
-        public async Task<IActionResult> GetByTransaction(string transactionId)
-        {
-            var result = await _service.GetByTransactionIdAsync(transactionId);
-            return result is null
-                ? NotFound(ResponseApi<PaymentDto>.Failure(404, "Không tìm thấy giao dịch."))
-                : Ok(ResponseApi<PaymentDto>.Success(result));
-        }
+    [HttpGet("booking/{bookingId}")]
+    public async Task<IActionResult> GetPaymentsByBooking(string bookingId)
+    {
+        var result = await _service.GetPaymentsByBookingIdAsync(bookingId);
+        return Ok(ResponseApi<IEnumerable<PaymentDto>>.Success(result));
+    }
 
-        [HttpPost]
-        public async Task<IActionResult> Create([FromBody] CreatePaymentDto dto)
-        {
-            var result = await _service.CreateAsync(dto);
-            return CreatedAtAction(nameof(GetByTransaction),
-                new { transactionId = result.TransactionId },
-                ResponseApi<PaymentDto>.Success(result, "Thanh toán thành công.", 201));
-        }
-        [HttpPost ("createpayment")]
-        public async Task<IActionResult> CreatePayment(PaymentRequestDto paymentRequestDto)
-        {
+
+    [HttpPost ("createpayment")]
+    public async Task<IActionResult> CreatePayment(PaymentRequestDto paymentRequestDto)
+    {
             try
             {
                 var request = new HttpRequestMessage(
@@ -62,7 +59,7 @@ namespace RoomManagement.Controllers
                     idBooking = paymentRequestDto.idBooking,
                     price = paymentRequestDto.price,
                     timestamp = timestamp,
-                    callBackUrl = "http://localhost:5204/api/pay/callbackbe"
+                    callBackUrl = "http://localhost:5226/api/pay/callback"
                 };
                 request.Headers.Add("X-Signature", signature);
                 request.Content = JsonContent.Create(paymenRequest);
@@ -93,11 +90,11 @@ namespace RoomManagement.Controllers
             {
                 return StatusCode(500,ResponseApi<string>.Failure(500,"Tạo build thành toán thất bại!"));
             }
-        }
+    }
 
-        [HttpPost("callback")]
-        public async Task<IActionResult> CallBack(PayGateRequestDto payGateRequestDto)
-        {
+    [HttpPost("callback")]
+    public async Task<IActionResult> CallBack(PayGateRequestDto payGateRequestDto)
+    {
             var signature = Request.Headers["X-Signature"].ToString();
             var result = await _service.CallBackPaymentAsync(payGateRequestDto, signature);
             if (!result)
@@ -105,20 +102,5 @@ namespace RoomManagement.Controllers
                 return BadRequest();
             }
             return Ok();
-        }
-
-        [HttpGet("{idbooking}/status")]
-        public async Task<IActionResult> GetStatus(string idbooking)
-        {
-            var result = await _service.GetStatusAsync(idbooking);
-            if (result == null)
-            {
-                return Ok();
-            }
-            return Ok();
-        }
-        
-        
-        
     }
 }

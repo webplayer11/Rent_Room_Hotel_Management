@@ -1,24 +1,27 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace RoomManagement.Models
+namespace RoomManagement.Models;
+
+[Table("HotelImage")]
+public class HotelImage
 {
-    [Table("HotelImage")]
-    public class HotelImage
-    {
-        [Key]
-        [MaxLength(50)]
-        public string Id { get; set; } = default!;
+    [Key]
+    [MaxLength(50)]
+    public string Id { get; set; } = default!;
 
-        [MaxLength(50)]
-        public string? HotelId { get; set; }
+    [MaxLength(50)]
+    public string? HotelId { get; set; }
 
-        public string? Url { get; set; }
+    public string? Url { get; set; }
 
-        public string? Caption { get; set; }
+    public string? Caption { get; set; }
 
-        // Navigation
-        [ForeignKey(nameof(HotelId))]
-        public Hotel? Hotel { get; set; }
-    }
+    public bool IsPrimary { get; set; } = false;
+
+    public int SortOrder { get; set; } = 0;
+
+    // Navigation
+    [ForeignKey(nameof(HotelId))]
+    public Hotel? Hotel { get; set; }
 }

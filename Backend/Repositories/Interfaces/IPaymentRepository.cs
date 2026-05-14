@@ -1,10 +1,15 @@
-﻿using RoomManagement.Models;
+using RoomManagement.Models;
 
-namespace RoomManagement.Repositories.Interfaces
+namespace RoomManagement.Repositories.Interfaces;
+
+public interface IPaymentRepository
 {
-    public interface IPaymentRepository : IGenericRepository<Payment>
-    {
-        Task<IEnumerable<Payment>> GetByBookingIdAsync(string bookingId);
-        Task<Payment?> GetByTransactionIdAsync(string transactionId);
-    }
+    Task<IEnumerable<Payment>> GetByBookingIdAsync(string bookingId);
+    Task<Payment?> GetByIdAsync(string id);
+    Task<Payment> CreateAsync(Payment payment);
+    Task<Payment> UpdateAsync(Payment payment);
+    
+    Task<bool> UpdateStatusAsync(string payment);
+    
+    
 }
