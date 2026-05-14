@@ -37,7 +37,7 @@ namespace RoomManagement.Services.Implementations
             => _repo.GetAverageRatingAsync(hotelId);
 
         private static ReviewDto MapToDto(Review r) => new(
-            r.Id, r.HotelId, r.CustomerId, r.Customer?.Name,
+            r.Id, r.HotelId, r.CustomerId, null,
             r.Rating, r.Comment, r.CreatedAt);
     }
 }

@@ -22,7 +22,7 @@ namespace RoomManagement.Repositories.Implementations
                            .Include(h => h.Rooms).ThenInclude(r => r.Images)
                            .Include(h => h.Images)
                            .Include(h => h.Amenities)
-                           .Include(h => h.Reviews).ThenInclude(r => r.Customer)
+                           .Include(h => h.Reviews)
                            .FirstOrDefaultAsync(h => h.Id == id);
 
         public async Task<IEnumerable<Hotel>> GetByOwnerIdAsync(string ownerId)

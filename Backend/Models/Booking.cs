@@ -39,8 +39,6 @@ namespace RoomManagement.Models
         public DateTime? CreatedAt { get; set; }
 
         // Navigation
-        public Customer? CustomerNav { get; set; }
-
         public Room? RoomNav { get; set; }
 
         public ICollection<Payment> Payments { get; set; } = new List<Payment>();

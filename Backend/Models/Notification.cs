@@ -22,9 +22,5 @@ namespace RoomManagement.Models
         public DateTime? SentAt { get; set; }
 
         public bool? IsRead { get; set; }
-
-        // Navigation
-        [ForeignKey(nameof(CustomerId))]
-        public Customer? Customer { get; set; }
     }
 }

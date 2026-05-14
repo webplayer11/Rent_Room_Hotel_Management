@@ -18,7 +18,6 @@ namespace RoomManagement.DTOs
 
     public record BookingDetailDto(
         string Id,
-        CustomerDto? Customer,
         RoomDto? Room,
         string? ReservationNumber,
         DateOnly? StartDate,

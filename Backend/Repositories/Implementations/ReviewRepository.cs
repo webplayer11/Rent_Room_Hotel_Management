@@ -12,7 +12,6 @@ namespace RoomManagement.Repositories.Implementations
         public async Task<IEnumerable<Review>> GetByHotelIdAsync(string hotelId)
             => await _dbSet.AsNoTracking()
                            .Where(r => r.HotelId == hotelId)
-                           .Include(r => r.Customer)
                            .OrderByDescending(r => r.CreatedAt)
                            .ToListAsync();
 
