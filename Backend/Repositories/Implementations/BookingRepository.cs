@@ -37,5 +37,9 @@ namespace RoomManagement.Repositories.Implementations
                 b.Id != excludeBookingId &&
                 b.StartDate < endDate &&
                 b.EndDate > startDate);
+        public async Task<bool> HasActiveBookingByHotelAsync(string hotelId)
+            => await _dbSet.Include(b => b.RoomNav).AnyAsync(b => b.RoomNav != null && 
+            b.RoomNav.HotelId == hotelId &&
+            (b.Status == "Confirmed" || b.Status == "CheckedIn"));
     }
 }

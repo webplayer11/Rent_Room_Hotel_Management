@@ -23,16 +23,8 @@ namespace RoomManagement.Controllers
             _ownerRepo = ownerRepo;
         }
 
-        private async Task<string?> GetCurrentOwnerId()
-        {
-            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (userId == null) return null;
-            
-            // Tìm HotelOwner theo ApplicationUser Id
-            var owners = await _ownerRepo.GetAllAsync();
-            var owner = owners.FirstOrDefault();
-            return owner?.Id;
-        }
+        private string? GetCurrentOwnerId()
+            => User.FindFirstValue(ClaimTypes.NameIdentifier);
 
         // ── HotelOwner Endpoints ───────────────────────────────────────────
 
@@ -40,7 +32,7 @@ namespace RoomManagement.Controllers
         [Authorize(Roles = "Owner")]
         public async Task<IActionResult> Create([FromBody] CreateHotelDeleteRequestDto dto)
         {
-            var ownerId = await GetCurrentOwnerId();
+            var ownerId = GetCurrentOwnerId();
             if (ownerId == null) return Unauthorized(ResponseApi<object>.Failure(401, "Không tìm thấy thông tin chủ khách sạn."));
 
             try
@@ -58,7 +50,7 @@ namespace RoomManagement.Controllers
         [Authorize(Roles = "Owner")]
         public async Task<IActionResult> GetMyRequests()
         {
-            var ownerId = await GetCurrentOwnerId();
+            var ownerId = GetCurrentOwnerId();
             if (ownerId == null) return Unauthorized(ResponseApi<object>.Failure(401, "Không tìm thấy thông tin chủ khách sạn."));
 
             var result = await _service.GetByOwnerAsync(ownerId);
@@ -69,7 +61,7 @@ namespace RoomManagement.Controllers
         [Authorize(Roles = "Owner")]
         public async Task<IActionResult> Cancel(string id)
         {
-            var ownerId = await GetCurrentOwnerId();
+            var ownerId = GetCurrentOwnerId();
             if (ownerId == null) return Unauthorized(ResponseApi<object>.Failure(401, "Không tìm thấy thông tin chủ khách sạn."));
 
             var success = await _service.CancelAsync(id, ownerId);
