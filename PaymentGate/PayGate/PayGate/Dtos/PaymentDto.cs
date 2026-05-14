@@ -8,7 +8,7 @@ public class PaymentDto
 
 public class PaymentRequestDto
 {
-    public int idBooking { get; set; }
+    public string idBooking { get; set; }
     public decimal price { get; set; }
     public string  timestamp { get; set; }
     public string callBackUrl { get; set; }
@@ -26,9 +26,14 @@ public class PaymentResponseDto
 
 public class PayGateRequestDto
 {
-    public int Idbooking { get; set; }
+    public string Idbooking { get; set; }
     public decimal price { get; set; }
     public string? timestamp { get; set; }
     public string Build { get; set; }
     public string status { get; set; }
+}
+
+public class GateCall
+{
+    public string idBooking { get; set; }
 }

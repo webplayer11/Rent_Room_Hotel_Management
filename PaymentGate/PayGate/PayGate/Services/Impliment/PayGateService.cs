@@ -8,7 +8,7 @@ namespace PayGate.Services.Impliment
 {
     public class PayGateService : IPayGateService
     {
-        private static List<BuildDto> _buildDtos = new List<BuildDto>();
+        private static List<BuildDto> _buildDtos = new();
         
         
 
@@ -37,6 +37,7 @@ namespace PayGate.Services.Impliment
                 status = "Pending",
             };
             _buildDtos.Add(build);
+             Console.WriteLine (_buildDtos[0].idBooking);
             
             return new PaymentResponseDto
             {
@@ -48,12 +49,13 @@ namespace PayGate.Services.Impliment
             };
         }
 
-        public async Task<PayGateRequestDto> CallBackBackEnd(int idBooking)
+        public async Task<PayGateRequestDto> CallBackBackEnd(string gateCall)
         {
-            var build =  _buildDtos.FirstOrDefault(b => b.idBooking == idBooking);
+           
+            var build =  _buildDtos.FirstOrDefault(b => b.idBooking == gateCall);
             if (build == null)
-                //throw new Exception("Không tìm thấy Build payment");
-                return null;
+              // throw new Exception("Không tìm thấy Build payment");
+               return null;
             build.status = "SUCCESS";
             var timestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds().ToString();
             

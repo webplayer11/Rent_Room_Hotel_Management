@@ -37,15 +37,16 @@ public class PaymentController : ControllerBase
     }
 
     [HttpPost("callback")]
-    public async Task<IActionResult> CallbackPayment(int idBooking)
+    public async Task<IActionResult> CallbackPayment(GateCall gateCall)
     {
-        var result = await _payGateService.CallBackBackEnd(idBooking);
-        if (result == null) return BadRequest();
+        
+        var result = await _payGateService.CallBackBackEnd(gateCall.idBooking);
+        if (result == null) return BadRequest(ResponseApi<string>.Failure(400,"looix ddaay"));
         var data = $"{result.Build}|{result.Idbooking}|{result.price}|{result.timestamp}";
         var signature = _payGateService.GenerateHmacSha256(data, an.Key);
         var request = new HttpRequestMessage(
             HttpMethod.Post,
-            "http://localhost:5204/api/pay/callback"
+            "http://localhost:5204/api/payments/callback"
         );
         request.Headers.Add("X-Signature", signature);
         request.Content = JsonContent.Create(result);
