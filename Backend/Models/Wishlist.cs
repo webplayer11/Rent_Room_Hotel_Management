@@ -17,9 +17,6 @@ namespace RoomManagement.Models
         public string? HotelId { get; set; }
 
         // Navigation
-        [ForeignKey(nameof(CustomerId))]
-        public Customer? Customer { get; set; }
-
         [ForeignKey(nameof(HotelId))]
         public Hotel? Hotel { get; set; }
     }

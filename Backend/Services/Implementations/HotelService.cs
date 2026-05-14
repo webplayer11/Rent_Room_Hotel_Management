@@ -164,7 +164,7 @@ namespace RoomManagement.Services.Implementations
                     review.Id,
                     review.HotelId,
                     review.CustomerId,
-                    review.Customer?.Name,
+                    null,
                     review.Rating,
                     review.Comment,
                     review.CreatedAt

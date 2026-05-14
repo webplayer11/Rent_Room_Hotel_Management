@@ -13,7 +13,6 @@ namespace RoomManagement.Data
         }
 
         // ── DbSets ──────────────────────────────────────────────────────────
-        public DbSet<Customer> Customers { get; set; }
         public DbSet<HotelOwner> HotelOwners { get; set; }
         public DbSet<Hotel> Hotels { get; set; }
         public DbSet<Room> Rooms { get; set; }
@@ -35,17 +34,6 @@ namespace RoomManagement.Data
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
-
-            // ── Customer ──────────────────────────────────────────────────────
-            modelBuilder.Entity<Customer>(entity =>
-            {
-                entity.ToTable("Customer");
-                entity.HasKey(e => e.Id);
-                entity.Property(e => e.Id).HasMaxLength(50);
-                entity.Property(e => e.Name).HasMaxLength(100);
-                entity.Property(e => e.Phone).HasMaxLength(20);
-                entity.Property(e => e.IdentityDoc).HasMaxLength(100);
-            });
 
             // ── HotelOwner ────────────────────────────────────────────────────
             modelBuilder.Entity<HotelOwner>(entity =>
@@ -159,11 +147,6 @@ namespace RoomManagement.Data
                 entity.Property(e => e.TotalPrice).HasColumnType("decimal(18,2)");
                 entity.Property(e => e.CreatedAt).HasColumnType("datetime2");
 
-                entity.HasOne(e => e.CustomerNav)
-                      .WithMany(c => c.Bookings)
-                      .HasForeignKey(e => e.CustomerId)
-                      .OnDelete(DeleteBehavior.Restrict);
-
                 entity.HasOne(e => e.RoomNav)
                       .WithMany(r => r.Bookings)
                       .HasForeignKey(e => e.RoomId)
@@ -221,11 +204,6 @@ namespace RoomManagement.Data
                       .WithMany(h => h.Reviews)
                       .HasForeignKey(e => e.HotelId)
                       .OnDelete(DeleteBehavior.Restrict);
-
-                entity.HasOne(e => e.Customer)
-                      .WithMany(c => c.Reviews)
-                      .HasForeignKey(e => e.CustomerId)
-                      .OnDelete(DeleteBehavior.Restrict);
             });
 
             // ── Wishlist ──────────────────────────────────────────────────────
@@ -236,11 +214,6 @@ namespace RoomManagement.Data
                 entity.Property(e => e.Id).HasMaxLength(50);
                 entity.Property(e => e.CustomerId).HasMaxLength(50);
                 entity.Property(e => e.HotelId).HasMaxLength(50);
-
-                entity.HasOne(e => e.Customer)
-                      .WithMany(c => c.Wishlists)
-                      .HasForeignKey(e => e.CustomerId)
-                      .OnDelete(DeleteBehavior.Restrict);
 
                 entity.HasOne(e => e.Hotel)
                       .WithMany()
@@ -269,11 +242,6 @@ namespace RoomManagement.Data
                 entity.Property(e => e.CustomerId).HasMaxLength(50);
                 entity.Property(e => e.Type).HasMaxLength(50);
                 entity.Property(e => e.SentAt).HasColumnType("datetime2");
-
-                entity.HasOne(e => e.Customer)
-                      .WithMany(c => c.Notifications)
-                      .HasForeignKey(e => e.CustomerId)
-                      .OnDelete(DeleteBehavior.Cascade);
             });
 
             // ── Promotion ─────────────────────────────────────────────────────

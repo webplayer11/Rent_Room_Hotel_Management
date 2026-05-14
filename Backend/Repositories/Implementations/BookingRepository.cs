@@ -23,7 +23,6 @@ namespace RoomManagement.Repositories.Implementations
 
         public async Task<Booking?> GetWithDetailsAsync(string id)
             => await _dbSet.AsNoTracking()
-                           .Include(b => b.CustomerNav)
                            .Include(b => b.RoomNav).ThenInclude(r => r!.Hotel)
                            .Include(b => b.Payments)
                            .Include(b => b.Invoices)

@@ -66,9 +66,6 @@ namespace RoomManagement.Services.Implementations
 
         private static BookingDetailDto MapToDetailDto(Booking b) => new(
             b.Id,
-            b.CustomerNav is null ? null : new CustomerDto(
-                b.CustomerNav.Id, b.CustomerNav.Name,
-                b.CustomerNav.Phone, b.CustomerNav.Address, b.CustomerNav.IdentityDoc),
             b.RoomNav is null ? null : new RoomDto(
                 b.RoomNav.Id, b.RoomNav.HotelId, b.RoomNav.RoomNumber, b.RoomNav.RoomType,
                 b.RoomNav.Capacity, b.RoomNav.PricePerNight, b.RoomNav.Status,
