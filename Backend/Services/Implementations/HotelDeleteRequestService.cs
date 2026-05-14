@@ -9,15 +9,18 @@ namespace RoomManagement.Services.Implementations
     {
         private readonly IHotelDeleteRequestRepository _repo;
         private readonly IHotelRepository _hotelRepo;
+        private readonly IBookingRepository _bookingRepo;
         private readonly INotificationService _notificationService;
 
         public HotelDeleteRequestService(
             IHotelDeleteRequestRepository repo,
             IHotelRepository hotelRepo,
+            IBookingRepository bookingRepo,
             INotificationService notificationService)
         {
             _repo = repo;
             _hotelRepo = hotelRepo;
+            _bookingRepo = bookingRepo;
             _notificationService = notificationService;
         }
 
@@ -69,26 +72,34 @@ namespace RoomManagement.Services.Implementations
 
         public async Task<bool> ReviewAsync(string id, ReviewHotelDeleteRequestDto dto)
         {
+            // Validate Decision
+            var validDecisions = new[] { "Approved", "Rejected" };
+            if (!validDecisions.Contains(dto.Decision))
+                throw new ArgumentException("Decision không hợp lệ. Chỉ chấp nhận: Approved, Rejected.");
+
             var entity = await _repo.GetWithDetailsAsync(id);
-            if (entity == null || entity.Status != "Pending") return false;
+            if (entity == null) throw new KeyNotFoundException("Không tìm thấy yêu cầu.");
+            if (entity.Status != "Pending")
+                throw new InvalidOperationException($"Không thể xử lý yêu cầu ở trạng thái '{entity.Status}'.");
 
             entity.Status = dto.Decision;
             entity.AdminNote = dto.AdminNote;
             entity.UpdatedAt = DateTime.UtcNow;
-
             await _repo.UpdateAsync(entity);
 
             if (dto.Decision == "Approved")
             {
+                var hasActiveBooking = await _bookingRepo.HasActiveBookingByHotelAsync(entity.HotelId);
+                if (hasActiveBooking)
+                    throw new InvalidOperationException("Không thể xóa khách sạn đang có booking Confirmed hoặc CheckedIn.");
+
+                entity.Status = "Approved";
+                entity.AdminNote = dto.AdminNote;
+                entity.UpdatedAt = DateTime.UtcNow;
+                await _repo.UpdateAsync(entity);
+
                 await _hotelRepo.DeleteAsync(entity.HotelId);
-                // Notify Owner
-                // await _notificationService.SendToCustomerAsync(entity.OwnerId, "Yêu cầu xóa khách sạn đã được duyệt", "Khách sạn của bạn đã bị xóa khỏi hệ thống.");
-            }
-            else if (dto.Decision == "Rejected")
-            {
-                // Notify Owner
-                // await _notificationService.SendToCustomerAsync(entity.OwnerId, "Yêu cầu xóa khách sạn đã bị từ chối", $"Lý do: {dto.AdminNote}");
-            }
+            }    
 
             return true;
         }
