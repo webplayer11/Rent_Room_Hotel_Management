@@ -105,7 +105,14 @@ public class RoomService : IRoomService
             RoomSize = room.RoomSize,
             Status = room.Status,
             IsSmokingAllowed = room.IsSmokingAllowed,
-            IsActive = room.IsActive
+            IsActive = room.IsActive,
+            Images = room.Images?.Select(img => new RoomImageDto
+            {
+                Id = img.Id,
+                Url = img.Url,
+                Caption = img.Caption,
+                SortOrder = img.SortOrder
+            }).ToList() ?? new List<RoomImageDto>()
         };
     }
 }

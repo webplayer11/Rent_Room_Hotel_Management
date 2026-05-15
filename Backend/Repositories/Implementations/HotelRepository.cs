@@ -16,17 +16,24 @@ public class HotelRepository : IHotelRepository
 
     public async Task<IEnumerable<Hotel>> GetAllAsync()
     {
-        return await _context.Hotels.ToListAsync();
+        return await _context.Hotels
+            .Include(h => h.Images)
+            .ToListAsync();
     }
 
     public async Task<IEnumerable<Hotel>> GetByHostIdAsync(string hostId)
     {
-        return await _context.Hotels.Where(h => h.HostId == hostId).ToListAsync();
+        return await _context.Hotels
+            .Include(h => h.Images)
+            .Where(h => h.HostId == hostId)
+            .ToListAsync();
     }
 
     public async Task<Hotel?> GetByIdAsync(string id)
     {
-        return await _context.Hotels.FirstOrDefaultAsync(h => h.Id == id);
+        return await _context.Hotels
+            .Include(h => h.Images)
+            .FirstOrDefaultAsync(h => h.Id == id);
     }
 
     public async Task<Hotel> CreateAsync(Hotel hotel)

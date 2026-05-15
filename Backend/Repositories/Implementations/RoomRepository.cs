@@ -16,12 +16,17 @@ public class RoomRepository : IRoomRepository
 
     public async Task<IEnumerable<Room>> GetByHotelIdAsync(string hotelId)
     {
-        return await _context.Rooms.Where(r => r.HotelId == hotelId).ToListAsync();
+        return await _context.Rooms
+            .Include(r => r.Images)
+            .Where(r => r.HotelId == hotelId)
+            .ToListAsync();
     }
 
     public async Task<Room?> GetByIdAsync(string id)
     {
-        return await _context.Rooms.FirstOrDefaultAsync(r => r.Id == id);
+        return await _context.Rooms
+            .Include(r => r.Images)
+            .FirstOrDefaultAsync(r => r.Id == id);
     }
 
     public async Task<Room> CreateAsync(Room room)
