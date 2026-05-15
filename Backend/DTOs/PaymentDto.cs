@@ -7,7 +7,7 @@ public class PaymentDto
     public string Id { get; set; } = default!;
     public string BookingId { get; set; } = default!;
     public decimal Amount { get; set; }
-    public string Method { get; set; } = default!;
+    public string Method { get; set; } = "QR";
     public string Status { get; set; } = "Pending";
     public string? TransactionId { get; set; }
     public DateTime? PaidAt { get; set; }
@@ -16,7 +16,7 @@ public class PaymentDto
 public class ProcessPaymentDto
 {
     public string BookingId { get; set; } = default!;
-    public string Method { get; set; } = default!; // Cash, CreditCard, VNPay, Momo
+    public string Method { get; set; } = "QR";
 }
 
 

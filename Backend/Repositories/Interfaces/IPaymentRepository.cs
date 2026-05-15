@@ -9,7 +9,7 @@ public interface IPaymentRepository
     Task<Payment> CreateAsync(Payment payment);
     Task<Payment> UpdateAsync(Payment payment);
     
-    Task<bool> UpdateStatusAsync(string payment);
+    Task<bool> UpdateStatusAsync(string paymentBuild);
     
     
 }

@@ -49,7 +49,7 @@ public class PaymentRepository : IPaymentRepository
 
     public async Task<bool> UpdateStatusAsync(string paymentBuild)
     {
-        var payment =  await _context.Payments.FirstOrDefaultAsync(p => p.Id == paymentBuild);
+        var payment =  await _context.Payments.FirstOrDefaultAsync(p => p.TransactionId == paymentBuild);
         if (payment == null)
         {
             return false;

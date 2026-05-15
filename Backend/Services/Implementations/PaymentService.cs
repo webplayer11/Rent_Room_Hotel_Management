@@ -122,13 +122,13 @@ public class PaymentService : IPaymentService
                 return false;
             }
 
-           /** var result = await _paymentRepository.UpdateStatusAsync(payGateRequestDto.Build);
+           var result = await _paymentRepository.UpdateStatusAsync(payGateRequestDto.Build);
             
             if (!result)
             {
                 return false;
             }
-            **/
+        
             return true;
     }
 
