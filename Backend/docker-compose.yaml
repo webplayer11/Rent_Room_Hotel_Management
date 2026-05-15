@@ -1,5 +1,4 @@
 services:
-  # SQL Server — chạy bằng Docker để không cần cài trên máy
   sqlserver:
     image: mcr.microsoft.com/mssql/server:2022-latest
     container_name: roommanagement-db
@@ -8,9 +7,9 @@ services:
       SA_PASSWORD: "RoomPass@123"
       MSSQL_PID: "Express"
     ports:
-      - "1433:1433"         # Expose ra máy host để dotnet run kết nối vào
+      - "1433:1433"
     volumes:
-      - sqlserver_data:/var/opt/mssql   # Giữ data khi restart
+      - sqlserver_data:/var/opt/mssql
 
   # MinIO — Server lưu trữ object (giống S3)
   minio:

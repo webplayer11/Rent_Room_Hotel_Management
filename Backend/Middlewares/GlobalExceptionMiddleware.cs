@@ -74,4 +74,5 @@ namespace RoomManagement.Middlewares
             this IApplicationBuilder app)
             => app.UseMiddleware<GlobalExceptionMiddleware>();
     }
+    
 }

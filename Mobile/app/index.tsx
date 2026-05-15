@@ -1,37 +1,44 @@
-import { Redirect } from 'expo-router';
-import { useAuth } from '../src/context/AuthContext';
-import { ActivityIndicator, View, StyleSheet } from 'react-native';
+import { router } from "expo-router";
+import { useEffect } from "react";
+import { ActivityIndicator, View } from "react-native";
+
+import { tokenStorage } from "../src/shared/storage/tokenStorage";
 
 export default function Index() {
-  const { userToken, userRole, isLoading } = useAuth();
+  useEffect(() => {
+    checkAuth();
+  }, []);
 
-  if (isLoading) {
-    return (
-      <View style={styles.loader}>
-        <ActivityIndicator size="large" color="#185FA5" />
-      </View>
-    );
-  }
+  const checkAuth = async () => {
+    try {
+      const token = await tokenStorage.getAccessToken();
 
-  if (!userToken) {
-    return <Redirect href="/auth/login" />;
-  }
+      if (!token) {
+        router.replace("/auth/login");
+        return;
+      }
 
-  if (userRole === 'admin') {
-    return <Redirect href="/admin" />;
-  }
+      const role = await tokenStorage.getRole();
 
-  if (userRole === 'owner') {
-    return <Redirect href="/owner" />;
-  }
+      if (role === "Admin") {
+        router.replace("/admin/home");
+      } else if (role === "Host") {
+        router.replace("/owner/home");
+      } else if (role === "Customer") {
+        router.replace("/customer/home");
+      } else {
+        await tokenStorage.clearTokens();
+        router.replace("/auth/login");
+      }
+    } catch {
+      await tokenStorage.clearTokens();
+      router.replace("/auth/login");
+    }
+  };
 
-  return <Redirect href="/customer" />;
+  return (
+    <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+      <ActivityIndicator size="large" />
+    </View>
+  );
 }
-
-const styles = StyleSheet.create({
-  loader: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-});

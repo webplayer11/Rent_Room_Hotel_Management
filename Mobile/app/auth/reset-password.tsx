@@ -1,4 +1,4 @@
-import { router } from "expo-router";
+import { router, useLocalSearchParams } from "expo-router";
 import { useState } from "react";
 import {
   Alert,
@@ -10,24 +10,22 @@ import {
 
 import { authApi } from "../../src/shared/api/authApi";
 
-export default function ForgotPasswordScreen() {
-  const [email, setEmail] = useState("");
+export default function ResetPasswordScreen() {
+  const { email, token } = useLocalSearchParams();
 
-  const handleForgot = async () => {
+  const [newPassword, setNewPassword] = useState("");
+
+  const handleReset = async () => {
     try {
-      const res = await authApi.forgotPassword(email);
+      await authApi.resetPassword(
+        email as string,
+        token as string,
+        newPassword
+      );
 
-      const token = res.data.resetToken;
+      Alert.alert("Thành công", "Đổi mật khẩu thành công");
 
-      Alert.alert("Thông báo", "Token reset đã được tạo");
-
-      router.push({
-        pathname: "/auth/reset-password",
-        params: {
-          email,
-          token,
-        },
-      });
+      router.replace("/auth/login");
     } catch (e: any) {
       Alert.alert("Lỗi", e.message);
     }
@@ -36,18 +34,19 @@ export default function ForgotPasswordScreen() {
   return (
     <View style={{ flex: 1, justifyContent: "center", padding: 24 }}>
       <Text style={{ fontSize: 28, fontWeight: "bold" }}>
-        Quên mật khẩu
+        Đặt lại mật khẩu
       </Text>
 
       <TextInput
-        placeholder="Nhập email"
-        value={email}
-        onChangeText={setEmail}
+        placeholder="Mật khẩu mới"
+        secureTextEntry
+        value={newPassword}
+        onChangeText={setNewPassword}
         style={input}
       />
 
-      <Pressable onPress={handleForgot} style={button}>
-        <Text style={buttonText}>Gửi yêu cầu</Text>
+      <Pressable onPress={handleReset} style={button}>
+        <Text style={buttonText}>Đổi mật khẩu</Text>
       </Pressable>
     </View>
   );

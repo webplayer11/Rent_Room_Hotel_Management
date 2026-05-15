@@ -35,7 +35,10 @@ builder.Services.AddApplicationServices();
 // ═══════════════════════════════════════════════════════════════
 //  3. CONTROLLERS + JSON
 // ═══════════════════════════════════════════════════════════════
-builder.Services.AddControllers()
+builder.Services.AddControllers(options =>
+{
+    options.Filters.Add<RoomManagement.Filters.ValidationFilter>();
+})
     .AddJsonOptions(opt =>
     {
         opt.JsonSerializerOptions.PropertyNamingPolicy =
@@ -141,6 +144,11 @@ if (app.Environment.IsDevelopment())
         opt.RoutePrefix = string.Empty;
     });
 }
+
+//app.UseHttpsRedirection();
+
+app.UseCors("AllowAll");
+
 
 //app.UseHttpsRedirection();
 app.UseCors();

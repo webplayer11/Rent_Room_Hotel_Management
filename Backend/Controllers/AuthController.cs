@@ -141,4 +141,5 @@ public class AuthController : ControllerBase
         var errors = result.Errors.Select(e => e.Description).ToList();
         return BadRequest(ResponseApi<List<string>>.Failure(400, "Đặt lại mật khẩu thất bại", errors));
     }
+
 }

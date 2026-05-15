@@ -1,52 +1,107 @@
-//const API_BASE_URL = 'http://localhost:5204/api';
+import { tokenStorage } from "../storage/tokenStorage";
 
-// Nếu test bằng điện thoại Expo Go, đổi thành IP máy tính, ví dụ:
-const API_BASE_URL = 'http://192.168.1.86:5204/api';
+const API_URL = process.env.EXPO_PUBLIC_API_URL;
 
 type ApiResponse<T> = {
-  success: boolean;
-  message: string | null;
+  isSuccess: boolean;
+  code: number;
+  message: string;
   data: T;
 };
 
-export async function apiGet<T>(endpoint: string): Promise<T> {
-  const response = await fetch(`${API_BASE_URL}${endpoint}`);
+type AuthResponseDto = {
+  fullName: string;
+  roles: string[];
+  token: string;
+  refreshToken: string;
+};
 
-  const json: ApiResponse<T> = await response.json();
+async function refreshAccessToken() {
+  const accessToken = await tokenStorage.getAccessToken();
+  const refreshToken = await tokenStorage.getRefreshToken();
 
-  if (!response.ok || !json.success) {
-    throw new Error(json.message || 'Có lỗi xảy ra khi gọi API');
+  if (!accessToken || !refreshToken) {
+    throw new Error("Không có token để làm mới");
   }
 
-  return json.data;
-}
-
-export async function apiPost<TResponse, TBody>(
-  endpoint: string,
-  body: TBody
-): Promise<TResponse> {
-  const response = await fetch(`${API_BASE_URL}${endpoint}`, {
-    method: 'POST',
+  const response = await fetch(`${API_URL}/api/auth/refresh-token`, {
+    method: "POST",
     headers: {
-      'Content-Type': 'application/json',
+      "Content-Type": "application/json",
     },
-    body: JSON.stringify(body),
+    body: JSON.stringify({
+      accessToken,
+      refreshToken,
+    }),
   });
 
-  const rawText = await response.text();
+  const result = (await response.json()) as ApiResponse<AuthResponseDto>;
 
-  let json: ApiResponse<TResponse> | null = null;
-
-  try {
-    json = JSON.parse(rawText);
-  } catch {
-    console.log('Backend trả về không phải JSON:', rawText);
-    throw new Error('Backend đang lỗi. Xem terminal Backend để biết lỗi thật.');
+  if (!response.ok || !result.data) {
+    throw new Error(result.message || "Refresh token thất bại");
   }
 
-  if (!response.ok || !json.success) {
-    throw new Error(json.message || 'Có lỗi xảy ra khi gửi dữ liệu');
+  await tokenStorage.saveTokens(
+    result.data.token,
+    result.data.refreshToken
+  );
+
+  return result.data.token;
+}
+
+export async function apiFetch<T = any>(
+  endpoint: string,
+  options: RequestInit = {}
+): Promise<T> {
+  if (!API_URL) {
+    throw new Error("Thiếu EXPO_PUBLIC_API_URL trong file .env");
   }
 
-  return json.data;
+  const accessToken = await tokenStorage.getAccessToken();
+
+  let response = await fetch(`${API_URL}${endpoint}`, {
+    ...options,
+    headers: {
+      "Content-Type": "application/json",
+      ...(accessToken
+        ? { Authorization: `Bearer ${accessToken}` }
+        : {}),
+      ...(options.headers || {}),
+    },
+  });
+
+  if (response.status === 401 && !endpoint.includes("login")) {
+    try {
+      const newToken = await refreshAccessToken();
+
+      response = await fetch(`${API_URL}${endpoint}`, {
+        ...options,
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${newToken}`,
+          ...(options.headers || {}),
+        },
+      });
+    } catch {
+      await tokenStorage.clearTokens();
+      throw new Error("Phiên đăng nhập đã hết hạn, vui lòng đăng nhập lại");
+    }
+  }
+
+  const data = await response.json().catch(() => null);
+
+ if (!response.ok) {
+  console.log("API ERROR STATUS:", response.status);
+  console.log("API ERROR DATA:", data);
+
+  const errorMessage =
+    data?.data?.join?.("\n") ||
+    data?.errors?.join?.("\n") ||
+    data?.message ||
+    "Có lỗi xảy ra";
+
+  throw new Error(errorMessage);
+}
+
+  return data;
 }
