@@ -37,6 +37,11 @@ public class Hotel
     public bool IsActive { get; set; } = true;
 
     [Column(TypeName = "datetime2")]
+    public DateTime? SuspendedAt { get; set; }
+
+    public string? SuspendReason { get; set; }
+
+    [Column(TypeName = "datetime2")]
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
     [Column(TypeName = "datetime2")]

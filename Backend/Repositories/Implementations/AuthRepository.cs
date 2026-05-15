@@ -66,28 +66,28 @@ public class AuthRepository : IAuthRepository
         return result;
     }
 
-    public async Task<IdentityResult> UpgradeToHostAsync(string userId, UpgradeToHostDto dto)
+    public async Task<bool> UpgradeToHostAsync(string userId, UpgradeToHostDto dto, string businessLicenseUrlsJson)
     {
         var user = await _userManager.FindByIdAsync(userId);
         if (user == null)
-            return IdentityResult.Failed(new IdentityError { Description = "User not found!" });
+            return false;
 
         if (await _userManager.IsInRoleAsync(user, AppRoles.Host))
-            return IdentityResult.Failed(new IdentityError { Description = "User is already a Host!" });
+            return false;
 
         // Tạo HostProfile cho User
         var hostProfile = new HostProfile
         {
             Id = user.Id,
             CompanyName = dto.CompanyName,
-            TaxCode = dto.TaxCode
+            TaxCode = dto.TaxCode,
+            BusinessLicenseUrls = businessLicenseUrlsJson
         };
 
         _context.HostProfiles.Add(hostProfile);
         await _context.SaveChangesAsync();
-
-        await EnsureRoleExistsAsync(AppRoles.Host);
-        return await _userManager.AddToRoleAsync(user, AppRoles.Host);
+        
+        return true;
     }
 
     public async Task<AuthResponseDto?> LoginAsync(LoginDto loginDto)

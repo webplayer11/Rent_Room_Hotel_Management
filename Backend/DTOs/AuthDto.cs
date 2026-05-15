@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using Microsoft.AspNetCore.Http;
 
 namespace RoomManagement.DTOs;
 
@@ -33,6 +34,9 @@ public class UpgradeToHostDto
 
     [Required]
     public string TaxCode { get; set; } = string.Empty;
+
+    [Required]
+    public List<IFormFile> BusinessLicenses { get; set; } = new();
 }
 
 public class LoginDto

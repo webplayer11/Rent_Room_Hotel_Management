@@ -26,7 +26,14 @@ public class HostProfile
     [MaxLength(100)]
     public string? BankName { get; set; }
 
+    public string? BusinessLicenseUrls { get; set; }
+
     public bool IsVerified { get; set; } = false;
+
+    [MaxLength(20)]
+    public string Status { get; set; } = "Pending"; // Pending, Approved, Rejected
+
+    public string? RejectionReason { get; set; }
 
     [Column(TypeName = "datetime2")]
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;

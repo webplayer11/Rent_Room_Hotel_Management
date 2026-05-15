@@ -10,24 +10,24 @@ namespace PayGate.Controllers;
 [Route("api/paymentgate")]
 public class PaymentController : ControllerBase
 {
-    
+
     private readonly IPayGateService _payGateService;
     private readonly HttpClient _httpClient;
 
-    public PaymentController(IPayGateService payGateService,  HttpClient httpClient)
+    public PaymentController(IPayGateService payGateService, HttpClient httpClient)
     {
         _payGateService = payGateService;
         _httpClient = httpClient;
     }
-    
+
     [HttpPost("createbuiltpayment")]
     public async Task<IActionResult> CreatBill(PaymentRequestDto paymentRequestDto)
     {
         try
         {
             var signature = Request.Headers["X-Signature"].ToString();
-            var result = await _payGateService.CreateBuiltPayment(paymentRequestDto,signature);
-            return Ok(ResponseApi<PaymentResponseDto>.Success(result));  
+            var result = await _payGateService.CreateBuiltPayment(paymentRequestDto, signature);
+            return Ok(ResponseApi<PaymentResponseDto>.Success(result));
         }
         catch (Exception ex)
         {
@@ -39,9 +39,9 @@ public class PaymentController : ControllerBase
     [HttpPost("callback")]
     public async Task<IActionResult> CallbackPayment(GateCall gateCall)
     {
-        
+
         var result = await _payGateService.CallBackBackEnd(gateCall.idBooking);
-        if (result == null) return BadRequest(ResponseApi<string>.Failure(400,"looix ddaay"));
+        if (result == null) return BadRequest(ResponseApi<string>.Failure(400, "looix ddaay"));
         var data = $"{result.Build}|{result.Idbooking}|{result.price}|{result.timestamp}";
         var signature = _payGateService.GenerateHmacSha256(data, an.Key);
         var request = new HttpRequestMessage(
@@ -61,7 +61,8 @@ public class PaymentController : ControllerBase
                 )
             );
         }
+
         return Ok();
     }
-    
+
 }

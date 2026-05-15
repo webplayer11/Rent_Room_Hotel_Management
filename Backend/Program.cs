@@ -28,6 +28,8 @@ builder.Services.AddIdentity<ApplicationUser, IdentityRole>()
 // ═══════════════════════════════════════════════════════════════
 //  2. REPOSITORIES + SERVICES  (một dòng duy nhất)
 // ═══════════════════════════════════════════════════════════════
+builder.Services.Configure<RoomManagement.Models.MinIOOptions>(
+    builder.Configuration.GetSection("MinIO"));
 builder.Services.AddApplicationServices();
 
 // ═══════════════════════════════════════════════════════════════

@@ -1,7 +1,10 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Options;
+using RoomManagement.Data;
 using RoomManagement.DTOs;
+using RoomManagement.Models;
 using RoomManagement.Services.Interfaces;
 
 namespace RoomManagement.Controllers;
@@ -11,10 +14,20 @@ namespace RoomManagement.Controllers;
 public class HotelController : ControllerBase
 {
     private readonly IHotelService _service;
+    private readonly IStorageService _storageService;
+    private readonly MinIOOptions _minioOptions;
+    private readonly AppDbContext _context;
 
-    public HotelController(IHotelService service)
+    public HotelController(
+        IHotelService service,
+        IStorageService storageService,
+        IOptions<MinIOOptions> minioOptions,
+        AppDbContext context)
     {
         _service = service;
+        _storageService = storageService;
+        _minioOptions = minioOptions.Value;
+        _context = context;
     }
 
     [HttpGet]
@@ -79,4 +92,59 @@ public class HotelController : ControllerBase
 
         return Ok(ResponseApi<string>.Success(null!, "Xóa khách sạn thành công"));
     }
+
+    // ── Image Upload ──────────────────────────────────────────────
+
+    [HttpPost("{id}/images")]
+    [Authorize(Roles = "Host")]
+    public async Task<IActionResult> UploadImage(string id, IFormFile file)
+    {
+        var hostId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (hostId == null) return Unauthorized();
+
+        var hotel = await _context.Hotels.FindAsync(id);
+        if (hotel == null || hotel.HostId != hostId)
+            return NotFound(ResponseApi<string>.Failure(404, "Không tìm thấy khách sạn hoặc bạn không có quyền"));
+
+        var objectKey = $"{id}_{DateTimeOffset.UtcNow.ToUnixTimeSeconds()}.webp";
+        var relativePath = await _storageService.UploadAsync(file, _minioOptions.HotelBucketName, objectKey, 1280, 720);
+
+        var image = new HotelImage
+        {
+            Id = Guid.NewGuid().ToString(),
+            HotelId = id,
+            Url = relativePath,
+            IsPrimary = !_context.HotelImages.Any(hi => hi.HotelId == id)
+        };
+
+        _context.HotelImages.Add(image);
+        await _context.SaveChangesAsync();
+
+        return Ok(ResponseApi<object>.Success(new { image.Id, image.Url, image.IsPrimary }, "Upload ảnh thành công", 201));
+    }
+
+    [HttpDelete("{id}/images/{imageId}")]
+    [Authorize(Roles = "Host")]
+    public async Task<IActionResult> DeleteImage(string id, string imageId)
+    {
+        var hostId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (hostId == null) return Unauthorized();
+
+        var hotel = await _context.Hotels.FindAsync(id);
+        if (hotel == null || hotel.HostId != hostId)
+            return NotFound(ResponseApi<string>.Failure(404, "Không tìm thấy khách sạn hoặc bạn không có quyền"));
+
+        var image = await _context.HotelImages.FindAsync(imageId);
+        if (image == null || image.HotelId != id)
+            return NotFound(ResponseApi<string>.Failure(404, "Không tìm thấy ảnh"));
+
+        if (!string.IsNullOrEmpty(image.Url))
+            await _storageService.DeleteAsync(image.Url);
+
+        _context.HotelImages.Remove(image);
+        await _context.SaveChangesAsync();
+
+        return Ok(ResponseApi<string>.Success(null!, "Xóa ảnh thành công"));
+    }
 }
+

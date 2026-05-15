@@ -42,30 +42,5 @@ public class HostProfileController : ControllerBase
 
         return Ok(ResponseApi<HostProfileDto>.Success(profile, "Cập nhật hồ sơ thành công"));
     }
-
-    [HttpGet("pending")]
-    [Authorize(Roles = "Admin")]
-    public async Task<IActionResult> GetPendingHosts()
-    {
-        var hosts = await _service.GetHostsByStatusAsync(false);
-        return Ok(ResponseApi<IEnumerable<HostProfileDto>>.Success(hosts));
-    }
-
-    [HttpGet("approved")]
-    [Authorize(Roles = "Admin")]
-    public async Task<IActionResult> GetApprovedHosts()
-    {
-        var hosts = await _service.GetHostsByStatusAsync(true);
-        return Ok(ResponseApi<IEnumerable<HostProfileDto>>.Success(hosts));
-    }
-
-    [HttpPost("{id}/approve")]
-    [Authorize(Roles = "Admin")]
-    public async Task<IActionResult> ApproveHost(string id)
-    {
-        var result = await _service.ApproveHostAsync(id);
-        if (!result) return NotFound(ResponseApi<string>.Failure(404, "Không tìm thấy HostProfile"));
-
-        return Ok(ResponseApi<string>.Success(null!, "Duyệt Host thành công"));
-    }
 }
+

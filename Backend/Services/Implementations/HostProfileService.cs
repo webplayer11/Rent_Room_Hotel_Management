@@ -63,6 +63,7 @@ public class HostProfileService : IHostProfileService
             BankAccount = profile.BankAccount,
             BankName = profile.BankName,
             IsVerified = profile.IsVerified,
+            BusinessLicenseUrl = profile.BusinessLicenseUrls,
             Email = profile.User?.Email,
             FullName = profile.User?.FullName,
             PhoneNumber = profile.User?.PhoneNumber

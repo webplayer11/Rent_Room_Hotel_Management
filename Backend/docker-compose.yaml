@@ -12,5 +12,39 @@ services:
     volumes:
       - sqlserver_data:/var/opt/mssql   # Giữ data khi restart
 
+  # MinIO — Server lưu trữ object (giống S3)
+  minio:
+    image: minio/minio:latest
+    container_name: roommanagement-minio
+    environment:
+      MINIO_ROOT_USER: "admin"
+      MINIO_ROOT_PASSWORD: "password123"
+    ports:
+      - "9000:9000" # API Port
+      - "9001:9001" # Console Port
+    volumes:
+      - minio_data:/data
+    command: server /data --console-address ":9001"
+
+  # Tự động tạo các bucket và cấp quyền public read cho MinIO
+  minio-setup:
+    image: minio/mc:latest
+    container_name: roommanagement-minio-setup
+    depends_on:
+      - minio
+    entrypoint: >
+      /bin/sh -c "
+      sleep 5;
+      /usr/bin/mc alias set myminio http://minio:9000 admin password123;
+      /usr/bin/mc mb myminio/hotel-images --ignore-existing;
+      /usr/bin/mc anonymous set download myminio/hotel-images;
+      /usr/bin/mc mb myminio/room-images --ignore-existing;
+      /usr/bin/mc anonymous set download myminio/room-images;
+      /usr/bin/mc mb myminio/host-documents --ignore-existing;
+      /usr/bin/mc anonymous set download myminio/host-documents;
+      exit 0;
+      "
+
 volumes:
   sqlserver_data:
+  minio_data:

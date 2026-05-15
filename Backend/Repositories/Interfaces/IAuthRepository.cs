@@ -6,7 +6,7 @@ namespace RoomManagement.Repositories.Interfaces;
 public interface IAuthRepository
 {
     Task<IdentityResult> RegisterAsync(RegisterDto registerDto);
-    Task<IdentityResult> UpgradeToHostAsync(string userId, UpgradeToHostDto dto);
+    Task<bool> UpgradeToHostAsync(string userId, UpgradeToHostDto dto, string businessLicenseUrlsJson);
     Task<AuthResponseDto?> LoginAsync(LoginDto loginDto);
     Task<AuthResponseDto?> RefreshTokenAsync(TokenRequestDto tokenRequestDto);
     Task<bool> LogoutAsync(string token);

@@ -159,5 +159,26 @@ public class AppDbContext : IdentityDbContext<ApplicationUser>
             .WithMany(h => h.RevenueReports)
             .HasForeignKey(rr => rr.HotelId)
             .OnDelete(DeleteBehavior.Cascade);
+
+        // Voucher → Hotel (nullable: null = voucher toàn sàn)
+        modelBuilder.Entity<Voucher>()
+            .HasOne(v => v.Hotel)
+            .WithMany()
+            .HasForeignKey(v => v.HotelId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        // Voucher → ApplicationUser (người tạo)
+        modelBuilder.Entity<Voucher>()
+            .HasOne(v => v.CreatedByUser)
+            .WithMany()
+            .HasForeignKey(v => v.CreatedByUserId)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        // Booking → Voucher
+        modelBuilder.Entity<Booking>()
+            .HasOne(b => b.Voucher)
+            .WithMany(v => v.Bookings)
+            .HasForeignKey(b => b.VoucherId)
+            .OnDelete(DeleteBehavior.SetNull);
     }
 }

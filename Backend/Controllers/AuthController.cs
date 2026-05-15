@@ -1,8 +1,11 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Options;
 using RoomManagement.DTOs;
+using RoomManagement.Models;
 using RoomManagement.Repositories.Interfaces;
+using RoomManagement.Services.Interfaces;
 
 namespace RoomManagement.Controllers;
 
@@ -11,10 +14,17 @@ namespace RoomManagement.Controllers;
 public class AuthController : ControllerBase
 {
     private readonly IAuthRepository _authRepository;
+    private readonly IStorageService _storageService;
+    private readonly MinIOOptions _minioOptions;
 
-    public AuthController(IAuthRepository authRepository)
+    public AuthController(
+        IAuthRepository authRepository,
+        IStorageService storageService,
+        IOptions<MinIOOptions> minioOptions)
     {
         _authRepository = authRepository;
+        _storageService = storageService;
+        _minioOptions = minioOptions.Value;
     }
 
     [HttpPost("register")]
@@ -30,17 +40,52 @@ public class AuthController : ControllerBase
 
     [HttpPost("upgrade-to-host")]
     [Authorize]
-    public async Task<IActionResult> UpgradeToHost([FromBody] UpgradeToHostDto dto)
+    public async Task<IActionResult> UpgradeToHost([FromForm] UpgradeToHostDto dto)
     {
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
         if (userId == null) return Unauthorized();
 
-        var result = await _authRepository.UpgradeToHostAsync(userId, dto);
-        if (result.Succeeded)
-            return Ok(ResponseApi<string>.Success(null!, "Nâng cấp tài khoản chủ nhà thành công", 200));
+        if (dto.BusinessLicenses == null || !dto.BusinessLicenses.Any())
+        {
+            return BadRequest(ResponseApi<string>.Failure(400, "Vui lòng cung cấp ít nhất một ảnh giấy phép kinh doanh"));
+        }
 
-        var errors = result.Errors.Select(e => e.Description).ToList();
-        return BadRequest(ResponseApi<List<string>>.Failure(400, "Nâng cấp chủ nhà thất bại", errors));
+        var uploadedUrls = new List<string>();
+        try
+        {
+            foreach (var file in dto.BusinessLicenses)
+            {
+                if (file.Length > 0)
+                {
+                    var objectKey = $"host_{userId}_{DateTimeOffset.UtcNow.ToUnixTimeSeconds()}_{Guid.NewGuid()}.webp";
+                    var relativePath = await _storageService.UploadAsync(
+                        file,
+                        _minioOptions.HostDocumentBucketName,
+                        objectKey,
+                        1280, 720);
+                    uploadedUrls.Add(relativePath);
+                }
+            }
+        }
+        catch (Exception)
+        {
+            foreach (var url in uploadedUrls) await _storageService.DeleteAsync(url);
+            return BadRequest(ResponseApi<string>.Failure(400, "Lỗi khi tải ảnh lên hệ thống"));
+        }
+
+        var businessLicenseUrlsJson = System.Text.Json.JsonSerializer.Serialize(uploadedUrls);
+
+        var result = await _authRepository.UpgradeToHostAsync(userId, dto, businessLicenseUrlsJson);
+        if (result)
+            return Ok(ResponseApi<string>.Success(null!, "Yêu Cầu nâng cấp tài khoản chủ nhà thành công", 200));
+
+        // Delete uploaded files if upgrade fails
+        foreach (var url in uploadedUrls)
+        {
+            await _storageService.DeleteAsync(url);
+        }
+
+        return BadRequest(ResponseApi<string>.Failure(400, "Yêu Cầu Nâng cấp chủ nhà thất bại"));
     }
 
     [HttpPost("login")]

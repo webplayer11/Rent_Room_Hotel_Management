@@ -8,6 +8,7 @@ public class HostProfileDto
     public string? BankAccount { get; set; }
     public string? BankName { get; set; }
     public bool IsVerified { get; set; }
+    public string? BusinessLicenseUrl { get; set; }
     
     // User info for Admin
     public string? Email { get; set; }
