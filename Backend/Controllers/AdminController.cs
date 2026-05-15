@@ -67,6 +67,29 @@ public class AdminController : ControllerBase
         return Ok(ResponseApi<IEnumerable<HotelDto>>.Success(result));
     }
 
+    [HttpGet("hotels/pending")]
+    public async Task<IActionResult> GetPendingHotels()
+    {
+        var result = await _service.GetPendingHotelsAsync();
+        return Ok(ResponseApi<IEnumerable<HotelDto>>.Success(result));
+    }
+
+    [HttpGet("hotels/approved")]
+    public async Task<IActionResult> GetApprovedHotels()
+    {
+        var result = await _service.GetApprovedHotelsAsync();
+        return Ok(ResponseApi<IEnumerable<HotelDto>>.Success(result));
+    }
+
+    [HttpGet("hotels/{id}")]
+    public async Task<IActionResult> GetHotelById(string id)
+    {
+        var result = await _service.GetHotelByIdAdminAsync(id);
+        if (result == null) return NotFound(ResponseApi<string>.Failure(404, "Không tìm thấy khách sạn"));
+        
+        return Ok(ResponseApi<HotelDto>.Success(result));
+    }
+
     [HttpPost("hotels/{id}/approve")]
     public async Task<IActionResult> ApproveHotel(string id)
     {

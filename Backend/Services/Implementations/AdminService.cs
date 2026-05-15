@@ -104,6 +104,41 @@ public class AdminService : IAdminService
     //  HOTEL MANAGEMENT
     // ══════════════════════════════════════════════════════════════
 
+    public async Task<IEnumerable<HotelDto>> GetPendingHotelsAsync()
+    {
+        var hotels = await _context.Hotels
+            .Include(h => h.Host)
+            .Include(h => h.Images)
+            .Where(h => !h.IsApproved)
+            .OrderByDescending(h => h.CreatedAt)
+            .ToListAsync();
+
+        return hotels.Select(MapHotelToDto);
+    }
+
+    public async Task<IEnumerable<HotelDto>> GetApprovedHotelsAsync()
+    {
+        var hotels = await _context.Hotels
+            .Include(h => h.Host)
+            .Include(h => h.Images)
+            .Where(h => h.IsApproved)
+            .OrderByDescending(h => h.CreatedAt)
+            .ToListAsync();
+
+        return hotels.Select(MapHotelToDto);
+    }
+
+    public async Task<HotelDto?> GetHotelByIdAdminAsync(string hotelId)
+    {
+        var hotel = await _context.Hotels
+            .Include(h => h.Host)
+            .Include(h => h.Images)
+            .FirstOrDefaultAsync(h => h.Id == hotelId);
+
+        if (hotel == null) return null;
+        return MapHotelToDto(hotel);
+    }
+
     public async Task<IEnumerable<HotelDto>> GetAllHotelsAdminAsync()
     {
         var hotels = await _context.Hotels
@@ -275,7 +310,15 @@ public class AdminService : IAdminService
             IsApproved = hotel.IsApproved,
             HostId = hotel.HostId,
             Latitude = hotel.Latitude,
-            Longitude = hotel.Longitude
+            Longitude = hotel.Longitude,
+            Images = hotel.Images?.Select(img => new HotelImageDto
+            {
+                Id = img.Id,
+                Url = img.Url,
+                Caption = img.Caption,
+                IsPrimary = img.IsPrimary,
+                SortOrder = img.SortOrder
+            }).ToList() ?? new List<HotelImageDto>()
         };
     }
 }

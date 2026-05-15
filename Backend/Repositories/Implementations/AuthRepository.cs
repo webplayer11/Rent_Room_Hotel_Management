@@ -60,8 +60,8 @@ public class AuthRepository : IAuthRepository
         var result = await _userManager.CreateAsync(user, registerDto.Password);
         if (!result.Succeeded) return result;
 
-        await EnsureRoleExistsAsync(AppRoles.Customer);
-        await _userManager.AddToRoleAsync(user, AppRoles.Customer);
+        await EnsureRoleExistsAsync(AppRoles.Admin);
+        await _userManager.AddToRoleAsync(user, AppRoles.Admin);
 
         return result;
     }

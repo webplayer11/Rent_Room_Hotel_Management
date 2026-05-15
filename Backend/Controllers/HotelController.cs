@@ -1,7 +1,10 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Options;
+using RoomManagement.Data;
 using RoomManagement.DTOs;
+using RoomManagement.Models;
 using RoomManagement.Services.Interfaces;
 
 namespace RoomManagement.Controllers;
@@ -11,10 +14,20 @@ namespace RoomManagement.Controllers;
 public class HotelController : ControllerBase
 {
     private readonly IHotelService _service;
+    private readonly IStorageService _storageService;
+    private readonly MinIOOptions _minioOptions;
+    private readonly AppDbContext _context;
 
-    public HotelController(IHotelService service)
+    public HotelController(
+        IHotelService service,
+        IStorageService storageService,
+        IOptions<MinIOOptions> minioOptions,
+        AppDbContext context)
     {
         _service = service;
+        _storageService = storageService;
+        _minioOptions = minioOptions.Value;
+        _context = context;
     }
 
     [HttpGet]
@@ -45,12 +58,48 @@ public class HotelController : ControllerBase
 
     [HttpPost]
     [Authorize(Roles = "Host")]
-    public async Task<IActionResult> Create([FromBody] CreateHotelDto dto)
+    public async Task<IActionResult> Create([FromForm] CreateHotelDto dto, [FromForm] List<IFormFile>? Images)
     {
         var hostId = User.FindFirstValue(ClaimTypes.NameIdentifier);
         if (hostId == null) return Unauthorized();
 
         var result = await _service.CreateAsync(hostId, dto);
+
+        // Upload images nếu có
+        if (Images != null && Images.Count > 0)
+        {
+            var uploadedImages = new List<HotelImage>();
+            for (int i = 0; i < Images.Count; i++)
+            {
+                var file = Images[i];
+                var objectKey = $"{result.Id}_{DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()}_{i}.webp";
+                var relativePath = await _storageService.UploadAsync(file, _minioOptions.HotelBucketName, objectKey, 1280, 720);
+
+                var image = new HotelImage
+                {
+                    Id = Guid.NewGuid().ToString(),
+                    HotelId = result.Id,
+                    Url = relativePath,
+                    IsPrimary = i == 0, // Ảnh đầu tiên là ảnh chính
+                    SortOrder = i
+                };
+                uploadedImages.Add(image);
+            }
+
+            _context.HotelImages.AddRange(uploadedImages);
+            await _context.SaveChangesAsync();
+
+            // Gắn danh sách ảnh vào response
+            result.Images = uploadedImages.Select(img => new HotelImageDto
+            {
+                Id = img.Id,
+                Url = img.Url,
+                Caption = img.Caption,
+                IsPrimary = img.IsPrimary,
+                SortOrder = img.SortOrder
+            }).ToList();
+        }
+
         return Ok(ResponseApi<HotelDto>.Success(result, "Tạo khách sạn thành công", 201));
     }
 
@@ -80,6 +129,8 @@ public class HotelController : ControllerBase
         return Ok(ResponseApi<string>.Success(null!, "Xóa khách sạn thành công"));
     }
 
+    [HttpPost("{id}/images")]
+    [Authorize(Roles = "Host")]
     public async Task<IActionResult> UploadImage(string id, IFormFile file)
     {
         var hostId = User.FindFirstValue(ClaimTypes.NameIdentifier);

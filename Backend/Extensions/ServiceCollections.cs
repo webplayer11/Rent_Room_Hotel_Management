@@ -21,6 +21,7 @@ namespace RoomManagement.Extensions
             services.AddScoped<IRoomRepository, RoomRepository>();
             services.AddScoped<IBookingRepository, BookingRepository>();
             services.AddScoped<IPaymentRepository, PaymentRepository>();
+            services.AddScoped<IVoucherRepository, VoucherRepository>();
             // Add other repositories here...
 
             // ── Services ──────────────────────────────────────────────────────
@@ -29,6 +30,10 @@ namespace RoomManagement.Extensions
             services.AddScoped<IRoomService, RoomService>();
             services.AddScoped<IBookingService, BookingService>();
             services.AddScoped<IPaymentService, PaymentService>();
+            services.AddScoped<IStorageService, MinIOStorageService>();
+            services.AddScoped<IAdminService, AdminService>();
+            services.AddScoped<IHostRevenueService, HostRevenueService>();
+            services.AddScoped<IVoucherService, VoucherService>();
             // services.AddScoped<ICustomerService, CustomerService>();
             // Add other services here...
 

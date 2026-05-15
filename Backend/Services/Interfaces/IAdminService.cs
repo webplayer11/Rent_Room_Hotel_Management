@@ -12,6 +12,9 @@ public interface IAdminService
     Task<bool> RejectHostAsync(string hostId, string reason);
 
     // ── Hotel Management ─────────────────────────
+    Task<IEnumerable<HotelDto>> GetPendingHotelsAsync();
+    Task<IEnumerable<HotelDto>> GetApprovedHotelsAsync();
+    Task<HotelDto?> GetHotelByIdAdminAsync(string hotelId);
     Task<IEnumerable<HotelDto>> GetAllHotelsAdminAsync();
     Task<bool> ApproveHotelAsync(string hotelId);
     Task<bool> SuspendHotelAsync(string hotelId, string reason);
