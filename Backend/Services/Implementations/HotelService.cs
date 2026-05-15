@@ -93,7 +93,15 @@ public class HotelService : IHotelService
             IsApproved = hotel.IsApproved,
             HostId = hotel.HostId,
             Latitude = hotel.Latitude,
-            Longitude = hotel.Longitude
+            Longitude = hotel.Longitude,
+            Images = hotel.Images?.Select(img => new HotelImageDto
+            {
+                Id = img.Id,
+                Url = img.Url,
+                Caption = img.Caption,
+                IsPrimary = img.IsPrimary,
+                SortOrder = img.SortOrder
+            }).ToList() ?? new List<HotelImageDto>()
         };
     }
 }

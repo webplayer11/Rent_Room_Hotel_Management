@@ -58,12 +58,48 @@ public class HotelController : ControllerBase
 
     [HttpPost]
     [Authorize(Roles = "Host")]
-    public async Task<IActionResult> Create([FromBody] CreateHotelDto dto)
+    public async Task<IActionResult> Create([FromForm] CreateHotelDto dto, [FromForm] List<IFormFile>? Images)
     {
         var hostId = User.FindFirstValue(ClaimTypes.NameIdentifier);
         if (hostId == null) return Unauthorized();
 
         var result = await _service.CreateAsync(hostId, dto);
+
+        // Upload images nếu có
+        if (Images != null && Images.Count > 0)
+        {
+            var uploadedImages = new List<HotelImage>();
+            for (int i = 0; i < Images.Count; i++)
+            {
+                var file = Images[i];
+                var objectKey = $"{result.Id}_{DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()}_{i}.webp";
+                var relativePath = await _storageService.UploadAsync(file, _minioOptions.HotelBucketName, objectKey, 1280, 720);
+
+                var image = new HotelImage
+                {
+                    Id = Guid.NewGuid().ToString(),
+                    HotelId = result.Id,
+                    Url = relativePath,
+                    IsPrimary = i == 0, // Ảnh đầu tiên là ảnh chính
+                    SortOrder = i
+                };
+                uploadedImages.Add(image);
+            }
+
+            _context.HotelImages.AddRange(uploadedImages);
+            await _context.SaveChangesAsync();
+
+            // Gắn danh sách ảnh vào response
+            result.Images = uploadedImages.Select(img => new HotelImageDto
+            {
+                Id = img.Id,
+                Url = img.Url,
+                Caption = img.Caption,
+                IsPrimary = img.IsPrimary,
+                SortOrder = img.SortOrder
+            }).ToList();
+        }
+
         return Ok(ResponseApi<HotelDto>.Success(result, "Tạo khách sạn thành công", 201));
     }
 
@@ -92,8 +128,6 @@ public class HotelController : ControllerBase
 
         return Ok(ResponseApi<string>.Success(null!, "Xóa khách sạn thành công"));
     }
-
-    // ── Image Upload ──────────────────────────────────────────────
 
     [HttpPost("{id}/images")]
     [Authorize(Roles = "Host")]

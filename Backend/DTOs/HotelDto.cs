@@ -1,5 +1,14 @@
 namespace RoomManagement.DTOs;
 
+public class HotelImageDto
+{
+    public string Id { get; set; } = default!;
+    public string? Url { get; set; }
+    public string? Caption { get; set; }
+    public bool IsPrimary { get; set; }
+    public int SortOrder { get; set; }
+}
+
 public class HotelDto
 {
     public string Id { get; set; } = default!;
@@ -14,6 +23,7 @@ public class HotelDto
     public bool IsActive { get; set; }
     public bool IsApproved { get; set; }
     public string HostId { get; set; } = default!;
+    public List<HotelImageDto> Images { get; set; } = new();
 }
 
 public class CreateHotelDto

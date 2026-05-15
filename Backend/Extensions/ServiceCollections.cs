@@ -1,4 +1,3 @@
-using RoomManagement.Models;
 using RoomManagement.Repositories.Interfaces;
 using RoomManagement.Repositories.Implementations;
 using RoomManagement.Services.Interfaces;
@@ -23,6 +22,7 @@ namespace RoomManagement.Extensions
             services.AddScoped<IBookingRepository, BookingRepository>();
             services.AddScoped<IPaymentRepository, PaymentRepository>();
             services.AddScoped<IVoucherRepository, VoucherRepository>();
+            // Add other repositories here...
 
             // ── Services ──────────────────────────────────────────────────────
             services.AddScoped<IHostProfileService, HostProfileService>();
@@ -30,10 +30,12 @@ namespace RoomManagement.Extensions
             services.AddScoped<IRoomService, RoomService>();
             services.AddScoped<IBookingService, BookingService>();
             services.AddScoped<IPaymentService, PaymentService>();
-            services.AddScoped<IAdminService, AdminService>();
-            services.AddScoped<IVoucherService, VoucherService>();
-            services.AddScoped<IHostRevenueService, HostRevenueService>();
             services.AddScoped<IStorageService, MinIOStorageService>();
+            services.AddScoped<IAdminService, AdminService>();
+            services.AddScoped<IHostRevenueService, HostRevenueService>();
+            services.AddScoped<IVoucherService, VoucherService>();
+            // services.AddScoped<ICustomerService, CustomerService>();
+            // Add other services here...
 
             return services;
         }
