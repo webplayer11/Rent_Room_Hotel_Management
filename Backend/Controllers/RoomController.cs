@@ -47,13 +47,46 @@ public class RoomController : ControllerBase
 
     [HttpPost]
     [Authorize(Roles = "Host")]
-    public async Task<IActionResult> Create([FromBody] CreateRoomDto dto)
+    public async Task<IActionResult> Create([FromForm] CreateRoomDto dto, [FromForm] List<IFormFile>? Images)
     {
         var hostId = User.FindFirstValue(ClaimTypes.NameIdentifier);
         if (hostId == null) return Unauthorized();
 
         var result = await _service.CreateAsync(hostId, dto);
         if (result == null) return BadRequest(ResponseApi<string>.Failure(400, "Không thể tạo phòng, vui lòng kiểm tra quyền sở hữu khách sạn"));
+
+        // Upload images nếu có
+        if (Images != null && Images.Count > 0)
+        {
+            var uploadedImages = new List<RoomImage>();
+            for (int i = 0; i < Images.Count; i++)
+            {
+                var file = Images[i];
+                var objectKey = $"{result.Id}_{DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()}_{i}.webp";
+                var relativePath = await _storageService.UploadAsync(file, _minioOptions.RoomBucketName, objectKey, 1280, 720);
+
+                var image = new RoomImage
+                {
+                    Id = Guid.NewGuid().ToString(),
+                    RoomId = result.Id,
+                    Url = relativePath,
+                    SortOrder = i
+                };
+                uploadedImages.Add(image);
+            }
+
+            _context.RoomImages.AddRange(uploadedImages);
+            await _context.SaveChangesAsync();
+
+            // Gắn danh sách ảnh vào response
+            result.Images = uploadedImages.Select(img => new RoomImageDto
+            {
+                Id = img.Id,
+                Url = img.Url,
+                Caption = img.Caption,
+                SortOrder = img.SortOrder
+            }).ToList();
+        }
 
         return Ok(ResponseApi<RoomDto>.Success(result, "Tạo phòng thành công", 201));
     }

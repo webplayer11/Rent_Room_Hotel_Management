@@ -1,5 +1,13 @@
 namespace RoomManagement.DTOs;
 
+public class RoomImageDto
+{
+    public string Id { get; set; } = default!;
+    public string? Url { get; set; }
+    public string? Caption { get; set; }
+    public int SortOrder { get; set; }
+}
+
 public class RoomDto
 {
     public string Id { get; set; } = default!;
@@ -16,6 +24,7 @@ public class RoomDto
     public string? Status { get; set; }
     public bool IsSmokingAllowed { get; set; }
     public bool IsActive { get; set; }
+    public List<RoomImageDto> Images { get; set; } = new();
 }
 
 public class CreateRoomDto
