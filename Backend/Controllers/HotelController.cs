@@ -1,10 +1,7 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Options;
-using RoomManagement.Data;
 using RoomManagement.DTOs;
-using RoomManagement.Models;
 using RoomManagement.Services.Interfaces;
 
 namespace RoomManagement.Controllers;
@@ -14,20 +11,10 @@ namespace RoomManagement.Controllers;
 public class HotelController : ControllerBase
 {
     private readonly IHotelService _service;
-    private readonly IStorageService _storageService;
-    private readonly MinIOOptions _minioOptions;
-    private readonly AppDbContext _context;
 
-    public HotelController(
-        IHotelService service,
-        IStorageService storageService,
-        IOptions<MinIOOptions> minioOptions,
-        AppDbContext context)
+    public HotelController(IHotelService service)
     {
         _service = service;
-        _storageService = storageService;
-        _minioOptions = minioOptions.Value;
-        _context = context;
     }
 
     [HttpGet]
@@ -93,10 +80,6 @@ public class HotelController : ControllerBase
         return Ok(ResponseApi<string>.Success(null!, "Xóa khách sạn thành công"));
     }
 
-    // ── Image Upload ──────────────────────────────────────────────
-
-    [HttpPost("{id}/images")]
-    [Authorize(Roles = "Host")]
     public async Task<IActionResult> UploadImage(string id, IFormFile file)
     {
         var hostId = User.FindFirstValue(ClaimTypes.NameIdentifier);
