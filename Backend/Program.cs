@@ -8,6 +8,8 @@ using RoomManagement.Extensions;
 using RoomManagement.Data;
 using RoomManagement.Models;
 
+using RoomManagement.Utils;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // ═══════════════════════════════════════════════════════════════
@@ -144,6 +146,79 @@ if (app.Environment.IsDevelopment())
         opt.RoutePrefix = string.Empty;
     });
 }
+
+
+// ═══════════════════════════════════════════════════════════════
+//  7. SEED ROLES + ADMIN ACCOUNTS
+// ═══════════════════════════════════════════════════════════════
+using (var scope = app.Services.CreateScope())
+{
+    var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
+    var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+
+    string[] roles =
+    {
+        AppRoles.Admin,
+        AppRoles.Host,
+        AppRoles.Customer
+    };
+
+    foreach (var role in roles)
+    {
+        if (!await roleManager.RoleExistsAsync(role))
+        {
+            await roleManager.CreateAsync(new IdentityRole(role));
+        }
+    }
+
+    var admins = new[]
+    {
+        new
+        {
+            Email = "admin@gmail.com",
+            Password = "Admin@123",
+            FullName = "System Admin"
+        },
+        new
+        {
+            Email = "manager@gmail.com",
+            Password = "Manager@123",
+            FullName = "Manager Admin"
+        }
+    };
+
+    foreach (var item in admins)
+    {
+        var adminUser = await userManager.FindByEmailAsync(item.Email);
+
+        if (adminUser == null)
+        {
+            adminUser = new ApplicationUser
+            {
+                UserName = item.Email,
+                Email = item.Email,
+                FullName = item.FullName,
+                EmailConfirmed = true,
+                SecurityStamp = Guid.NewGuid().ToString()
+            };
+
+            var result = await userManager.CreateAsync(adminUser, item.Password);
+
+            if (result.Succeeded)
+            {
+                await userManager.AddToRoleAsync(adminUser, AppRoles.Admin);
+            }
+        }
+        else
+        {
+            if (!await userManager.IsInRoleAsync(adminUser, AppRoles.Admin))
+            {
+                await userManager.AddToRoleAsync(adminUser, AppRoles.Admin);
+            }
+        }
+    }
+}
+
 
 //app.UseHttpsRedirection();
 

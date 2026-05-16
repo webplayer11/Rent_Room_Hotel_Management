@@ -69,7 +69,7 @@ public class AdminService : IAdminService
         if (host == null) return null;
         return MapHostToDto(host);
     }
-
+/*
     public async Task<bool> ApproveHostAsync(string hostId)
     {
         var host = await _context.HostProfiles.FindAsync(hostId);
@@ -86,7 +86,40 @@ public class AdminService : IAdminService
         await _context.SaveChangesAsync();
         return true;
     }
+*/
+    public async Task<bool> ApproveHostAsync(string hostId)
+{
+    var host = await _context.HostProfiles.FindAsync(hostId);
 
+    if (host == null)
+        return false;
+
+    var user = await _userManager.FindByIdAsync(host.Id);
+
+    if (user == null)
+        return false;
+
+    host.Status = "Approved";
+    host.IsVerified = true;
+    host.RejectionReason = null;
+
+    await EnsureRoleExistsAsync(AppRoles.Host);
+
+    if (!await _userManager.IsInRoleAsync(user, AppRoles.Host))
+    {
+        var result = await _userManager.AddToRoleAsync(
+            user,
+            AppRoles.Host
+        );
+
+        if (!result.Succeeded)
+            return false;
+    }
+
+    await _context.SaveChangesAsync();
+
+    return true;
+}
     public async Task<bool> RejectHostAsync(string hostId, string reason)
     {
         var host = await _context.HostProfiles.FindAsync(hostId);
@@ -288,7 +321,7 @@ public class AdminService : IAdminService
             BankAccount = host.BankAccount,
             BankName = host.BankName,
             IsVerified = host.IsVerified,
-            BusinessLicenseUrl = host.BusinessLicenseUrls,
+            BusinessLicenseUrls = host.BusinessLicenseUrls,
             Email = host.User?.Email,
             FullName = host.User?.FullName,
             PhoneNumber = host.User?.PhoneNumber

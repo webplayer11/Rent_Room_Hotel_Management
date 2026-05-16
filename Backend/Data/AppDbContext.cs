@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using RoomManagement.Models;
+using System.Text.Json;
 
 namespace RoomManagement.Data;
 
@@ -180,5 +181,13 @@ public class AppDbContext : IdentityDbContext<ApplicationUser>
             .WithMany(v => v.Bookings)
             .HasForeignKey(b => b.VoucherId)
             .OnDelete(DeleteBehavior.SetNull);
+
+        // HostProfile - BusinessLicenseUrls
+        modelBuilder.Entity<HostProfile>()
+        .Property(x => x.BusinessLicenseUrls)
+        .HasConversion(
+        v => JsonSerializer.Serialize(v, (JsonSerializerOptions?)null),
+        v => JsonSerializer.Deserialize<List<string>>(v, (JsonSerializerOptions?)null) ?? new List<string>()
+    );
     }
 }

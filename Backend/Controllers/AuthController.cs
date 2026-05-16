@@ -40,6 +40,7 @@ public class AuthController : ControllerBase
 
     [HttpPost("upgrade-to-host")]
     [Authorize]
+    [Consumes("multipart/form-data")]
     public async Task<IActionResult> UpgradeToHost([FromForm] UpgradeToHostDto dto)
     {
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);

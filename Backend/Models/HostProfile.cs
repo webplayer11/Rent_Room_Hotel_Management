@@ -26,7 +26,7 @@ public class HostProfile
     [MaxLength(100)]
     public string? BankName { get; set; }
 
-    public string? BusinessLicenseUrls { get; set; }
+    public List<string> BusinessLicenseUrls { get; set; } = new();
 
     public bool IsVerified { get; set; } = false;
 

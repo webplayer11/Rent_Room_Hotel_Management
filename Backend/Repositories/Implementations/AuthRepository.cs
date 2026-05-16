@@ -60,12 +60,12 @@ public class AuthRepository : IAuthRepository
         var result = await _userManager.CreateAsync(user, registerDto.Password);
         if (!result.Succeeded) return result;
 
-        await EnsureRoleExistsAsync(AppRoles.Admin);
-        await _userManager.AddToRoleAsync(user, AppRoles.Admin);
+        await EnsureRoleExistsAsync(AppRoles.Customer);
+        await _userManager.AddToRoleAsync(user, AppRoles.Customer);
 
         return result;
     }
-
+/*
     public async Task<bool> UpgradeToHostAsync(string userId, UpgradeToHostDto dto, string businessLicenseUrlsJson)
     {
         var user = await _userManager.FindByIdAsync(userId);
@@ -81,13 +81,63 @@ public class AuthRepository : IAuthRepository
             Id = user.Id,
             CompanyName = dto.CompanyName,
             TaxCode = dto.TaxCode,
-            BusinessLicenseUrls = businessLicenseUrlsJson
+            BusinessLicenseUrls = new List<string> { businessLicenseUrlsJson }
         };
 
         _context.HostProfiles.Add(hostProfile);
         await _context.SaveChangesAsync();
         
         return true;
+    }
+*/
+    public async Task<bool> UpgradeToHostAsync(
+    string userId,
+    UpgradeToHostDto dto,
+    string businessLicenseUrlsJson)
+    {
+   /* var user = await _userManager.FindByIdAsync(userId);
+    if (user == null) return false;*/
+    
+    var user = await _userManager.FindByIdAsync(userId);
+
+if (user == null)
+{
+    Console.WriteLine("KHÔNG TÌM THẤY USER: " + userId);
+    return false;
+}
+
+ /*   var existingProfile = await _context.HostProfiles
+        .FirstOrDefaultAsync(x => x.Id == user.Id);
+
+    if (existingProfile != null)
+    {
+        return false;
+    }
+*/
+var existingProfile = await _context.HostProfiles
+    .FirstOrDefaultAsync(x => x.Id == user.Id);
+
+if (existingProfile != null)
+{
+    Console.WriteLine("ĐÃ CÓ HOST PROFILE: " + user.Id);
+    return false;
+}
+    var hostProfile = new HostProfile
+    {
+        Id = user.Id,
+        CompanyName = dto.CompanyName,
+        TaxCode = dto.TaxCode,
+        BusinessLicenseUrls =
+        System.Text.Json.JsonSerializer.Deserialize<List<string>>(
+        businessLicenseUrlsJson) ?? new List<string>(),
+        IsVerified = false
+    };
+
+    _context.HostProfiles.Add(hostProfile);
+
+    await _context.SaveChangesAsync();
+
+    return true;
     }
 
     public async Task<AuthResponseDto?> LoginAsync(LoginDto loginDto)
