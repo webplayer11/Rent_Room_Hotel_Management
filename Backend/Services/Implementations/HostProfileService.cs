@@ -66,7 +66,8 @@ public class HostProfileService : IHostProfileService
             BusinessLicenseUrls = profile.BusinessLicenseUrls,
             Email = profile.User?.Email,
             FullName = profile.User?.FullName,
-            PhoneNumber = profile.User?.PhoneNumber
+            PhoneNumber = profile.User?.PhoneNumber,
+            CreatedAt = profile.CreatedAt
         };
     }
 }
