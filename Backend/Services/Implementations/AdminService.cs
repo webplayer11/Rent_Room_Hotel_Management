@@ -324,7 +324,8 @@ public class AdminService : IAdminService
             BusinessLicenseUrls = host.BusinessLicenseUrls,
             Email = host.User?.Email,
             FullName = host.User?.FullName,
-            PhoneNumber = host.User?.PhoneNumber
+            PhoneNumber = host.User?.PhoneNumber,
+            CreatedAt = host.CreatedAt
         };
     }
 
