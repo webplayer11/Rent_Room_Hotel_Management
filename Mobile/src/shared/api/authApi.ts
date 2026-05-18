@@ -1,4 +1,5 @@
 import { apiFetch } from "./apiClient";
+import { Platform } from "react-native";
 
 export type ApiResponse<T> = {
   isSuccess: boolean;
@@ -73,4 +74,56 @@ resetPassword: (
       }),
     }) as Promise<ApiResponse<AuthResponseDto>>;
   },
+
+  upgradeToHost: async (
+  companyName: string,
+  taxCode: string,
+  businessLicenses: any[]
+) => {
+  const formData = new FormData();
+
+  formData.append("CompanyName", companyName);
+  formData.append("TaxCode", taxCode);
+
+  for (let index = 0; index < businessLicenses.length; index++) {
+    const file = businessLicenses[index];
+
+    const fileName =
+      file.fileName ||
+      file.name ||
+      `license_${index}.jpg`;
+
+    const fileType =
+      file.mimeType ||
+      file.type ||
+      "image/jpeg";
+
+    // WEB
+    if (Platform.OS === "web") {
+      const response = await fetch(file.uri);
+      const blob = await response.blob();
+
+      formData.append(
+        "BusinessLicenses",
+        blob,
+        fileName
+      );
+    }
+
+    // MOBILE
+    else {
+      formData.append("BusinessLicenses", {
+        uri: file.uri,
+        name: fileName,
+        type: fileType,
+      } as any);
+    }
+  }
+
+  return apiFetch("/api/auth/upgrade-to-host", {
+    method: "POST",
+    body: formData,
+    isFormData: true,
+  }) as Promise<ApiResponse<string>>;
+},
 };

@@ -60,6 +60,12 @@ export default function ProfileScreen() {
           <MenuItem icon="settings-outline" title="Cài đặt ứng dụng" />
           <MenuItem icon="globe-outline" title="Ngôn ngữ & Tiền tệ" />
         </View>
+        <TouchableOpacity style={styles.menuItem}
+          onPress={() => router.push("/customer/setting/comehost")}
+> 
+           <Ionicons name="business-outline" size={22} color="#2563eb" />
+           <Text style={styles.sectionTitle}>Đăng ký trở thành Host</Text>
+        </TouchableOpacity>
 
         <TouchableOpacity style={styles.logoutButton} onPress={() => router.push('/login')}>
           <Text style={styles.logoutText}>Đăng xuất</Text>
