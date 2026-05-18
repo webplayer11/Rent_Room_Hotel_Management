@@ -59,7 +59,7 @@ public class PayGateResponseDto
 
 public class PayGateRequestDto
 {
-    public int Idbooking { get; set; }
+    public string Idbooking { get; set; }
     public decimal price { get; set; }
     public string? timestamp { get; set; }
     public string Build { get; set; }
