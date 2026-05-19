@@ -24,6 +24,7 @@ public class HotelDto
     public bool IsApproved { get; set; }
     public string HostId { get; set; } = default!;
     public List<HotelImageDto> Images { get; set; } = new();
+
 }
 
 public class CreateHotelDto
@@ -34,6 +35,7 @@ public class CreateHotelDto
     public int? StarRating { get; set; }
     public string? CheckInTime { get; set; }
     public string? CheckOutTime { get; set; }
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 }
 
 public class UpdateHotelDto : CreateHotelDto

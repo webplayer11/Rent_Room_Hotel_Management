@@ -64,8 +64,11 @@ public class HotelController : ControllerBase
         if (hostId == null) return Unauthorized();
 
         var result = await _service.CreateAsync(hostId, dto);
-
+        if (Images == null || Images.Count == 0) {
+            return BadRequest(new ResponseApi<string>{IsSuccess = false,Code = 400,Message = "Vui lòng tải lên ít nhất 1 ảnh khách sạn",Data = null});
+}
         // Upload images nếu có
+
         if (Images != null && Images.Count > 0)
         {
             var uploadedImages = new List<HotelImage>();
@@ -108,6 +111,7 @@ public class HotelController : ControllerBase
     public async Task<IActionResult> Update(string id, [FromBody] UpdateHotelDto dto)
     {
         var hostId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
         if (hostId == null) return Unauthorized();
 
         var result = await _service.UpdateAsync(hostId, id, dto);

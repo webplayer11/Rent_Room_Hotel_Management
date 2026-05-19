@@ -1,4 +1,8 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, {
+  useMemo,
+  useState,
+  useCallback,
+} from "react";
 import {
   View,
   Text,
@@ -8,8 +12,15 @@ import {
   TouchableOpacity,
   Alert,
 } from "react-native";
+import {
+  X,
+  CheckCircle,
+  AlertCircle,
+  Maximize2,
+  ChevronLeft,
+} from "lucide-react-native";
 import { adminApi, PendingHostDto } from "../../src/shared/api/adminApi";
-import { router } from "expo-router";
+import { router,Stack, useFocusEffect } from "expo-router";
 
 type FilterType = "all" | "newest" | "oldest";
 
@@ -36,9 +47,11 @@ export default function PendingHostsScreen() {
     }
   };
 
-  useEffect(() => {
+  useFocusEffect(
+  useCallback(() => {
     loadPendingHosts();
-  }, []);
+  }, [])
+);
 
   const displayHosts = useMemo(() => {
     const list = [...hosts];
@@ -127,7 +140,16 @@ export default function PendingHostsScreen() {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Host chờ duyệt</Text>
+      <Stack.Screen
+      options={{
+      headerShown: true,
+      title: "Danh sách chờ duyệt",
+      headerLeft: () => (
+      <TouchableOpacity onPress={() => router.back()} style={{ marginLeft: 10 }}>
+        <ChevronLeft size={28} color="#000" />
+      </TouchableOpacity>),
+      }}/>
+    
 
       <View style={styles.filterContainer}>
         {renderFilterButton("Tất cả", "all")}
