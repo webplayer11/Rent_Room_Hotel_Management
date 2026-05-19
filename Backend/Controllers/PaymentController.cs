@@ -23,7 +23,7 @@ public class PaymentController : ControllerBase
     }
 
     [HttpPost("process")]
-    public async Task<IActionResult> ProcessPayment([FromBody] ProcessPaymentDto dto)
+    public async Task<IActionResult> ProcessPayment([FromBody] ProcessPaymentRequestDto dto)
     {
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
         if (userId == null) return Unauthorized();
@@ -102,5 +102,17 @@ public class PaymentController : ControllerBase
                 return BadRequest();
             }
             return Ok();
+    }
+    
+    [HttpGet("{idbooking}/status")]
+    public async Task<IActionResult> GetStatus(string idbooking)
+    {
+        var result = await _service.GetStatusAsync(idbooking);
+        if (string.IsNullOrEmpty(result))
+        {
+           return NotFound(ResponseApi<string>.Failure(404, "Không tìm thấy thanh toán của Booking"));
+        }
+
+        return Ok(ResponseApi<string>.Success(result));
     }
 }

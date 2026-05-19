@@ -19,6 +19,13 @@ public class ProcessPaymentDto
     public string Method { get; set; } = "QR";
 }
 
+public class ProcessPaymentRequestDto
+{
+    public string BookingId { get; set; } = default!;
+    public string Method { get; set; } = "QR";
+    
+}
+
 
 // customer request payment
 public class PaymentRequestDto
