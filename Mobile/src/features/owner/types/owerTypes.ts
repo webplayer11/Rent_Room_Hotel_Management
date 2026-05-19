@@ -1,3 +1,5 @@
+
+
 export type HotelStatus = 'approved' | 'pending' | 'need_update';
 
 export type BookingStatus =

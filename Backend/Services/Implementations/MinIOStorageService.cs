@@ -110,7 +110,8 @@ public class MinIOStorageService : IStorageService
         await _s3Client.PutObjectAsync(request);
 
         // 7. Trả về relative path
-        return $"/{bucketName}/{objectKey}";
+        var protocol = _minioOptions.UseSSL ? "https" : "http";
+        return $"{protocol}://{_minioOptions.Endpoint}/{bucketName}/{objectKey}";
     }
 
     public async Task DeleteAsync(string relativePath)

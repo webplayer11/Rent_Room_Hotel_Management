@@ -1,6 +1,6 @@
 import { tokenStorage } from "../storage/tokenStorage";
 
-const API_URL = process.env.EXPO_PUBLIC_API_URL;
+const API_URL = process.env.EXPO_PUBLIC_API_URL?.trim();
 
 type ApiResponse<T> = {
   isSuccess: boolean;
@@ -16,9 +16,17 @@ type AuthResponseDto = {
   refreshToken: string;
 };
 
+type ApiFetchOptions = RequestInit & {
+  isFormData?: boolean;
+};
+
 async function refreshAccessToken() {
   const accessToken = await tokenStorage.getAccessToken();
   const refreshToken = await tokenStorage.getRefreshToken();
+
+  if (!API_URL) {
+    throw new Error("Thiếu EXPO_PUBLIC_API_URL trong file .env");
+  }
 
   if (!accessToken || !refreshToken) {
     throw new Error("Không có token để làm mới");
@@ -35,15 +43,16 @@ async function refreshAccessToken() {
     }),
   });
 
-  const result = (await response.json()) as ApiResponse<AuthResponseDto>;
+  const result = (await response.json().catch(() => null)) as ApiResponse<AuthResponseDto> | null;
 
-  if (!response.ok || !result.data) {
-    throw new Error(result.message || "Refresh token thất bại");
+  if (!response.ok || !result?.data?.token) {
+    throw new Error(result?.message || "Refresh token thất bại");
   }
 
   await tokenStorage.saveTokens(
     result.data.token,
-    result.data.refreshToken
+    result.data.refreshToken,
+    result.data.roles?.[0]
   );
 
   return result.data.token;
@@ -51,7 +60,7 @@ async function refreshAccessToken() {
 
 export async function apiFetch<T = any>(
   endpoint: string,
-  options: RequestInit = {}
+  options: ApiFetchOptions = {}
 ): Promise<T> {
   if (!API_URL) {
     throw new Error("Thiếu EXPO_PUBLIC_API_URL trong file .env");
@@ -59,28 +68,45 @@ export async function apiFetch<T = any>(
 
   const accessToken = await tokenStorage.getAccessToken();
 
+  const buildHeaders = (token?: string) => {
+    const headers: Record<string, string> = {};
+
+    if (!options.isFormData) {
+      headers["Content-Type"] = "application/json";
+    }
+
+    if (token) {
+      headers.Authorization = `Bearer ${token}`;
+    }
+
+    return {
+      ...headers,
+      ...(options.headers as Record<string, string>),
+    };
+  };
+
+  console.log("API URL:", `${API_URL}${endpoint}`);
+  console.log("ACCESS TOKEN:", accessToken);
+
   let response = await fetch(`${API_URL}${endpoint}`, {
     ...options,
-    headers: {
-      "Content-Type": "application/json",
-      ...(accessToken
-        ? { Authorization: `Bearer ${accessToken}` }
-        : {}),
-      ...(options.headers || {}),
-    },
+    headers: buildHeaders(accessToken || undefined),
   });
 
-  if (response.status === 401 && !endpoint.includes("login")) {
+  const isAuthEndpoint =
+    endpoint.includes("/api/auth/login") ||
+    endpoint.includes("/api/auth/register") ||
+    endpoint.includes("/api/auth/forgot-password") ||
+    endpoint.includes("/api/auth/reset-password") ||
+    endpoint.includes("/api/auth/refresh-token");
+
+  if (response.status === 401 && !isAuthEndpoint) {
     try {
       const newToken = await refreshAccessToken();
 
       response = await fetch(`${API_URL}${endpoint}`, {
         ...options,
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${newToken}`,
-          ...(options.headers || {}),
-        },
+        headers: buildHeaders(newToken),
       });
     } catch {
       await tokenStorage.clearTokens();
@@ -90,18 +116,18 @@ export async function apiFetch<T = any>(
 
   const data = await response.json().catch(() => null);
 
- if (!response.ok) {
-  console.log("API ERROR STATUS:", response.status);
-  console.log("API ERROR DATA:", data);
+  if (!response.ok) {
+    console.log("API ERROR STATUS:", response.status);
+    console.log("API ERROR DATA:", data);
 
-  const errorMessage =
-    data?.data?.join?.("\n") ||
-    data?.errors?.join?.("\n") ||
-    data?.message ||
-    "Có lỗi xảy ra";
+    const errorMessage =
+      data?.data?.join?.("\n") ||
+      data?.errors?.join?.("\n") ||
+      data?.message ||
+      `API lỗi ${response.status}`;
 
-  throw new Error(errorMessage);
-}
+    throw new Error(errorMessage);
+  }
 
   return data;
 }

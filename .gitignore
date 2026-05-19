@@ -5,3 +5,5 @@ Backend/bin/
 Backend/obj/
 .vs
 bin
+Backend/minio/
+Backend/minio.exe

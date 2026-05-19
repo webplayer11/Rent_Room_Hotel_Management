@@ -4,7 +4,7 @@ import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { AppCard } from '../../shared/components/AppCard';
 import { colors } from '../../shared/constants/colors';
-import { adminDashboardMockData } from './adminMockData';
+
 import type { AdminHotelStatus, AdminTaskAction } from './adminTypes';
 
 // ---------------------------------------------------------------------------
