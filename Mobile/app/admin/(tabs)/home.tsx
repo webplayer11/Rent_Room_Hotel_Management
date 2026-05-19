@@ -185,6 +185,16 @@ export default function AdminHomeScreen() {
             <Text style={styles.actionText}>Duyệt KS mới</Text>
           </Pressable>
 
+          <Pressable
+            style={({ pressed }) => [styles.actionBtn, pressed && { opacity: 0.7 }]}
+            onPress={() => router.push('/admin/pending-room')}
+          >
+            <View style={[styles.actionIcon, { backgroundColor: '#FEF3C7' }]}>
+              <Ionicons name="bed-outline" size={24} color="#D97706" />
+            </View>
+            <Text style={styles.actionText}>Duyệt phòng</Text>
+          </Pressable>
+
           <Pressable style={({ pressed }) => [styles.actionBtn, pressed && { opacity: 0.7 }]}>
             <View style={[styles.actionIcon, { backgroundColor: '#E0E7FF' }]}>
               <Ionicons name="people" size={24} color="#4F46E5" />

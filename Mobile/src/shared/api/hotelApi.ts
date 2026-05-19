@@ -34,4 +34,10 @@ export const hotelApi = {
       isFormData: true,
     });
   },
+
+  getMyHotels: async () => {
+    return apiFetch("/api/hotels/my-hotels", {
+      method: "GET",
+    });
+  },
 };
