@@ -19,7 +19,7 @@ public class PaymentService : IPaymentService
         _bookingRepository = bookingRepository;
     }
 
-    public async Task<PaymentDto?> ProcessPaymentAsync(string userId, ProcessPaymentDto dto)
+    public async Task<PaymentDto?> ProcessPaymentAsync(string userId, ProcessPaymentRequestDto dto)
     {
         var booking = await _bookingRepository.GetByIdAsync(dto.BookingId);
         if (booking == null || booking.UserId != userId) return null;
@@ -29,16 +29,10 @@ public class PaymentService : IPaymentService
             BookingId = dto.BookingId,
             Amount = booking.FinalPrice,
             Method = dto.Method,
-            Status = "Completed", // Simulated payment success
-            TransactionId = Guid.NewGuid().ToString("N").ToUpper(),
-            PaidAt = DateTime.UtcNow
+            Status = "PENDING", // Simulated payment success
+
         };
-
         var created = await _paymentRepository.CreateAsync(payment);
-
-        // Update booking status
-        booking.Status = "Confirmed";
-        await _bookingRepository.UpdateAsync(booking);
 
         return MapToDto(created);
     }
@@ -128,8 +122,16 @@ public class PaymentService : IPaymentService
             {
                 return false;
             }
-        
             return true;
     }
 
+    public async Task<string> GetStatusAsync(string idbooking)
+    {
+        var payment = await _paymentRepository.GetByIdAsync(idbooking);
+        if (payment == null)
+        {
+            return string.Empty;
+        }
+        return payment.Status;
+    }
 }

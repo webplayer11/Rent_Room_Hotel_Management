@@ -44,8 +44,6 @@ public class PaymentRepository : IPaymentRepository
         return payment;
     }
     
-    
-    
 
     public async Task<bool> UpdateStatusAsync(string paymentBuild)
     {
