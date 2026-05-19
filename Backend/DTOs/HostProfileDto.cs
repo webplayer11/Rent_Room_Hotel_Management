@@ -9,7 +9,7 @@ public class HostProfileDto
     public string? BankName { get; set; }
     public bool IsVerified { get; set; }
     public List<string> BusinessLicenseUrls { get; set; } = new();
-    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+
     
     // User info for Admin
     public string? Email { get; set; }
