@@ -10,4 +10,5 @@ public interface IHotelService
     Task<HotelDto> CreateAsync(string hostId, CreateHotelDto dto);
     Task<HotelDto?> UpdateAsync(string hostId, string id, UpdateHotelDto dto);
     Task<bool> DeleteAsync(string hostId, string id);
+    Task<IEnumerable<SearchHotelResponseDto>> SearchAsync(SearchHotelRequestDto request);
 }
