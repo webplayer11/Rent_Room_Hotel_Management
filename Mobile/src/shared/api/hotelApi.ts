@@ -1,5 +1,36 @@
 import { apiFetch } from "./apiClient";
 
+export type ApiResponse<T> = {
+  isSuccess: boolean;
+  code: number;
+  message: string;
+  data: T;
+};
+
+export type HotelImageDto = {
+  id: string;
+  url?: string;
+  caption?: string;
+  isPrimary: boolean;
+  sortOrder: number;
+};
+
+export type HotelDto = {
+  id: string;
+  name?: string;
+  description?: string;
+  address?: string;
+  latitude?: number;
+  longitude?: number;
+  starRating?: number;
+  checkInTime?: string;
+  checkOutTime?: string;
+  isActive: boolean;
+  isApproved: boolean;
+  hostId: string;
+  images: HotelImageDto[];
+};
+
 export type CreateHotelPayload = {
   name: string;
   description: string;
@@ -11,7 +42,7 @@ export type CreateHotelPayload = {
 };
 
 export const hotelApi = {
-  createHotel: async (data: CreateHotelPayload) => {
+  createHotel: (data: CreateHotelPayload) => {
     const formData = new FormData();
 
     formData.append("Name", data.name);
@@ -32,12 +63,18 @@ export const hotelApi = {
       method: "POST",
       body: formData,
       isFormData: true,
-    });
+    }) as Promise<ApiResponse<HotelDto>>;
   },
 
-  getMyHotels: async () => {
+  getMyHotels: () => {
     return apiFetch("/api/hotels/my-hotels", {
       method: "GET",
-    });
+    }) as Promise<ApiResponse<HotelDto[]>>;
+  },
+
+  getHotelById: (id: string) => {
+    return apiFetch(`/api/hotels/${id}`, {
+      method: "GET",
+    }) as Promise<ApiResponse<HotelDto>>;
   },
 };

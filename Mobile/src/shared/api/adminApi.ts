@@ -32,6 +32,7 @@ export type PendingHotelDto = {
 };
 
 export type PendingRoomDto = {
+  id: string;
   hotelId: string;
   roomNumber?: string;
   roomType?: string;
@@ -44,6 +45,7 @@ export type PendingRoomDto = {
   roomSize?: number;
   isSmokingAllowed: boolean;
   images: any[];
+  createdAt?: string;
 };
 
 
@@ -101,7 +103,7 @@ export const adminApi = {
   },
 
   // xem phòng cần duyệt 
-    getPendingRooms: () => {
+  getPendingRooms: () => {
     return apiFetch('/api/admin/rooms/pending', {
       method: "GET",
     }) as Promise<ApiResponse<PendingRoomDto[]>>;

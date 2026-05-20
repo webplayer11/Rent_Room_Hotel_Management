@@ -44,11 +44,12 @@ export default function LoginScreen() {
       const roles = user.roles ?? [];
       const mainRole = roles[0] ?? "Customer";
 
-      // Lưu token + role
+      // Lưu token + role + tên chủ
       await tokenStorage.saveTokens(
         user.token,
         user.refreshToken,
-        mainRole
+        mainRole,
+        user.fullName
       );
 
       // Điều hướng theo role

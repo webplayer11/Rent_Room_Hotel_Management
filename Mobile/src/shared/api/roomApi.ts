@@ -25,6 +25,13 @@ export type RoomDto = {
   images: RoomImageDto[];
 };
 
+export type ApiResponse<T> = {
+  isSuccess: boolean;
+  code: number;
+  message: string;
+  data: T;
+};
+
 export type CreateRoomDto = {
   hotelId: string;
   roomNumber?: string;
@@ -38,10 +45,11 @@ export type CreateRoomDto = {
   roomSize?: number;
   isSmokingAllowed: boolean;
   images: any[];
+  status?: string;
 };
 
 export const roomApi = {
-  createRoom: async (data: CreateRoomDto) => {
+  createRoom: (data: CreateRoomDto) => {
     const formData = new FormData();
 
     formData.append("HotelId", data.hotelId);
@@ -71,6 +79,31 @@ export const roomApi = {
       method: "POST",
       body: formData,
       isFormData: true,
-    });
+    }) as Promise<ApiResponse<RoomDto>>;
+  },
+
+  getRoomsByHotelId: (hotelId: string) => {
+    return apiFetch(`/api/rooms/hotel/${hotelId}`, {
+      method: "GET",
+    }) as Promise<ApiResponse<RoomDto[]>>;
+  },
+
+  deleteRoom: (id: string) => {
+    return apiFetch(`/api/rooms/${id}`, {
+      method: "DELETE",
+    }) as Promise<ApiResponse<string>>;
+  },
+
+  getRoomById: (id: string) => {
+    return apiFetch(`/api/rooms/${id}`, {
+      method: "GET",
+    }) as Promise<ApiResponse<RoomDto>>;
+  },
+
+  updateRoom: (id: string, data: Partial<CreateRoomDto>) => {
+    return apiFetch(`/api/rooms/${id}`, {
+      method: "PUT",
+      body: JSON.stringify(data),
+    }) as Promise<ApiResponse<RoomDto>>;
   },
 };

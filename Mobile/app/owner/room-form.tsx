@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Alert,
   Image,
@@ -18,6 +18,7 @@ import { useRouter, useLocalSearchParams } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { ChevronLeft } from "lucide-react-native";
 import { roomApi } from "../../src/shared/api/roomApi";
+import { IMAGE_URL } from "../../src/config";
 
 type RoomImage = {
   id: string;
@@ -28,7 +29,8 @@ type RoomImage = {
 
 export default function CreateRoomScreen() {
   const router = useRouter();
-  const { hotelId } = useLocalSearchParams<{ hotelId: string }>();
+  const { hotelId, id } = useLocalSearchParams<{ hotelId: string; id?: string }>();
+  const isEditMode = !!id;
 
   const [roomNumber, setRoomNumber] = useState("");
   const [selectedRoomType, setSelectedRoomType] = useState("Standard");
@@ -48,6 +50,69 @@ export default function CreateRoomScreen() {
   const [selectedBedType, setSelectedBedType] = useState("Đôi");
   const [customBedType, setCustomBedType] = useState("");
   const [showBedTypeDropdown, setShowBedTypeDropdown] = useState(false);
+
+  // Load existing room details if in Edit Mode
+  useEffect(() => {
+    if (isEditMode && id) {
+      const loadRoomData = async () => {
+        try {
+          setLoading(true);
+          const res = await roomApi.getRoomById(id);
+          if (res.isSuccess && res.data) {
+            const room = res.data;
+            setRoomNumber(room.roomNumber || "");
+            
+            const stdTypes = ["Standard", "Superior", "Deluxe", "Suite", "Family"];
+            if (room.roomType && stdTypes.includes(room.roomType)) {
+              setSelectedRoomType(room.roomType);
+            } else {
+              setSelectedRoomType("Khác");
+              setCustomRoomType(room.roomType || "");
+            }
+
+            setDescription(room.description || "");
+            setCapacity(String(room.capacity || ""));
+            setRoomSize(room.roomSize ? String(room.roomSize) : "");
+            setBedCount(String(room.bedCount || ""));
+
+            const stdBeds = ["Đơn", "Đôi"];
+            if (room.bedType && stdBeds.includes(room.bedType)) {
+              setSelectedBedType(room.bedType);
+            } else {
+              setSelectedBedType("Khác");
+              setCustomBedType(room.bedType || "");
+            }
+
+            setPricePerNight(String(room.pricePerNight || ""));
+            setDiscountPrice(room.discountPrice ? String(room.discountPrice) : "");
+            setIsSmokingAllowed(room.isSmokingAllowed || false);
+
+            if (room.images && room.images.length > 0) {
+              const formattedImages = room.images.map((img: any, idx: number) => {
+                const url = img.url || img;
+                const uri = url.startsWith("http") ? url : `${IMAGE_URL}/${url}`;
+                return {
+                  id: img.id || `${Date.now()}-${idx}`,
+                  uri,
+                  fileName: img.caption || `room_${idx}.jpg`,
+                  mimeType: "image/jpeg"
+                };
+              });
+              setImages(formattedImages);
+            }
+          } else {
+            Alert.alert("Lỗi", res.message || "Không thể tải thông tin phòng");
+          }
+        } catch (error: any) {
+          console.log("Error fetching room details:", error);
+          Alert.alert("Lỗi", "Đã xảy ra lỗi khi tải dữ liệu phòng");
+        } finally {
+          setLoading(false);
+        }
+      };
+      loadRoomData();
+    }
+  }, [id, isEditMode]);
 
   const pickImages = async () => {
     const result = await ImagePicker.launchImageLibraryAsync({
@@ -73,7 +138,7 @@ export default function CreateRoomScreen() {
   };
 
   const handleSubmit = async () => {
-    if (!hotelId) {
+    if (!hotelId && !isEditMode) {
       Alert.alert("Lỗi", "Không tìm thấy thông tin khách sạn. Vui lòng thử lại.");
       return;
     }
@@ -120,8 +185,8 @@ export default function CreateRoomScreen() {
     try {
       setLoading(true);
 
-      const result = await roomApi.createRoom({
-        hotelId,
+      const payload = {
+        hotelId: hotelId || "",
         roomNumber: roomNumber.trim(),
         roomType: finalRoomType,
         description: description.trim(),
@@ -132,21 +197,36 @@ export default function CreateRoomScreen() {
         discountPrice: discountPrice.trim() ? Number(discountPrice) : undefined,
         roomSize: roomSize.trim() ? Number(roomSize) : undefined,
         isSmokingAllowed,
-        images,
-      });
+        images: images.map(img => ({
+          uri: img.uri,
+          fileName: img.fileName,
+          mimeType: img.mimeType
+        })),
+      };
+
+      let result;
+      if (isEditMode && id) {
+        result = await roomApi.updateRoom(id, payload);
+      } else {
+        result = await roomApi.createRoom(payload);
+      }
 
       if (result.isSuccess) {
-        Alert.alert("Thành công", "Phòng đã được tạo thành công", [
-          {
-            text: "OK",
-            onPress: () => router.back(),
-          },
-        ]);
+        Alert.alert(
+          "Thành công", 
+          isEditMode ? "Thông tin phòng đã được cập nhật thành công" : "Phòng đã được tạo thành công", 
+          [
+            {
+              text: "OK",
+              onPress: () => router.back(),
+            },
+          ]
+        );
       } else {
-        Alert.alert("Lỗi", result.message || "Tạo phòng thất bại");
+        Alert.alert("Lỗi", result.message || (isEditMode ? "Cập nhật phòng thất bại" : "Tạo phòng thất bại"));
       }
     } catch (error: any) {
-      Alert.alert("Lỗi", error.message || "Không thể tạo phòng");
+      Alert.alert("Lỗi", error.message || "Không thể thực hiện tác vụ");
     } finally {
       setLoading(false);
     }
@@ -158,7 +238,7 @@ export default function CreateRoomScreen() {
         <Pressable onPress={() => router.back()} style={{ marginRight: 12 }}>
           <ChevronLeft size={28} color="#0F172A" />
         </Pressable>
-        <Text style={styles.title}>Thêm phòng mới</Text>
+        <Text style={styles.title}>{isEditMode ? "Cập nhật thông tin phòng" : "Thêm phòng mới"}</Text>
       </View>
 
       <ScrollView style={styles.screen} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
@@ -321,7 +401,7 @@ export default function CreateRoomScreen() {
         {loading ? (
           <ActivityIndicator color="#FFF" />
         ) : (
-          <Text style={styles.submitText}>Tạo phòng</Text>
+          <Text style={styles.submitText}>{isEditMode ? "Cập nhật phòng" : "Tạo phòng"}</Text>
         )}
       </Pressable>
     </ScrollView>
