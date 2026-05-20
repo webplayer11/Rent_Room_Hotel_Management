@@ -31,6 +31,21 @@ export type PendingHotelDto = {
   images: any[];
 };
 
+export type PendingRoomDto = {
+  hotelId: string;
+  roomNumber?: string;
+  roomType?: string;
+  description?: string;
+  capacity: number;
+  bedCount: number;
+  bedType?: string;
+  pricePerNight: number;
+  discountPrice?: number;
+  roomSize?: number;
+  isSmokingAllowed: boolean;
+  images: any[];
+};
+
 
 export const adminApi = {
   getPendingHosts: () => {
@@ -59,7 +74,6 @@ export const adminApi = {
     }) as Promise<ApiResponse<PendingHostDto>>;
   },
 
-
   getPendingHotel: () => {
     return apiFetch('/api/admin/hotels/pending', {
       method: "GET",
@@ -79,9 +93,20 @@ export const adminApi = {
     }) as Promise<ApiResponse<PendingHotelDto>>;
   },
 
-  RejectHotel: (id: string) => {
-    return apiFetch(`/api/admin/hotels/${id}`, {
-      method: "DELETE",
+  SuspendHotel: (id: string, reason: string) => {
+    return apiFetch(`/api/admin/hotels/${id}/suspend`, {
+      method: "POST",
+      body: JSON.stringify({ reason }),
     }) as Promise<ApiResponse<string>>;
   },
+
+  // xem phòng cần duyệt 
+    getPendingRooms: () => {
+    return apiFetch('/api/admin/rooms/pending', {
+      method: "GET",
+    }) as Promise<ApiResponse<PendingRoomDto[]>>;
+  },
+
 };
+
+
