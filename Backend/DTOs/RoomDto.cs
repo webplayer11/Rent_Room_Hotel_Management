@@ -40,4 +40,5 @@ public class CreateRoomDto
     public decimal? DiscountPrice { get; set; }
     public double? RoomSize { get; set; }
     public bool IsSmokingAllowed { get; set; }
+    public string? Status { get; set; }
 }

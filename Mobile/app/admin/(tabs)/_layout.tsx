@@ -44,6 +44,13 @@ export default function AdminTabsLayout() {
         }}
       />
       <Tabs.Screen
+        name="voucher"
+        options={{
+          title: 'Voucher',
+          tabBarIcon: ({ color }) => <Ionicons name="ticket-outline" size={24} color={color} />,
+        }}
+      />
+      <Tabs.Screen
         name="profile"
         options={{
           title: 'Cá nhân',

@@ -146,7 +146,7 @@ public class AdminService : IAdminService
         var hotels = await _context.Hotels
             .Include(h => h.Host)
             .Include(h => h.Images)
-            .Where(h => !h.IsApproved)
+            .Where(h => !h.IsApproved && h.IsActive)
             .OrderByDescending(h => h.CreatedAt)
             .ToListAsync();
 

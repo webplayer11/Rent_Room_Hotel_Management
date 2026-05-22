@@ -49,7 +49,7 @@ public class RoomService : IRoomService
             DiscountPrice = dto.DiscountPrice,
             RoomSize = dto.RoomSize,
             IsSmokingAllowed = dto.IsSmokingAllowed,
-            Status = "Available",
+            Status = dto.Status ?? "Available",
             IsActive = true
         };
 
@@ -75,6 +75,10 @@ public class RoomService : IRoomService
         room.DiscountPrice = dto.DiscountPrice;
         room.RoomSize = dto.RoomSize;
         room.IsSmokingAllowed = dto.IsSmokingAllowed;
+        if (!string.IsNullOrEmpty(dto.Status))
+        {
+            room.Status = dto.Status;
+        }
 
         var updated = await _roomRepository.UpdateAsync(room);
         return _mapper.Map<RoomDto>(updated);
