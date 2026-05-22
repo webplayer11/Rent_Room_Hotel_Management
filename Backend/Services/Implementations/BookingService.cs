@@ -1,3 +1,4 @@
+using AutoMapper;
 using RoomManagement.DTOs;
 using RoomManagement.Models;
 using RoomManagement.Repositories.Interfaces;
@@ -9,29 +10,31 @@ public class BookingService : IBookingService
 {
     private readonly IBookingRepository _bookingRepository;
     private readonly IRoomRepository _roomRepository;
+    private readonly IMapper _mapper;
 
-    public BookingService(IBookingRepository bookingRepository, IRoomRepository roomRepository)
+    public BookingService(IBookingRepository bookingRepository, IRoomRepository roomRepository, IMapper mapper)
     {
         _bookingRepository = bookingRepository;
         _roomRepository = roomRepository;
+        _mapper = mapper;
     }
 
     public async Task<IEnumerable<BookingDto>> GetMyBookingsAsync(string userId)
     {
         var bookings = await _bookingRepository.GetByUserIdAsync(userId);
-        return bookings.Select(MapToDto);
+        return _mapper.Map<IEnumerable<BookingDto>>(bookings);
     }
 
     public async Task<IEnumerable<BookingDto>> GetHostBookingsAsync(string hostId)
     {
         var bookings = await _bookingRepository.GetByHostIdAsync(hostId);
-        return bookings.Select(MapToDto);
+        return _mapper.Map<IEnumerable<BookingDto>>(bookings);
     }
 
     public async Task<BookingDto?> GetByIdAsync(string id)
     {
         var booking = await _bookingRepository.GetByIdAsync(id);
-        return booking == null ? null : MapToDto(booking);
+        return booking == null ? null : _mapper.Map<BookingDto>(booking);
     }
 
     public async Task<BookingDto?> CreateBookingAsync(string userId, CreateBookingDto dto)
@@ -61,7 +64,7 @@ public class BookingService : IBookingService
         };
 
         var created = await _bookingRepository.CreateAsync(booking);
-        return MapToDto(created);
+        return _mapper.Map<BookingDto>(created);
     }
 
     public async Task<BookingDto?> UpdateBookingStatusAsync(string hostId, string bookingId, UpdateBookingStatusDto dto)
@@ -81,29 +84,7 @@ public class BookingService : IBookingService
         booking.UpdatedAt = DateTime.UtcNow;
 
         var updated = await _bookingRepository.UpdateAsync(booking);
-        return MapToDto(updated);
-    }
-
-    private static BookingDto MapToDto(Booking booking)
-    {
-        return new BookingDto
-        {
-            Id = booking.Id,
-            UserId = booking.UserId,
-            RoomId = booking.RoomId,
-            VoucherId = booking.VoucherId,
-            BookingCode = booking.BookingCode,
-            CheckInDate = booking.CheckInDate,
-            CheckOutDate = booking.CheckOutDate,
-            NumberOfNights = booking.NumberOfNights,
-            GuestCount = booking.GuestCount,
-            UnitPrice = booking.UnitPrice,
-            TotalPrice = booking.TotalPrice,
-            DiscountAmount = booking.DiscountAmount,
-            FinalPrice = booking.FinalPrice,
-            SpecialRequest = booking.SpecialRequest,
-            Status = booking.Status
-        };
+        return _mapper.Map<BookingDto>(updated);
     }
 
     private string GenerateBookingCode()

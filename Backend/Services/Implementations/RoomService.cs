@@ -1,3 +1,4 @@
+using AutoMapper;
 using RoomManagement.DTOs;
 using RoomManagement.Models;
 using RoomManagement.Repositories.Interfaces;
@@ -9,23 +10,25 @@ public class RoomService : IRoomService
 {
     private readonly IRoomRepository _roomRepository;
     private readonly IHotelRepository _hotelRepository;
+    private readonly IMapper _mapper;
 
-    public RoomService(IRoomRepository roomRepository, IHotelRepository hotelRepository)
+    public RoomService(IRoomRepository roomRepository, IHotelRepository hotelRepository, IMapper mapper)
     {
         _roomRepository = roomRepository;
         _hotelRepository = hotelRepository;
+        _mapper = mapper;
     }
 
     public async Task<IEnumerable<RoomDto>> GetByHotelIdAsync(string hotelId)
     {
         var rooms = await _roomRepository.GetByHotelIdAsync(hotelId);
-        return rooms.Select(MapToDto);
+        return _mapper.Map<IEnumerable<RoomDto>>(rooms);
     }
 
     public async Task<RoomDto?> GetByIdAsync(string id)
     {
         var room = await _roomRepository.GetByIdAsync(id);
-        return room != null ? MapToDto(room) : null;
+        return room != null ? _mapper.Map<RoomDto>(room) : null;
     }
 
     public async Task<RoomDto?> CreateAsync(string hostId, CreateRoomDto dto)
@@ -51,7 +54,7 @@ public class RoomService : IRoomService
         };
 
         var created = await _roomRepository.CreateAsync(room);
-        return MapToDto(created);
+        return _mapper.Map<RoomDto>(created);
     }
 
     public async Task<RoomDto?> UpdateAsync(string hostId, string id, CreateRoomDto dto)
@@ -78,7 +81,7 @@ public class RoomService : IRoomService
         }
 
         var updated = await _roomRepository.UpdateAsync(room);
-        return MapToDto(updated);
+        return _mapper.Map<RoomDto>(updated);
     }
 
     public async Task<bool> DeleteAsync(string hostId, string id)
@@ -90,33 +93,5 @@ public class RoomService : IRoomService
         if (hotel == null || hotel.HostId != hostId) return false;
 
         return await _roomRepository.DeleteAsync(id);
-    }
-
-    private static RoomDto MapToDto(Room room)
-    {
-        return new RoomDto
-        {
-            Id = room.Id,
-            HotelId = room.HotelId,
-            RoomNumber = room.RoomNumber,
-            RoomType = room.RoomType,
-            Description = room.Description,
-            Capacity = room.Capacity,
-            BedCount = room.BedCount,
-            BedType = room.BedType,
-            PricePerNight = room.PricePerNight,
-            DiscountPrice = room.DiscountPrice,
-            RoomSize = room.RoomSize,
-            Status = room.Status,
-            IsSmokingAllowed = room.IsSmokingAllowed,
-            IsActive = room.IsActive,
-            Images = room.Images?.Select(img => new RoomImageDto
-            {
-                Id = img.Id,
-                Url = img.Url,
-                Caption = img.Caption,
-                SortOrder = img.SortOrder
-            }).ToList() ?? new List<RoomImageDto>()
-        };
     }
 }

@@ -1,3 +1,4 @@
+using AutoMapper;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using RoomManagement.Data;
@@ -14,17 +15,20 @@ public class AdminService : IAdminService
     private readonly UserManager<ApplicationUser> _userManager;
     private readonly IConfiguration _configuration;
     private readonly RoleManager<IdentityRole> _roleManager;
+    private readonly IMapper _mapper;
 
     public AdminService(
         AppDbContext context,
         UserManager<ApplicationUser> userManager,
         IConfiguration configuration,
-        RoleManager<IdentityRole> roleManager)
+        RoleManager<IdentityRole> roleManager,
+        IMapper mapper)
     {
         _context = context;
         _userManager = userManager;
         _configuration = configuration;
         _roleManager = roleManager;
+        _mapper = mapper;
     }
     private async Task EnsureRoleExistsAsync(string roleName)
     {
@@ -46,7 +50,7 @@ public class AdminService : IAdminService
             .OrderByDescending(h => h.CreatedAt)
             .ToListAsync();
 
-        return hosts.Select(MapHostToDto);
+        return _mapper.Map<IEnumerable<HostProfileDto>>(hosts);
     }
 
     public async Task<IEnumerable<HostProfileDto>> GetApprovedHostsAsync()
@@ -57,7 +61,7 @@ public class AdminService : IAdminService
             .OrderByDescending(h => h.CreatedAt)
             .ToListAsync();
 
-        return hosts.Select(MapHostToDto);
+        return _mapper.Map<IEnumerable<HostProfileDto>>(hosts);
     }
 
     public async Task<HostProfileDto?> GetHostProfileByIdAsync(string hostId)
@@ -67,7 +71,7 @@ public class AdminService : IAdminService
             .FirstOrDefaultAsync(h => h.Id == hostId);
 
         if (host == null) return null;
-        return MapHostToDto(host);
+        return _mapper.Map<HostProfileDto>(host);
     }
 /*
     public async Task<bool> ApproveHostAsync(string hostId)
@@ -146,7 +150,7 @@ public class AdminService : IAdminService
             .OrderByDescending(h => h.CreatedAt)
             .ToListAsync();
 
-        return hotels.Select(MapHotelToDto);
+        return _mapper.Map<IEnumerable<HotelDto>>(hotels);
     }
 
     public async Task<IEnumerable<HotelDto>> GetApprovedHotelsAsync()
@@ -158,7 +162,7 @@ public class AdminService : IAdminService
             .OrderByDescending(h => h.CreatedAt)
             .ToListAsync();
 
-        return hotels.Select(MapHotelToDto);
+        return _mapper.Map<IEnumerable<HotelDto>>(hotels);
     }
 
     public async Task<HotelDto?> GetHotelByIdAdminAsync(string hotelId)
@@ -169,7 +173,7 @@ public class AdminService : IAdminService
             .FirstOrDefaultAsync(h => h.Id == hotelId);
 
         if (hotel == null) return null;
-        return MapHotelToDto(hotel);
+        return _mapper.Map<HotelDto>(hotel);
     }
 
     public async Task<IEnumerable<HotelDto>> GetAllHotelsAdminAsync()
@@ -179,7 +183,7 @@ public class AdminService : IAdminService
             .OrderByDescending(h => h.CreatedAt)
             .ToListAsync();
 
-        return hotels.Select(MapHotelToDto);
+        return _mapper.Map<IEnumerable<HotelDto>>(hotels);
     }
 
     public async Task<bool> ApproveHotelAsync(string hotelId)
@@ -308,51 +312,7 @@ public class AdminService : IAdminService
             MonthlyRevenue = monthlyBookings // Same data, Amount field contains revenue
         };
     }
-
+}
     // ── Mapping Helpers ──────────────────────────────────────────
 
-    private static HostProfileDto MapHostToDto(HostProfile host)
-    {
-        return new HostProfileDto
-        {
-            Id = host.Id,
-            CompanyName = host.CompanyName,
-            TaxCode = host.TaxCode,
-            BankAccount = host.BankAccount,
-            BankName = host.BankName,
-            IsVerified = host.IsVerified,
-            BusinessLicenseUrls = host.BusinessLicenseUrls,
-            Email = host.User?.Email,
-            FullName = host.User?.FullName,
-            PhoneNumber = host.User?.PhoneNumber,
-            CreatedAt = host.CreatedAt
-        };
-    }
 
-    private static HotelDto MapHotelToDto(Hotel hotel)
-    {
-        return new HotelDto
-        {
-            Id = hotel.Id,
-            Name = hotel.Name,
-            Description = hotel.Description,
-            Address = hotel.Address,
-            StarRating = hotel.StarRating,
-            CheckInTime = hotel.CheckInTime,
-            CheckOutTime = hotel.CheckOutTime,
-            IsActive = hotel.IsActive,
-            IsApproved = hotel.IsApproved,
-            HostId = hotel.HostId,
-            Latitude = hotel.Latitude,
-            Longitude = hotel.Longitude,
-            Images = hotel.Images?.Select(img => new HotelImageDto
-            {
-                Id = img.Id,
-                Url = img.Url,
-                Caption = img.Caption,
-                IsPrimary = img.IsPrimary,
-                SortOrder = img.SortOrder
-            }).ToList() ?? new List<HotelImageDto>()
-        };
-    }
-}

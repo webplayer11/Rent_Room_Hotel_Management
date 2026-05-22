@@ -1,4 +1,5 @@
 using RoomManagement.Models;
+using RoomManagement.DTOs;
 
 namespace RoomManagement.Repositories.Interfaces;
 
@@ -10,4 +11,5 @@ public interface IHotelRepository
     Task<Hotel> CreateAsync(Hotel hotel);
     Task<Hotel> UpdateAsync(Hotel hotel);
     Task<bool> DeleteAsync(string id);
+    Task<IEnumerable<Hotel>> SearchHotelsAsync(SearchHotelRequestDto request);
 }

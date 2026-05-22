@@ -1,5 +1,6 @@
 using System.Security.Cryptography;
 using System.Text;
+using AutoMapper;
 using RoomManagement.DTOs;
 using RoomManagement.Models;
 using RoomManagement.Repositories.Interfaces;
@@ -12,11 +13,13 @@ public class PaymentService : IPaymentService
 {
     private readonly IPaymentRepository _paymentRepository;
     private readonly IBookingRepository _bookingRepository;
+    private readonly IMapper _mapper;
 
-    public PaymentService(IPaymentRepository paymentRepository, IBookingRepository bookingRepository)
+    public PaymentService(IPaymentRepository paymentRepository, IBookingRepository bookingRepository, IMapper mapper)
     {
         _paymentRepository = paymentRepository;
         _bookingRepository = bookingRepository;
+        _mapper = mapper;
     }
 
     public async Task<PaymentDto?> ProcessPaymentAsync(string userId, ProcessPaymentRequestDto dto)
@@ -34,28 +37,16 @@ public class PaymentService : IPaymentService
         };
         var created = await _paymentRepository.CreateAsync(payment);
 
-        return MapToDto(created);
+        return _mapper.Map<PaymentDto>(created);
     }
 
     public async Task<IEnumerable<PaymentDto>> GetPaymentsByBookingIdAsync(string bookingId)
     {
         var payments = await _paymentRepository.GetByBookingIdAsync(bookingId);
-        return payments.Select(MapToDto);
+        return _mapper.Map<IEnumerable<PaymentDto>>(payments);
     }
 
-    private static PaymentDto MapToDto(Payment payment)
-    {
-        return new PaymentDto
-        {
-            Id = payment.Id,
-            BookingId = payment.BookingId,
-            Amount = payment.Amount,
-            Method = payment.Method,
-            Status = payment.Status,
-            TransactionId = payment.TransactionId,
-            PaidAt = payment.PaidAt
-        };
-    }
+
 
 //theem
     public string GenerateHmacSha256(string data, string secretKey)

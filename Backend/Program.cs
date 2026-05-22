@@ -37,6 +37,7 @@ builder.Services.AddApplicationServices();
 // ═══════════════════════════════════════════════════════════════
 //  3. CONTROLLERS + JSON
 // ═══════════════════════════════════════════════════════════════
+builder.Services.AddAutoMapper(typeof(Program));
 builder.Services.AddControllers(options =>
 {
     options.Filters.Add<RoomManagement.Filters.ValidationFilter>();
