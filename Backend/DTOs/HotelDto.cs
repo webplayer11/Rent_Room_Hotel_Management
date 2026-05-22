@@ -60,4 +60,5 @@ public class SearchHotelRequestDto
 public class SearchHotelResponseDto : HotelDto
 {
     public List<RoomDto> AvailableRooms { get; set; } = new();
+    public bool IsFavorited { get; set; }
 }

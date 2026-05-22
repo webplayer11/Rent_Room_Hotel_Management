@@ -59,6 +59,7 @@ public class Hotel
     public ICollection<HotelImage> Images { get; set; } = new List<HotelImage>();
     public ICollection<Review> Reviews { get; set; } = new List<Review>();
     public ICollection<RevenueReport> RevenueReports { get; set; } = new List<RevenueReport>();
+    public ICollection<Favorite> Favorites { get; set; } = new List<Favorite>();
 
     // Many-to-many (Fluent API)
     public ICollection<Amenity> Amenities { get; set; } = new List<Amenity>();

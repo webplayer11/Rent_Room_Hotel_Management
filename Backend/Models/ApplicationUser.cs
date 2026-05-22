@@ -26,6 +26,6 @@ public class ApplicationUser : IdentityUser
     // Navigation — quan hệ 1-N
     public ICollection<Booking> Bookings { get; set; } = new List<Booking>();
     public ICollection<Review> Reviews { get; set; } = new List<Review>();
-    public ICollection<Wishlist> Wishlists { get; set; } = new List<Wishlist>();
+    public ICollection<Favorite> Favorites { get; set; } = new List<Favorite>();
     public ICollection<Notification> Notifications { get; set; } = new List<Notification>();
 }
