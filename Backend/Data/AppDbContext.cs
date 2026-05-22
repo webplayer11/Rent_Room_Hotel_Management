@@ -22,7 +22,7 @@ public class AppDbContext : IdentityDbContext<ApplicationUser>
     public DbSet<Payment> Payments { get; set; }
     public DbSet<Invoice> Invoices { get; set; }
     public DbSet<Review> Reviews { get; set; }
-    public DbSet<Wishlist> Wishlists { get; set; }
+    public DbSet<Favorite> Favorites { get; set; }
     public DbSet<Notification> Notifications { get; set; }
     public DbSet<Voucher> Vouchers { get; set; }
     public DbSet<Promotion> Promotions { get; set; }
@@ -121,17 +121,21 @@ public class AppDbContext : IdentityDbContext<ApplicationUser>
             .HasForeignKey<Review>(r => r.BookingId)
             .OnDelete(DeleteBehavior.SetNull);
 
-        // Wishlist
-        modelBuilder.Entity<Wishlist>()
-            .HasOne(w => w.User)
-            .WithMany(u => u.Wishlists)
-            .HasForeignKey(w => w.UserId)
+        // Favorite
+        modelBuilder.Entity<Favorite>()
+            .HasIndex(f => new { f.UserId, f.HotelId })
+            .IsUnique();
+
+        modelBuilder.Entity<Favorite>()
+            .HasOne(f => f.User)
+            .WithMany(u => u.Favorites)
+            .HasForeignKey(f => f.UserId)
             .OnDelete(DeleteBehavior.Cascade);
 
-        modelBuilder.Entity<Wishlist>()
-            .HasOne(w => w.Hotel)
-            .WithMany()
-            .HasForeignKey(w => w.HotelId)
+        modelBuilder.Entity<Favorite>()
+            .HasOne(f => f.Hotel)
+            .WithMany(h => h.Favorites)
+            .HasForeignKey(f => f.HotelId)
             .OnDelete(DeleteBehavior.Cascade);
 
         // Notification
