@@ -37,8 +37,8 @@ export default function HostRequestDetailScreen() {
   const [rejectModalVisible, setRejectModalVisible] = useState(false);
   const [reason, setReason] = useState("");
   const [fullScreenImage, setFullScreenImage] = useState<string | null>(null);
-  
-  
+
+
   const loadDetail = async () => {
     if (!id) return;
 
@@ -168,52 +168,48 @@ export default function HostRequestDetailScreen() {
             <Text style={styles.infoLabel}>Mã số thuế</Text>
             <Text style={styles.infoValue}>{host.taxCode || "Chưa có"}</Text>
           </View>
-{host.businessLicenseUrls &&
-host.businessLicenseUrls.length > 0 ? (
-  <View style={styles.infoSection}>
-    <Text style={styles.infoLabel}>
-      Giấy phép kinh doanh
-    </Text>
+          {host.businessLicenseUrls &&
+            host.businessLicenseUrls.length > 0 ? (
+            <View style={styles.infoSection}>
+              <Text style={styles.infoLabel}>
+                Giấy phép kinh doanh
+              </Text>
 
-    <ScrollView
-      horizontal
-      showsHorizontalScrollIndicator={false}
-      contentContainerStyle={{ gap: 12 }}
-    >
-      {host.businessLicenseUrls.map((url, index) => (
-        <TouchableOpacity
-          key={index}
-          style={styles.licenseImageContainer}
-          onPress={() => setFullScreenImage(url)}
-        >
-          <Image
-            source={{
-              uri: url.startsWith("http")
-                ? url
-                : `http://192.168.0.105:9000/${url}`,
-            }}
-            style={styles.licenseImage}
-            resizeMode="cover"
-          />
+              <View style={{ gap: 12, marginTop: 8 }}>
+                {host.businessLicenseUrls.map((url, index) => (
+                  <TouchableOpacity
+                    key={index}
+                    style={styles.licenseImageContainer}
+                    onPress={() => setFullScreenImage(url)}
+                  >
+                    <Image
+                      source={{
+                        uri: url.startsWith("http")
+                          ? url
+                          : `http://192.168.0.105:9000/${url}`,
+                      }}
+                      style={styles.licenseImage}
+                      resizeMode="cover"
+                    />
 
-          <View style={styles.maximizeIcon}>
-            <Maximize2 size={20} color="#FFF" />
-          </View>
-        </TouchableOpacity>
-      ))}
-    </ScrollView>
-  </View>
-) : (
-  <View style={styles.infoSection}>
-    <Text style={styles.infoLabel}>
-      Giấy phép kinh doanh
-    </Text>
+                    <View style={styles.maximizeIcon}>
+                      <Maximize2 size={20} color="#FFF" />
+                    </View>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </View>
+          ) : (
+            <View style={styles.infoSection}>
+              <Text style={styles.infoLabel}>
+                Giấy phép kinh doanh
+              </Text>
 
-    <Text style={{ color: "#999" }}>
-      Chưa có giấy phép
-    </Text>
-  </View>
-)}
+              <Text style={{ color: "#999" }}>
+                Chưa có giấy phép
+              </Text>
+            </View>
+          )}
         </View>
       </ScrollView>
 
@@ -295,20 +291,25 @@ host.businessLicenseUrls.length > 0 ? (
       {fullScreenImage && (
         <Modal transparent visible animationType="fade">
           <View style={styles.fullScreenContainer}>
+            <Image
+              source={{
+                uri: fullScreenImage.startsWith("http")
+                  ? fullScreenImage
+                  : `http://192.168.0.105:9000/${fullScreenImage}`,
+              }}
+              resizeMode="contain"
+              style={{
+                width: Dimensions.get("window").width,
+                height: Dimensions.get("window").height,
+              }}
+            />
+
             <TouchableOpacity
               style={styles.closeFullScreen}
               onPress={() => setFullScreenImage(null)}
             >
               <X size={30} color="#FFF" />
             </TouchableOpacity>
-
-           <Image  source={{ uri: fullScreenImage }}
-            resizeMode="contain"
-            style={{
-            width: Dimensions.get("window").width,
-            height: Dimensions.get("window").height * 0.8,
-  }}
-/>
           </View>
         </Modal>
       )}
@@ -343,6 +344,7 @@ const styles = StyleSheet.create({
     color: '#1A1A1A',
   },
   licenseImageContainer: {
+    width: Dimensions.get("window").width - 40,
     marginTop: 10,
     borderRadius: 16,
     overflow: 'hidden',
@@ -484,6 +486,8 @@ const styles = StyleSheet.create({
     top: 50,
     right: 20,
     zIndex: 10,
+    elevation: 10,
+    padding: 10,
   },
   center: {
     flex: 1,

@@ -46,6 +46,7 @@ public class HotelService : IHotelService
             HostId = hostId,
             IsActive = true,
             IsApproved = false
+            
         };
 
         var created = await _repository.CreateAsync(hotel);
