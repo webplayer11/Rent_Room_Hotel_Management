@@ -93,10 +93,14 @@ export default function HotelDetailScreen() {
   const confirmReject = async () => {
     if (!id) return;
 
-    // Using RejectHotel (mapped to DELETE or specific reject endpoint for hotels)
+    if (!reason.trim()) {
+      Alert.alert("Thiếu lý do", "Vui lòng nhập lý do từ chối");
+      return;
+    }
+
     try {
       setActionLoading(true);
-      await adminApi.RejectHotel(id);
+      await adminApi.SuspendHotel(id, reason);
       setRejectModalVisible(false);
       Alert.alert("Thành công", "Đã từ chối (xóa) yêu cầu khách sạn");
       router.back();
@@ -140,7 +144,7 @@ export default function HotelDetailScreen() {
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         <View style={styles.section}>
-          
+
           <View style={styles.infoSection}>
             <Text style={styles.infoLabel}>Tên khách sạn</Text>
             <Text style={styles.infoValue}>{hotel.name || "Chưa có"}</Text>
@@ -241,27 +245,30 @@ export default function HotelDetailScreen() {
         </View>
       </ScrollView>
 
-      <View style={styles.footer}>
-        <TouchableOpacity
-          style={[styles.actionButton, styles.acceptButton]}
-          onPress={handleAccept}
-          disabled={actionLoading}
-        >
-          <CheckCircle size={20} color="#FFF" style={{ marginRight: 8 }} />
-          <Text style={styles.actionButtonText}>
-            {actionLoading ? "Đang xử lý..." : "Chấp nhận duyệt"}
-          </Text>
-        </TouchableOpacity>
 
-        <TouchableOpacity
-          style={[styles.actionButton, styles.rejectButton]}
-          onPress={handleReject}
-          disabled={actionLoading}
-        >
-          <X size={20} color="#FFF" style={{ marginRight: 8 }} />
-          <Text style={styles.actionButtonText}>Từ chối</Text>
-        </TouchableOpacity>
-      </View>
+      {!rejectModalVisible && (
+        <View style={styles.footer}>
+          <TouchableOpacity
+            style={[styles.actionButton, styles.acceptButton]}
+            onPress={handleAccept}
+            disabled={actionLoading}
+          >
+            <CheckCircle size={20} color="#FFF" style={{ marginRight: 8 }} />
+            <Text style={styles.actionButtonText}>
+              {actionLoading ? "Đang xử lý..." : "Chấp nhận duyệt"}
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.actionButton, styles.rejectButton]}
+            onPress={handleReject}
+            disabled={actionLoading}
+          >
+            <X size={20} color="#FFF" style={{ marginRight: 8 }} />
+            <Text style={styles.actionButtonText}>Từ chối</Text>
+          </TouchableOpacity>
+        </View>
+      )}
 
       <Modal
         visible={rejectModalVisible}
@@ -287,15 +294,14 @@ export default function HotelDetailScreen() {
                 Việc từ chối sẽ đồng nghĩa với việc xóa bỏ yêu cầu đăng ký khách sạn này. Bạn có chắc chắn muốn tiếp tục?
               </Text>
 
-              {/* Keep this just in case backend gets updated to need a reason for rejecting hotels in future */}
-              {/* <TextInput
+              <TextInput
                 style={styles.reasonInput}
                 placeholder="Nhập lý do tại đây (không bắt buộc)..."
                 multiline
                 numberOfLines={4}
                 value={reason}
                 onChangeText={setReason}
-              /> */}
+              />
             </View>
 
             <View style={styles.modalFooter}>
@@ -328,10 +334,10 @@ export default function HotelDetailScreen() {
             </TouchableOpacity>
 
             <Image
-              source={{ 
+              source={{
                 uri: fullScreenImage.startsWith("http")
-                            ? fullScreenImage
-                            : `http://192.168.0.105:9000/${fullScreenImage}`
+                  ? fullScreenImage
+                  : `http://192.168.0.105:9000/${fullScreenImage}`
               }}
               resizeMode="contain"
               style={{
@@ -385,11 +391,11 @@ const styles = StyleSheet.create({
     borderColor: '#EEE',
     position: 'relative',
     backgroundColor: '#F8F9FA',
-    width: 200, // Explicit width for horizontal scroll
+    width: Dimensions.get('window').width * 0.8, // 80% chiều rộng màn hình
   },
   licenseImage: {
     width: '100%',
-    height: 150,
+    height: 220, // Tăng chiều cao lên 220
   },
   maximizeIcon: {
     position: 'absolute',

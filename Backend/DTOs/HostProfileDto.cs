@@ -9,7 +9,6 @@ public class HostProfileDto
     public string? BankName { get; set; }
     public bool IsVerified { get; set; }
     public List<string> BusinessLicenseUrls { get; set; } = new();
-
     
     // User info for Admin
     public string? Email { get; set; }

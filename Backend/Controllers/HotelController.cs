@@ -37,6 +37,13 @@ public class HotelController : ControllerBase
         return Ok(ResponseApi<IEnumerable<HotelDto>>.Success(result));
     }
 
+    [HttpGet("search")]
+    public async Task<IActionResult> Search([FromQuery] SearchHotelRequestDto request)
+    {
+        var result = await _service.SearchAsync(request);
+        return Ok(ResponseApi<IEnumerable<SearchHotelResponseDto>>.Success(result));
+    }
+
     [HttpGet("{id}")]
     public async Task<IActionResult> GetById(string id)
     {

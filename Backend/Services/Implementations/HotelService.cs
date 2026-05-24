@@ -1,3 +1,4 @@
+using AutoMapper;
 using RoomManagement.DTOs;
 using RoomManagement.Models;
 using RoomManagement.Repositories.Interfaces;
@@ -8,29 +9,31 @@ namespace RoomManagement.Services.Implementations;
 public class HotelService : IHotelService
 {
     private readonly IHotelRepository _repository;
+    private readonly IMapper _mapper;
 
-    public HotelService(IHotelRepository repository)
+    public HotelService(IHotelRepository repository, IMapper mapper)
     {
         _repository = repository;
+        _mapper = mapper;
     }
 
     public async Task<IEnumerable<HotelDto>> GetAllAsync()
     {
         var hotels = await _repository.GetAllAsync();
-        return hotels.Select(h => MapToDto(h));
+        return _mapper.Map<IEnumerable<HotelDto>>(hotels);
     }
 
     public async Task<IEnumerable<HotelDto>> GetByHostIdAsync(string hostId)
     {
         var hotels = await _repository.GetByHostIdAsync(hostId);
-        return hotels.Select(h => MapToDto(h));
+        return _mapper.Map<IEnumerable<HotelDto>>(hotels);
     }
 
     public async Task<HotelDto?> GetByIdAsync(string id)
     {
         var hotel = await _repository.GetByIdAsync(id);
         if (hotel == null) return null;
-        return MapToDto(hotel);
+        return _mapper.Map<HotelDto>(hotel);
     }
 
     public async Task<HotelDto> CreateAsync(string hostId, CreateHotelDto dto)
@@ -40,6 +43,8 @@ public class HotelService : IHotelService
             Name = dto.Name,
             Description = dto.Description,
             Address = dto.Address,
+            Latitude = dto.Latitude,
+            Longitude = dto.Longitude,
             StarRating = dto.StarRating,
             CheckInTime = dto.CheckInTime,
             CheckOutTime = dto.CheckOutTime,
@@ -50,7 +55,7 @@ public class HotelService : IHotelService
         };
 
         var created = await _repository.CreateAsync(hotel);
-        return MapToDto(created);
+        return _mapper.Map<HotelDto>(created);
     }
 
     public async Task<HotelDto?> UpdateAsync(string hostId, string id, UpdateHotelDto dto)
@@ -61,6 +66,8 @@ public class HotelService : IHotelService
         hotel.Name = dto.Name;
         hotel.Description = dto.Description;
         hotel.Address = dto.Address;
+        if (dto.Latitude.HasValue) hotel.Latitude = dto.Latitude;
+        if (dto.Longitude.HasValue) hotel.Longitude = dto.Longitude;
         hotel.StarRating = dto.StarRating;
         hotel.CheckInTime = dto.CheckInTime;
         hotel.CheckOutTime = dto.CheckOutTime;
@@ -68,7 +75,7 @@ public class HotelService : IHotelService
         hotel.UpdatedAt = DateTime.UtcNow;
 
         var updated = await _repository.UpdateAsync(hotel);
-        return MapToDto(updated);
+        return _mapper.Map<HotelDto>(updated);
     }
 
     public async Task<bool> DeleteAsync(string hostId, string id)
@@ -79,30 +86,9 @@ public class HotelService : IHotelService
         return await _repository.DeleteAsync(id);
     }
 
-    private static HotelDto MapToDto(Hotel hotel)
+    public async Task<IEnumerable<SearchHotelResponseDto>> SearchAsync(SearchHotelRequestDto request)
     {
-        return new HotelDto
-        {
-            Id = hotel.Id,
-            Name = hotel.Name,
-            Description = hotel.Description,
-            Address = hotel.Address,
-            StarRating = hotel.StarRating,
-            CheckInTime = hotel.CheckInTime,
-            CheckOutTime = hotel.CheckOutTime,
-            IsActive = hotel.IsActive,
-            IsApproved = hotel.IsApproved,
-            HostId = hotel.HostId,
-            Latitude = hotel.Latitude,
-            Longitude = hotel.Longitude,
-            Images = hotel.Images?.Select(img => new HotelImageDto
-            {
-                Id = img.Id,
-                Url = img.Url,
-                Caption = img.Caption,
-                IsPrimary = img.IsPrimary,
-                SortOrder = img.SortOrder
-            }).ToList() ?? new List<HotelImageDto>()
-        };
+        var hotels = await _repository.SearchHotelsAsync(request);
+        return _mapper.Map<IEnumerable<SearchHotelResponseDto>>(hotels);
     }
 }

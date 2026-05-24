@@ -3,8 +3,8 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace RoomManagement.Models;
 
-[Table("Wishlist")]
-public class Wishlist
+[Table("Favorite")]
+public class Favorite
 {
     [Key]
     [MaxLength(50)]

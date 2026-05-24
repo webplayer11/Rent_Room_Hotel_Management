@@ -1,3 +1,4 @@
+using AutoMapper;
 using Microsoft.EntityFrameworkCore;
 using RoomManagement.Data;
 using RoomManagement.DTOs;
@@ -11,11 +12,13 @@ public class VoucherService : IVoucherService
 {
     private readonly IVoucherRepository _repository;
     private readonly AppDbContext _context;
+    private readonly IMapper _mapper;
 
-    public VoucherService(IVoucherRepository repository, AppDbContext context)
+    public VoucherService(IVoucherRepository repository, AppDbContext context, IMapper mapper)
     {
         _repository = repository;
         _context = context;
+        _mapper = mapper;
     }
 
     // ── System Vouchers (Admin) ──────────────────────────────────
@@ -37,13 +40,13 @@ public class VoucherService : IVoucherService
         };
 
         var created = await _repository.CreateAsync(voucher);
-        return MapToDto(created);
+        return _mapper.Map<VoucherDto>(created);
     }
 
     public async Task<IEnumerable<VoucherDto>> GetSystemVouchersAsync()
     {
         var vouchers = await _repository.GetSystemVouchersAsync();
-        return vouchers.Select(MapToDto);
+        return _mapper.Map<IEnumerable<VoucherDto>>(vouchers);
     }
 
     // ── Hotel Vouchers (Host) ────────────────────────────────────
@@ -70,19 +73,19 @@ public class VoucherService : IVoucherService
         };
 
         var created = await _repository.CreateAsync(voucher);
-        return MapToDto(created);
+        return _mapper.Map<VoucherDto>(created);
     }
 
     public async Task<IEnumerable<VoucherDto>> GetHotelVouchersAsync(string hotelId)
     {
         var vouchers = await _repository.GetByHotelIdAsync(hotelId);
-        return vouchers.Select(MapToDto);
+        return _mapper.Map<IEnumerable<VoucherDto>>(vouchers);
     }
 
     public async Task<IEnumerable<VoucherDto>> GetMyVouchersAsync(string userId)
     {
         var vouchers = await _repository.GetByCreatorIdAsync(userId);
-        return vouchers.Select(MapToDto);
+        return _mapper.Map<IEnumerable<VoucherDto>>(vouchers);
     }
 
     // ── Common ───────────────────────────────────────────────────
@@ -145,30 +148,9 @@ public class VoucherService : IVoucherService
             Code = code,
             IsValid = true,
             Message = "Voucher hợp lệ",
-            Voucher = MapToDto(voucher)
+            Voucher = _mapper.Map<VoucherDto>(voucher)
         };
     }
 
-    // ── Mapping ──────────────────────────────────────────────────
 
-    private static VoucherDto MapToDto(Voucher voucher)
-    {
-        return new VoucherDto
-        {
-            Id = voucher.Id,
-            Code = voucher.Code,
-            Type = voucher.Type,
-            DiscountValue = voucher.DiscountValue,
-            MaxDiscountAmount = voucher.MaxDiscountAmount,
-            MinOrderAmount = voucher.MinOrderAmount,
-            MinNights = voucher.MinNights,
-            StartDate = voucher.StartDate,
-            EndDate = voucher.EndDate,
-            UsageLimit = voucher.UsageLimit,
-            UsedCount = voucher.UsedCount,
-            IsActive = voucher.IsActive,
-            HotelId = voucher.HotelId,
-            CreatedByUserId = voucher.CreatedByUserId
-        };
-    }
 }

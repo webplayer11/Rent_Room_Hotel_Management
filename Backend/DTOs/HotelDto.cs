@@ -32,6 +32,8 @@ public class CreateHotelDto
     public string? Name { get; set; }
     public string? Description { get; set; }
     public string? Address { get; set; }
+    public double? Latitude { get; set; }
+    public double? Longitude { get; set; }
     public int? StarRating { get; set; }
     public string? CheckInTime { get; set; }
     public string? CheckOutTime { get; set; }
@@ -41,4 +43,22 @@ public class CreateHotelDto
 public class UpdateHotelDto : CreateHotelDto
 {
     public bool IsActive { get; set; } = true;
+}
+
+public class SearchHotelRequestDto
+{
+    public string? Location { get; set; }
+    public double? Latitude { get; set; }
+    public double? Longitude { get; set; }
+    public double? RadiusKm { get; set; } = 10.0;
+    public DateOnly? CheckInDate { get; set; }
+    public DateOnly? CheckOutDate { get; set; }
+    public int RoomCount { get; set; } = 1;
+    public int GuestCount { get; set; } = 1;
+}
+
+public class SearchHotelResponseDto : HotelDto
+{
+    public List<RoomDto> AvailableRooms { get; set; } = new();
+    public bool IsFavorited { get; set; }
 }
