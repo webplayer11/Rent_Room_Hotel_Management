@@ -11,6 +11,8 @@ public class MappingProfile : Profile
         CreateMap<HotelImage, HotelImageDto>();
         CreateMap<RoomImage, RoomImageDto>();
         CreateMap<Room, RoomDto>();
+        CreateMap<Amenity, AmenityDto>();
+        CreateMap<RoomAmenity, RoomAmenityDto>();
         
         CreateMap<Hotel, HotelDto>();
         

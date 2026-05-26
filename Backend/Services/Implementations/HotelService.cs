@@ -3,6 +3,8 @@ using RoomManagement.DTOs;
 using RoomManagement.Models;
 using RoomManagement.Repositories.Interfaces;
 using RoomManagement.Services.Interfaces;
+using RoomManagement.Data;
+using Microsoft.EntityFrameworkCore;
 
 namespace RoomManagement.Services.Implementations;
 
@@ -10,11 +12,13 @@ public class HotelService : IHotelService
 {
     private readonly IHotelRepository _repository;
     private readonly IMapper _mapper;
+    private readonly AppDbContext _context;
 
-    public HotelService(IHotelRepository repository, IMapper mapper)
+    public HotelService(IHotelRepository repository, IMapper mapper, AppDbContext context)
     {
         _repository = repository;
         _mapper = mapper;
+        _context = context;
     }
 
     public async Task<IEnumerable<HotelDto>> GetAllAsync()
@@ -51,8 +55,31 @@ public class HotelService : IHotelService
             HostId = hostId,
             IsActive = true,
             IsApproved = false
-            
         };
+
+        if (dto.Amenities != null && dto.Amenities.Any())
+        {
+            var amenityNames = dto.Amenities.Select(a => a.Trim().ToLower()).Distinct().ToList();
+            var existingAmenities = await _context.Amenities
+                .Where(a => a.Name != null && amenityNames.Contains(a.Name.ToLower()))
+                .ToListAsync();
+
+            var existingNames = existingAmenities.Select(a => a.Name?.ToLower()).ToList();
+            var newNames = amenityNames.Except(existingNames).ToList();
+
+            foreach (var name in newNames)
+            {
+                var newAmenity = new Amenity
+                {
+                    Id = Guid.NewGuid().ToString(),
+                    Name = dto.Amenities.First(a => a.Trim().Equals(name, StringComparison.OrdinalIgnoreCase)).Trim()
+                };
+                _context.Amenities.Add(newAmenity);
+                existingAmenities.Add(newAmenity);
+            }
+
+            hotel.Amenities = existingAmenities;
+        }
 
         var created = await _repository.CreateAsync(hotel);
         return _mapper.Map<HotelDto>(created);
@@ -73,6 +100,34 @@ public class HotelService : IHotelService
         hotel.CheckOutTime = dto.CheckOutTime;
         hotel.IsActive = dto.IsActive;
         hotel.UpdatedAt = DateTime.UtcNow;
+
+        if (dto.Amenities != null)
+        {
+            var amenityNames = dto.Amenities.Select(a => a.Trim().ToLower()).Distinct().ToList();
+            var existingAmenities = await _context.Amenities
+                .Where(a => a.Name != null && amenityNames.Contains(a.Name.ToLower()))
+                .ToListAsync();
+
+            var existingNames = existingAmenities.Select(a => a.Name?.ToLower()).ToList();
+            var newNames = amenityNames.Except(existingNames).ToList();
+
+            foreach (var name in newNames)
+            {
+                var newAmenity = new Amenity
+                {
+                    Id = Guid.NewGuid().ToString(),
+                    Name = dto.Amenities.First(a => a.Trim().Equals(name, StringComparison.OrdinalIgnoreCase)).Trim()
+                };
+                _context.Amenities.Add(newAmenity);
+                existingAmenities.Add(newAmenity);
+            }
+
+            hotel.Amenities.Clear();
+            foreach (var amenity in existingAmenities)
+            {
+                hotel.Amenities.Add(amenity);
+            }
+        }
 
         var updated = await _repository.UpdateAsync(hotel);
         return _mapper.Map<HotelDto>(updated);

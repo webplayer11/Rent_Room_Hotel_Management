@@ -19,6 +19,7 @@ public class HotelRepository : IHotelRepository
     {
         return await _context.Hotels
             .Include(h => h.Images)
+            .Include(h => h.Amenities)
             .ToListAsync();
     }
 
@@ -26,6 +27,7 @@ public class HotelRepository : IHotelRepository
     {
         return await _context.Hotels
             .Include(h => h.Images)
+            .Include(h => h.Amenities)
             .Where(h => h.HostId == hostId)
             .ToListAsync();
     }
@@ -34,6 +36,7 @@ public class HotelRepository : IHotelRepository
     {
         return await _context.Hotels
             .Include(h => h.Images)
+            .Include(h => h.Amenities)
             .FirstOrDefaultAsync(h => h.Id == id);
     }
 
@@ -66,6 +69,7 @@ public class HotelRepository : IHotelRepository
     {
         var query = _context.Hotels
             .Include(h => h.Images)
+            .Include(h => h.Amenities)
             .Include(h => h.Rooms)
                 .ThenInclude(r => r.Images)
             .Include(h => h.Rooms)
