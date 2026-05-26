@@ -10,6 +10,7 @@ import {
   ActivityIndicator,
   Platform,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter, useFocusEffect } from "expo-router";
 import { MapPin, ChevronLeft } from "lucide-react-native";
 import { hotelApi } from "../../../src/shared/api/hotelApi";
@@ -165,7 +166,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     paddingHorizontal: 20,
-    paddingTop: Platform.OS === 'android' ? 40 : 20,
+    paddingTop: 16,
     paddingBottom: 20,
   },
   headerTitle: {

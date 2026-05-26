@@ -18,6 +18,7 @@ public class RoomRepository : IRoomRepository
     {
         return await _context.Rooms
             .Include(r => r.Images)
+            .Include(r => r.RoomAmenities)
             .Where(r => r.HotelId == hotelId)
             .ToListAsync();
     }
@@ -26,6 +27,7 @@ public class RoomRepository : IRoomRepository
     {
         return await _context.Rooms
             .Include(r => r.Images)
+            .Include(r => r.RoomAmenities)
             .FirstOrDefaultAsync(r => r.Id == id);
     }
 
