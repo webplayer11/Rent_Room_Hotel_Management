@@ -1,18 +1,18 @@
+import { SafeAreaView } from 'react-native-safe-area-context';
 import React, { useState, useCallback } from 'react';
-import { 
-    View, 
-    StyleSheet, 
-    TouchableOpacity, 
-    Text, 
-    Modal, 
-    SafeAreaView,
+import {
+    View,
+    StyleSheet,
+    TouchableOpacity,
+    Text,
+    Modal,
     ActivityIndicator,
     TextInput,
     FlatList,
-    Keyboard
+    Keyboard,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-// import MapView, { Marker } from 'react-native-maps';
+import MapView, { Region } from 'react-native-maps';
 import * as Location from 'expo-location';
 
 interface AppMapProps {
@@ -44,7 +44,7 @@ const AppMap = ({ visible, onClose, onSelectLocation }: AppMapProps) => {
         try {
             // Using Photon API (Free Geocoding based on OpenStreetMap)
             const response = await fetch(
-                `https://photon.komoot.io/api/?q=${encodeURIComponent(text)}&limit=10&lang=en`
+                `https://photon.komoot.io/api/?q=${encodeURIComponent(text)}&limit=10&bbox=102.14,8.56,109.46,23.39`
             );
             const data = await response.json();
             setSearchResults(data.features || []);
@@ -79,24 +79,33 @@ const AppMap = ({ visible, onClose, onSelectLocation }: AppMapProps) => {
     };
 
     const handleConfirm = async () => {
-        setLoading(true);
         try {
-            const reverse = await Location.reverseGeocodeAsync(region);
-            if (reverse.length > 0) {
-                const addr = reverse[0];
-                const fullAddress = [addr.streetNumber, addr.street, addr.district, addr.city]
-                    .filter(Boolean)
-                    .join(", ");
-                onSelectLocation(fullAddress || "Vị trí đã chọn", region);
+            setLoading(true);
+            // Lấy địa chỉ từ toạ độ tâm bản đồ (region)
+            const reverse = await Location.reverseGeocodeAsync({
+                latitude: region.latitude,
+                longitude: region.longitude,
+            });
+
+            let fullAddress = "Vị trí đã chọn";
+            if (reverse && reverse.length > 0) {
+                const loc = reverse[0];
+                const parts = [loc.name, loc.street, loc.subregion, loc.city, loc.region, loc.country].filter(Boolean);
+                if (parts.length > 0) {
+                    fullAddress = parts.join(", ");
+                }
             }
+
+            onSelectLocation(fullAddress, { latitude: region.latitude, longitude: region.longitude });
+            onClose();
         } catch (error) {
-            console.error(error);
+            console.log(error);
+            onSelectLocation("Vị trí đã chọn", { latitude: region.latitude, longitude: region.longitude });
+            onClose();
         } finally {
             setLoading(false);
-            onClose();
         }
     };
-
     return (
         <Modal 
             visible={visible} 
@@ -165,9 +174,12 @@ const AppMap = ({ visible, onClose, onSelectLocation }: AppMapProps) => {
                 </View>
 
                 <View style={{ flex: 1 }}>
-                    <View style={[styles.map, { backgroundColor: '#E2E8F0', justifyContent: 'center', alignItems: 'center' }]}>
-                        <Text style={{ color: '#64748B' }}>[Bản đồ tạm thời bị ẩn để test giao diện]</Text>
-                    </View>
+                    <MapView
+                        style={styles.map}
+                        region={region}
+                        onRegionChangeComplete={(newRegion: Region) => setRegion(newRegion)}
+                        showsUserLocation={true}
+                    />
                     
                     <View style={styles.markerFixed}>
                         <Ionicons name="location" size={40} color="#EF4444" />

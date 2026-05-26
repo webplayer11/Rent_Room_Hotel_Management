@@ -1,3 +1,5 @@
+import { SafeAreaView } from 'react-native-safe-area-context';
+import Toast from 'react-native-toast-message';
 import React, { useState, useEffect } from "react";
 import {
   View,
@@ -10,7 +12,6 @@ import {
   ScrollView,
   Alert,
   ActivityIndicator,
-  SafeAreaView,
   Pressable,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
@@ -55,7 +56,11 @@ export default function AdminVoucherScreen() {
 
   const handleCreateVoucher = async () => {
     if (!code.trim() || !discountValue.trim() || !usageLimit.trim()) {
-      Alert.alert("Lỗi", "Vui lòng nhập đầy đủ các trường bắt buộc (*)");
+      Toast.show({
+        type: 'error',
+        text1: "Lỗi",
+        text2: "Vui lòng nhập đầy đủ các trường bắt buộc (*)"
+      });
       return;
     }
 
@@ -74,15 +79,27 @@ export default function AdminVoucherScreen() {
       setLoading(true);
       const res = await voucherApi.createSystemVoucher(payload);
       if (res.isSuccess) {
-        Alert.alert("Thành công", "Đã tạo voucher hệ thống mới!");
+        Toast.show({
+          type: 'success',
+          text1: "Thành công",
+          text2: "Đã tạo voucher hệ thống mới!"
+        });
         setModalVisible(false);
         resetForm();
         loadVouchers();
       } else {
-        Alert.alert("Lỗi", res.message || "Không thể tạo voucher");
+        Toast.show({
+          type: 'error',
+          text1: "Lỗi",
+          text2: res.message || "Không thể tạo voucher"
+        });
       }
     } catch (error: any) {
-      Alert.alert("Lỗi", error.message || "Tạo voucher thất bại");
+      Toast.show({
+        type: 'error',
+        text1: "Lỗi",
+        text2: error.message || "Tạo voucher thất bại"
+      });
     } finally {
       setLoading(false);
     }
@@ -98,13 +115,25 @@ export default function AdminVoucherScreen() {
           try {
             const res = await voucherApi.deleteVoucher(id);
             if (res.isSuccess) {
-              Alert.alert("Thành công", "Đã xóa voucher");
+              Toast.show({
+                type: 'success',
+                text1: "Thành công",
+                text2: "Đã xóa voucher"
+              });
               loadVouchers();
             } else {
-              Alert.alert("Lỗi", res.message);
+              Toast.show({
+                type: 'error',
+                text1: "Lỗi",
+                text2: res.message
+              });
             }
           } catch (error: any) {
-            Alert.alert("Lỗi", "Không thể xóa voucher");
+            Toast.show({
+              type: 'error',
+              text1: "Lỗi",
+              text2: "Không thể xóa voucher"
+            });
           }
         },
       },

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, forwardRef } from 'react';
 import { 
   View, 
   TextInput, 
@@ -10,14 +10,14 @@ import {
 import { colors } from '../constants/colors';
 import { LucideIcon } from 'lucide-react-native';
 
-interface AppInputProps extends TextInputProps {
+export interface AppInputProps extends TextInputProps {
   label?: string;
   error?: string;
-  icon?: LucideIcon;
+  icon?: React.ElementType<any>;
   containerStyle?: any;
 }
 
-export const AppInput = ({ 
+export const AppInput = forwardRef<TextInput, AppInputProps>(({ 
   label, 
   error, 
   icon: Icon, 
@@ -25,7 +25,7 @@ export const AppInput = ({
   onFocus, 
   onBlur, 
   ...props 
-}: AppInputProps) => {
+}, ref) => {
   const [isFocused, setIsFocused] = useState(false);
   const focusAnim = useState(new Animated.Value(0))[0];
 
@@ -80,6 +80,7 @@ export const AppInput = ({
           />
         )}
         <TextInput
+          ref={ref}
           style={styles.input}
           placeholderTextColor={colors.muted}
           onFocus={handleFocus}
@@ -90,7 +91,7 @@ export const AppInput = ({
       {error && <Text style={styles.errorText}>{error}</Text>}
     </View>
   );
-};
+});
 
 const styles = StyleSheet.create({
   container: {

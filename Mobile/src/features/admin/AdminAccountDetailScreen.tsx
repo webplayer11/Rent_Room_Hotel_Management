@@ -1,3 +1,4 @@
+import Toast from 'react-native-toast-message';
 import React, { useState } from 'react';
 import {
   Alert, Pressable, ScrollView, StyleSheet, Text, TextInput, View,
@@ -73,7 +74,11 @@ export function AdminAccountDetailScreen() {
 
   function handleBlock() {
     if (!blockReasonInput.trim()) {
-      Alert.alert('Lỗi', 'Vui lòng nhập lý do khóa tài khoản.');
+      Toast.show({
+        type: 'error',
+        text1: 'Lỗi',
+        text2: 'Vui lòng nhập lý do khóa tài khoản.'
+      });
       return;
     }
     adminAccountsMockData[accIndex] = {
@@ -88,7 +93,11 @@ export function AdminAccountDetailScreen() {
     setBlockReasonInput('');
     setShowBlockInput(false);
     refreshAccounts();
-    Alert.alert('Đã khóa', 'Đã khóa tài khoản.');
+    Toast.show({
+      type: 'info',
+      text1: 'Đã khóa',
+      text2: 'Đã khóa tài khoản.'
+    });
   }
 
   function handleUnblock() {
@@ -107,7 +116,11 @@ export function AdminAccountDetailScreen() {
             ],
           };
           refreshAccounts();
-          Alert.alert('Đã mở khóa', 'Đã mở khóa tài khoản.');
+          Toast.show({
+            type: 'info',
+            text1: 'Đã mở khóa',
+            text2: 'Đã mở khóa tài khoản.'
+          });
         },
       },
     ]);

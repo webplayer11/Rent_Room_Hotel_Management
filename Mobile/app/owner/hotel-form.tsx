@@ -1,3 +1,4 @@
+import Toast from 'react-native-toast-message';
 import React, { useState } from "react";
 import {
   Alert,
@@ -17,6 +18,7 @@ import * as ImagePicker from "expo-image-picker";
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { hotelApi } from "../../src/shared/api/hotelApi";
+import AppMap from "../../src/shared/components/AppMap";
 
 type HotelImage = {
   id: string;
@@ -38,6 +40,20 @@ export default function CreateHotelScreen() {
   const [checkOutTime, setCheckOutTime] = useState("");
   const [images, setImages] = useState<HotelImage[]>([]);
   const [loading, setLoading] = useState(false);
+
+  const [latitude, setLatitude] = useState<number | undefined>(undefined);
+  const [longitude, setLongitude] = useState<number | undefined>(undefined);
+  const [mapVisible, setMapVisible] = useState(false);
+  const [selectedLocation, setSelectedLocation] = useState("");
+
+  const onSelectLocation = (address: string, coords?: { latitude: number; longitude: number }) => {
+    setSelectedLocation(address);
+    if (coords) {
+      setLatitude(coords.latitude);
+      setLongitude(coords.longitude);
+    }
+    setMapVisible(false);
+  };
 
   const pickImages = async () => {
     const result = await ImagePicker.launchImageLibraryAsync({
@@ -64,22 +80,47 @@ export default function CreateHotelScreen() {
 
   const handleSubmit = async () => {
     if (!name.trim()) {
-      Alert.alert("Thiếu tên", "Vui lòng nhập tên khách sạn");
+      Toast.show({
+        type: 'error',
+        text1: "Thiếu tên",
+        text2: "Vui lòng nhập tên khách sạn"
+      });
       return;
     }
 
     if (!street.trim() || !district.trim() || !city.trim()) {
-      Alert.alert("Thiếu địa chỉ", "Vui lòng nhập đầy đủ địa chỉ");
+      Toast.show({
+        type: 'error',
+        text1: "Thiếu địa chỉ",
+        text2: "Vui lòng nhập đầy đủ địa chỉ"
+      });
+      return;
+    }
+
+    if (!latitude || !longitude) {
+      Toast.show({
+        type: 'error',
+        text1: "Thiếu vị trí bản đồ",
+        text2: "Vui lòng chọn vị trí khách sạn trên bản đồ"
+      });
       return;
     }
 
     if (!description.trim()) {
-      Alert.alert("Thiếu mô tả", "Vui lòng nhập mô tả khách sạn");
+      Toast.show({
+        type: 'error',
+        text1: "Thiếu mô tả",
+        text2: "Vui lòng nhập mô tả khách sạn"
+      });
       return;
     }
 
     if (images.length === 0) {
-      Alert.alert("Thiếu ảnh", "Vui lòng chọn ít nhất 1 ảnh khách sạn");
+      Toast.show({
+        type: 'error',
+        text1: "Thiếu ảnh",
+        text2: "Vui lòng chọn ít nhất 1 ảnh khách sạn"
+      });
       return;
     }
 
@@ -92,6 +133,8 @@ export default function CreateHotelScreen() {
         name: name.trim(),
         description: description.trim(),
         address,
+        latitude,
+        longitude,
         starRating: starRating.trim() ? Number(starRating) : undefined,
         checkInTime,
         checkOutTime,
@@ -106,10 +149,18 @@ export default function CreateHotelScreen() {
           },
         ]);
       } else {
-        Alert.alert("Lỗi", result.message || "Tạo khách sạn thất bại");
+        Toast.show({
+          type: 'error',
+          text1: "Lỗi",
+          text2: result.message || "Tạo khách sạn thất bại"
+        });
       }
     } catch (error: any) {
-      Alert.alert("Lỗi", error.message || "Không thể tạo khách sạn");
+      Toast.show({
+        type: 'error',
+        text1: "Lỗi",
+        text2: error.message || "Không thể tạo khách sạn"
+      });
     } finally {
       setLoading(false);
     }
@@ -132,6 +183,23 @@ export default function CreateHotelScreen() {
         <Text style={styles.sectionTitle}>Thông tin cơ bản</Text>
 
         <Input label="Tên khách sạn *" value={name} onChangeText={setName} />
+        
+        <View style={{ marginBottom: 14 }}>
+          <Text style={styles.label}>Vị trí trên bản đồ *</Text>
+          <Pressable 
+            style={[styles.input, { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }]}
+            onPress={() => setMapVisible(true)}
+          >
+            <Text style={{ color: selectedLocation ? "#111827" : "#9CA3AF", flex: 1 }} numberOfLines={1}>
+              {selectedLocation || "Chạm để mở bản đồ chọn vị trí"}
+            </Text>
+            <Ionicons name="map-outline" size={20} color="#9CA3AF" />
+          </Pressable>
+          {latitude && longitude && (
+            <Text style={styles.hint}>Đã lưu toạ độ: {latitude.toFixed(4)}, {longitude.toFixed(4)}</Text>
+          )}
+        </View>
+
         <Input label="Số nhà / đường *" value={street} onChangeText={setStreet} />
         <Input label="Quận / huyện *" value={district} onChangeText={setDistrict} />
         <Input label="Tỉnh / thành phố *" value={city} onChangeText={setCity} />
@@ -203,6 +271,12 @@ export default function CreateHotelScreen() {
           <Text style={styles.submitText}>Gửi duyệt</Text>
         )}
       </Pressable>
+
+      <AppMap
+        visible={mapVisible}
+        onClose={() => setMapVisible(false)}
+        onSelectLocation={onSelectLocation}
+      />
     </ScrollView>
   );
 }

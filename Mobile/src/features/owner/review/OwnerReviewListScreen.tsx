@@ -1,5 +1,6 @@
+import Toast from 'react-native-toast-message';
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, Pressable, TextInput, Alert } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Pressable, TextInput } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { AppCard } from '../../../shared/components/AppCard';
@@ -37,14 +38,22 @@ export function OwnerReviewListScreen() {
   const handleSendReply = (id: string) => {
     const text = replyText[id]?.trim();
     if (!text) {
-      Alert.alert('Lỗi', 'Vui lòng nhập nội dung phản hồi.');
+      Toast.show({
+        type: 'error',
+        text1: 'Lỗi',
+        text2: 'Vui lòng nhập nội dung phản hồi.'
+      });
       return;
     }
     
     // Update state to mock sending reply
     setReviews(prev => prev.map(r => r.id === id ? { ...r, reply: text } : r));
     setReplyingTo(null);
-    Alert.alert('Thành công', 'Đã gửi phản hồi đánh giá.');
+    Toast.show({
+      type: 'success',
+      text1: 'Thành công',
+      text2: 'Đã gửi phản hồi đánh giá.'
+    });
   };
 
   const renderStars = (rating: number) => {

@@ -1,3 +1,4 @@
+import Toast from 'react-native-toast-message';
 import React, { useState } from 'react';
 import {
   Alert, Pressable, ScrollView, StyleSheet, Text, TextInput, View,
@@ -68,7 +69,11 @@ export function AdminHotelDetailScreen() {
         text: 'Duyệt',
         onPress: () => {
           updateStatus('approved');
-          Alert.alert('Thành công', 'Đã duyệt khách sạn.');
+          Toast.show({
+            type: 'success',
+            text1: 'Thành công',
+            text2: 'Đã duyệt khách sạn.'
+          });
         },
       },
     ]);
@@ -76,24 +81,40 @@ export function AdminHotelDetailScreen() {
 
   function handleRequestUpdate() {
     if (!noteInput.trim()) {
-      Alert.alert('Lỗi', 'Vui lòng nhập lý do cần bổ sung.');
+      Toast.show({
+        type: 'error',
+        text1: 'Lỗi',
+        text2: 'Vui lòng nhập lý do cần bổ sung.'
+      });
       return;
     }
     updateStatus('need_update', { adminNote: noteInput.trim() });
     setNoteInput('');
     setShowNoteInput(null);
-    Alert.alert('Đã gửi', 'Đã gửi yêu cầu bổ sung hồ sơ.');
+    Toast.show({
+      type: 'success',
+      text1: 'Đã gửi',
+      text2: 'Đã gửi yêu cầu bổ sung hồ sơ.'
+    });
   }
 
   function handleReject() {
     if (!noteInput.trim()) {
-      Alert.alert('Lỗi', 'Vui lòng nhập lý do từ chối.');
+      Toast.show({
+        type: 'error',
+        text1: 'Lỗi',
+        text2: 'Vui lòng nhập lý do từ chối.'
+      });
       return;
     }
     updateStatus('rejected', { rejectionReason: noteInput.trim() });
     setNoteInput('');
     setShowNoteInput(null);
-    Alert.alert('Đã từ chối', 'Đã từ chối hồ sơ khách sạn.');
+    Toast.show({
+      type: 'info',
+      text1: 'Đã từ chối',
+      text2: 'Đã từ chối hồ sơ khách sạn.'
+    });
   }
 
   function handleBlock() {
@@ -104,7 +125,11 @@ export function AdminHotelDetailScreen() {
         style: 'destructive',
         onPress: () => {
           updateStatus('blocked');
-          Alert.alert('Đã khóa', 'Đã tạm khóa khách sạn.');
+          Toast.show({
+            type: 'info',
+            text1: 'Đã khóa',
+            text2: 'Đã tạm khóa khách sạn.'
+          });
         },
       },
     ]);
@@ -117,7 +142,11 @@ export function AdminHotelDetailScreen() {
         text: 'Mở khóa',
         onPress: () => {
           updateStatus('approved');
-          Alert.alert('Đã mở khóa', 'Đã mở khóa khách sạn.');
+          Toast.show({
+            type: 'info',
+            text1: 'Đã mở khóa',
+            text2: 'Đã mở khóa khách sạn.'
+          });
         },
       },
     ]);
@@ -133,7 +162,6 @@ export function AdminHotelDetailScreen() {
         <Text style={styles.headerTitle}>Chi tiết khách sạn</Text>
         <View style={{ width: 32 }} />
       </View>
-
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
 
         {/* ===== HOTEL INFO ===== */}
@@ -189,7 +217,11 @@ export function AdminHotelDetailScreen() {
               </View>
               <Pressable
                 style={styles.viewFileBtn}
-                onPress={() => Alert.alert('Xem file', 'Tính năng xem file sẽ được xử lý khi nối backend.')}
+                onPress={() => Toast.show({
+                  type: 'info',
+                  text1: 'Xem file',
+                  text2: 'Tính năng xem file sẽ được xử lý khi nối backend.'
+                })}
               >
                 <Text style={styles.viewFileBtnText}>Xem file</Text>
               </Pressable>

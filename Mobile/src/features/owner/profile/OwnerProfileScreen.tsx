@@ -1,6 +1,17 @@
+import Toast from 'react-native-toast-message';
 import React, { useState } from 'react';
 import { useRouter } from 'expo-router';
-import { Alert, Pressable, ScrollView, StyleSheet, Text, TextInput, View, KeyboardAvoidingView, Platform, Image } from 'react-native';
+import {
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+  KeyboardAvoidingView,
+  Platform,
+  Image,
+} from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { Ionicons } from '@expo/vector-icons';
 import { AppButton } from '../../../shared/components/AppButton';
@@ -43,15 +54,27 @@ export function OwnerProfileScreen() {
   const handleSave = () => {
     if (!personalInfo.fullName || !personalInfo.phone || !personalInfo.email || 
         !businessInfo.companyName || !businessInfo.taxId || !businessInfo.address || !businessInfo.representativeName) {
-      Alert.alert('Lỗi', 'Vui lòng điền đầy đủ các trường thông tin bắt buộc.');
+      Toast.show({
+        type: 'error',
+        text1: 'Lỗi',
+        text2: 'Vui lòng điền đầy đủ các trường thông tin bắt buộc.'
+      });
       return;
     }
     // TODO: Sau này sẽ upload avatar bằng API multipart khi Backend hỗ trợ.
-    Alert.alert('Thành công', 'Đã lưu thay đổi thông tin.');
+    Toast.show({
+      type: 'success',
+      text1: 'Thành công',
+      text2: 'Đã lưu thay đổi thông tin.'
+    });
   };
 
   const handleChangePassword = () => {
-    Alert.alert('Thông báo', 'Tính năng đổi mật khẩu sẽ được xử lý khi nối backend.');
+    Toast.show({
+      type: 'info',
+      text1: 'Thông báo',
+      text2: 'Tính năng đổi mật khẩu sẽ được xử lý khi nối backend.'
+    });
   };
 
   return (

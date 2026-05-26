@@ -1,3 +1,4 @@
+import { SafeAreaView } from 'react-native-safe-area-context';
 import React, { useState, useMemo } from 'react';
 import {
   StyleSheet,
@@ -5,7 +6,6 @@ import {
   Text,
   TouchableOpacity,
   ScrollView,
-  SafeAreaView,
   Image,
   Dimensions,
   StatusBar,
@@ -26,6 +26,7 @@ const HomeScreen = () => {
   const router = useRouter();
 
   const [location, setLocation] = useState('Gần chỗ tôi');
+  const [coordinates, setCoordinates] = useState<{latitude: number; longitude: number} | null>(null);
   const [checkIn, setCheckIn] = useState<Date>(new Date());
   const [checkOut, setCheckOut] = useState<Date>(
     new Date(Date.now() + 86400000)
@@ -88,8 +89,9 @@ const HomeScreen = () => {
     return text;
   }, [rooms, adults, children]);
 
-  const onSelectLocation = (address: string) => {
+  const onSelectLocation = (address: string, coords?: { latitude: number; longitude: number }) => {
     setLocation(address);
+    if (coords) setCoordinates(coords);
     setSearchModalVisible(false);
   };
 
@@ -258,8 +260,10 @@ const HomeScreen = () => {
                   pathname: '/customer/hotel/list',
                   params: {
                     location,
-                    checkIn: checkIn.toISOString(),
-                    checkOut: checkOut.toISOString(),
+                    latitude: coordinates?.latitude,
+                    longitude: coordinates?.longitude,
+                    checkIn: format(checkIn, 'yyyy-MM-dd'),
+                    checkOut: format(checkOut, 'yyyy-MM-dd'),
                     rooms: rooms.toString(),
                     adults: adults.toString(),
                     children: children.toString(),

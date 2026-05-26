@@ -1,6 +1,7 @@
+import Toast from 'react-native-toast-message';
 import React, { useState } from 'react';
 import { useRouter } from 'expo-router';
-import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { AppButton } from '../../../shared/components/AppButton';
 import { AppCard } from '../../../shared/components/AppCard';
@@ -36,16 +37,28 @@ export function OwnerRoomListScreen() {
   const handleAction = (room: any) => {
     const isApproved = hotelStatusMap[room.hotelName] === 'approved';
     if (!isApproved) {
-      Alert.alert('Lỗi', 'Khách sạn chưa được duyệt nên chưa thể quản lý phòng.');
+      Toast.show({
+        type: 'error',
+        text1: 'Lỗi',
+        text2: 'Khách sạn chưa được duyệt nên chưa thể quản lý phòng.'
+      });
       return;
     }
     
     if (room.status === 'available') {
-      Alert.alert('Chỉnh sửa', 'Tính năng chỉnh sửa phòng sẽ được xử lý khi nối backend.');
+      Toast.show({
+        type: 'info',
+        text1: 'Chỉnh sửa',
+        text2: 'Tính năng chỉnh sửa phòng sẽ được xử lý khi nối backend.'
+      });
     } else if (room.status === 'booked') {
       router.push('/owner/bookings');
     } else if (room.status === 'maintenance') {
-      Alert.alert('Cập nhật', 'Tính năng cập nhật trạng thái phòng sẽ được xử lý khi nối backend.');
+      Toast.show({
+        type: 'info',
+        text1: 'Cập nhật',
+        text2: 'Tính năng cập nhật trạng thái phòng sẽ được xử lý khi nối backend.'
+      });
     }
   };
 
@@ -61,7 +74,11 @@ export function OwnerRoomListScreen() {
           onPress={() => {
             const hasApproved = ownerDashboardMockData.hotels.some(h => h.status === 'approved');
             if (!hasApproved) {
-              Alert.alert('Lỗi', 'Bạn cần có khách sạn được duyệt trước khi thêm phòng.');
+              Toast.show({
+                type: 'error',
+                text1: 'Lỗi',
+                text2: 'Bạn cần có khách sạn được duyệt trước khi thêm phòng.'
+              });
             } else {
               router.push('/owner/room-form');
             }
@@ -70,7 +87,6 @@ export function OwnerRoomListScreen() {
           <Ionicons name="add" size={24} color={colors.primary} />
         </Pressable>
       </View>
-
       <ScrollView style={styles.container} contentContainerStyle={styles.content}>
         <Text style={styles.description}>Theo dõi danh sách phòng, giá và trạng thái phòng.</Text>
 
@@ -158,7 +174,6 @@ export function OwnerRoomListScreen() {
           )}
         </View>
       </ScrollView>
-
       {/* Bottom Navigation */}
       <View style={styles.bottomNav}>
         {[

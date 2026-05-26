@@ -1,3 +1,4 @@
+import Toast from 'react-native-toast-message';
 import { router } from "expo-router";
 import { useState } from "react";
 import {
@@ -8,39 +9,49 @@ import {
   ScrollView,
   StyleSheet,
   Text,
-  TextInput,
   TouchableOpacity,
   View,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
 
 import { authApi } from "../../src/shared/api/authApi";
 import { tokenStorage } from "../../src/shared/storage/tokenStorage";
+import { AppFormInput } from "../../src/shared/components/AppFormInput";
+
+const loginSchema = z.object({
+  email: z.string().min(1, "Vui lòng nhập email").email("Email không hợp lệ"),
+  password: z.string().min(1, "Vui lòng nhập mật khẩu"),
+});
+
+type LoginFormValues = z.infer<typeof loginSchema>;
 
 export default function LoginScreen() {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const { control, handleSubmit } = useForm<LoginFormValues>({
+    resolver: zodResolver(loginSchema),
+    mode: "onTouched",
+    defaultValues: {
+      email: "",
+      password: "",
+    }
+  });
+
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
-  const login = async () => {
-    if (!email || !password) {
-      Alert.alert("Lỗi", "Vui lòng nhập đầy đủ email và mật khẩu");
-      return;
-    }
-
+  const onSubmit = async (data: LoginFormValues) => {
     try {
       setLoading(true);
 
       const res = await authApi.login({
-        email: email.trim(),
-        password,
+        email: data.email.trim(),
+        password: data.password,
       });
       
       const user = res.data;
-      console.log(user); // kiểm tra xem có đúng roles chua
-      console.log(user.roles);
-
       const roles = user.roles ?? [];
       const mainRole = roles[0] ?? "Customer";
 
@@ -60,40 +71,32 @@ export default function LoginScreen() {
       } else if (roles.includes("Customer")) {
         router.replace("/customer/home");
       } else {
-        Alert.alert(
-          "Lỗi",
-          "Tài khoản chưa được cấp quyền truy cập"
-        );
+        Toast.show({
+          type: 'error',
+          text1: "Lỗi",
+          text2: "Tài khoản chưa được cấp quyền truy cập"
+        });
       }
     } catch (e: any) {
-      Alert.alert(
-        "Đăng nhập thất bại",
-        e?.response?.data?.message ||
-          e?.message ||
-          "Email hoặc mật khẩu không chính xác",
-        [
-          {
-            text: "Thử lại",
-            style: "cancel",
-          },
-          {
-            text: "Đăng ký ngay",
-            onPress: () => router.push("/auth/register"),
-          },
-        ]
-      );
+      Toast.show({
+        type: 'error',
+        text1: "Đăng nhập thất bại",
+        text2: e?.response?.data?.message || e?.message || "Email hoặc mật khẩu không chính xác",
+        visibilityTime: 3000,
+      });
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === "ios" ? "padding" : undefined}
-      style={{ flex: 1, backgroundColor: "#F8F9FA" }}
-    >
-      <ScrollView
-        contentContainerStyle={{
+    <SafeAreaView style={{ flex: 1, backgroundColor: "#F8F9FA" }}>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
+        style={{ flex: 1, backgroundColor: "#F8F9FA" }}
+      >
+        <ScrollView
+          contentContainerStyle={{
           flexGrow: 1,
           justifyContent: "center",
           backgroundColor: "#F8F9FA",
@@ -116,40 +119,30 @@ export default function LoginScreen() {
           Đăng nhập
         </Text>
 
-        <TextInput
+        <AppFormInput
+          control={control}
+          name="email"
           placeholder="Email"
-          placeholderTextColor="#9CA3AF"
-          value={email}
-          onChangeText={setEmail}
-          autoCapitalize="none"
           keyboardType="email-address"
-          style={input}
+          autoCapitalize="none"
+          containerStyle={{ marginBottom: 0 }}
         />
 
-        {/* Password field with toggle visibility */}
-        <View style={[input, passwordInputContainer]}>
-          <TextInput
-            placeholder="Mật khẩu"
-            placeholderTextColor="#9CA3AF"
-            value={password}
-            onChangeText={setPassword}
-            secureTextEntry={!showPassword}
-            style={{ flex: 1, color: "#1F2937", fontSize: 15, paddingVertical: 14, paddingLeft: 0 }}
-          />
-          <TouchableOpacity
-            onPress={() => setShowPassword(!showPassword)}
-            activeOpacity={0.7}
-          >
-            <Ionicons
-              name={showPassword ? "eye-outline" : "eye-off-outline"}
-              size={20}
-              color="#9CA3AF"
-            />
-          </TouchableOpacity>
-        </View>
+        <AppFormInput
+          control={control}
+          name="password"
+          placeholder="Mật khẩu"
+          secureTextEntry={!showPassword}
+          containerStyle={{ marginBottom: 0 }}
+          icon={() => (
+            <TouchableOpacity onPress={() => setShowPassword(!showPassword)} activeOpacity={0.7}>
+              <Ionicons name={showPassword ? "eye-outline" : "eye-off-outline"} size={20} color="#9CA3AF" />
+            </TouchableOpacity>
+          )}
+        />
 
         <Pressable 
-          onPress={login} 
+          onPress={handleSubmit(onSubmit)} 
           disabled={loading} 
           style={[button, { opacity: loading ? 0.7 : 1 }]}
         >
@@ -186,28 +179,11 @@ export default function LoginScreen() {
         </Text>
       </ScrollView>
     </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 }
 
 // ── Shared styles ──────────────────────────────────────────────────────────
-
-const input = {
-  borderWidth: 1,
-  borderColor: "rgba(83, 146, 249, 0.3)",
-  backgroundColor: "#FFFFFF",
-  color: "#1F2937",
-  borderRadius: 12,
-  paddingHorizontal: 16,
-  paddingVertical: 14,
-  marginTop: 12,
-  fontSize: 15,
-} as const;
-
-const passwordInputContainer = {
-  flexDirection: "row",
-  alignItems: "center",
-  paddingVertical: 0,
-} as const;
 
 const button = {
   backgroundColor: "#5392F9",

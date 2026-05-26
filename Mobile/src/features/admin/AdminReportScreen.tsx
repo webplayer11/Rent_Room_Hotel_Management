@@ -1,7 +1,6 @@
+import Toast from 'react-native-toast-message';
 import React, { useState } from 'react';
-import {
-  Alert, Pressable, ScrollView, StyleSheet, Text, TextInput, View,
-} from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { AppCard } from '../../shared/components/AppCard';
@@ -64,24 +63,48 @@ export function AdminReportScreen() {
 
   function handleApplyCustom() {
     if (!startDateStr.trim() || !endDateStr.trim()) {
-      Alert.alert('Lỗi', 'Vui lòng nhập ngày bắt đầu và ngày kết thúc.');
+      Toast.show({
+        type: 'error',
+        text1: 'Lỗi',
+        text2: 'Vui lòng nhập ngày bắt đầu và ngày kết thúc.'
+      });
       return;
     }
     const start = parseDate(startDateStr.trim());
     const end = parseDate(endDateStr.trim());
-    if (!start) { Alert.alert('Lỗi', 'Ngày bắt đầu không hợp lệ. Định dạng: DD/MM/YYYY'); return; }
-    if (!end) { Alert.alert('Lỗi', 'Ngày kết thúc không hợp lệ. Định dạng: DD/MM/YYYY'); return; }
-    if (end < start) { Alert.alert('Lỗi', 'Ngày kết thúc không được trước ngày bắt đầu.'); return; }
+    if (!start) { Toast.show({
+      type: 'error',
+      text1: 'Lỗi',
+      text2: 'Ngày bắt đầu không hợp lệ. Định dạng: DD/MM/YYYY'
+    }); return; }
+    if (!end) { Toast.show({
+      type: 'error',
+      text1: 'Lỗi',
+      text2: 'Ngày kết thúc không hợp lệ. Định dạng: DD/MM/YYYY'
+    }); return; }
+    if (end < start) { Toast.show({
+      type: 'error',
+      text1: 'Lỗi',
+      text2: 'Ngày kết thúc không được trước ngày bắt đầu.'
+    }); return; }
 
     const label = `${startDateStr.trim()} - ${endDateStr.trim()}`;
     setCustomLabel(label);
     setShowCustomPicker(false);
     // TODO (Backend): gọi API báo cáo với startDate=startDateStr, endDate=endDateStr
-    Alert.alert('Đã áp dụng', `Xem báo cáo từ ${label}\n(Tính năng sẽ lấy dữ liệu thật khi nối backend.)`);
+    Toast.show({
+      type: 'info',
+      text1: 'Đã áp dụng',
+      text2: `Xem báo cáo từ ${label}\n(Tính năng sẽ lấy dữ liệu thật khi nối backend.)`
+    });
   }
 
   function handleExport(type: 'pdf' | 'excel') {
-    Alert.alert('Xuất báo cáo', 'Tính năng xuất báo cáo sẽ được xử lý khi nối backend.');
+    Toast.show({
+      type: 'info',
+      text1: 'Xuất báo cáo',
+      text2: 'Tính năng xuất báo cáo sẽ được xử lý khi nối backend.'
+    });
   }
 
   const activeFilterLabel = activeFilter === 'custom' && customLabel

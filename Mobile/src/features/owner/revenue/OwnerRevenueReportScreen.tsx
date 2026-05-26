@@ -1,12 +1,6 @@
+import Toast from 'react-native-toast-message';
 import React, { useState } from 'react';
-import {
-  Alert,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { AppCard } from '../../../shared/components/AppCard';
@@ -41,10 +35,11 @@ export function OwnerRevenueReportScreen() {
 
   function handleFilterPress(key: RevenueTimeFilter) {
     if (key === 'custom') {
-      Alert.alert(
-        'Tùy chỉnh thời gian',
-        'Tính năng chọn khoảng ngày sẽ được xử lý khi nối backend.'
-      );
+      Toast.show({
+        type: 'info',
+        text1: 'Tùy chỉnh thời gian',
+        text2: 'Tính năng chọn khoảng ngày sẽ được xử lý khi nối backend.'
+      });
     } else {
       setActiveFilter(key);
       // TODO (Backend Integration): Gọi API lấy báo cáo theo khoảng thời gian tương ứng
@@ -56,10 +51,11 @@ export function OwnerRevenueReportScreen() {
   }
 
   function handleExport(type: 'pdf' | 'excel') {
-    Alert.alert(
-      'Xuất báo cáo',
-      `Tính năng xuất ${type.toUpperCase()} sẽ được xử lý khi nối backend.`
-    );
+    Toast.show({
+      type: 'info',
+      text1: 'Xuất báo cáo',
+      text2: `Tính năng xuất ${type.toUpperCase()} sẽ được xử lý khi nối backend.`
+    });
   }
 
   const isTrendPositive = periodComparison >= 0;

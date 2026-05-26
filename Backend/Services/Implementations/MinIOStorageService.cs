@@ -40,6 +40,9 @@ public class MinIOStorageService : IStorageService
 
     public async Task<string> UploadAsync(IFormFile file, string bucketName, string objectKey, int? width = null, int? height = null)
     {
+        if (file == null || file.Length == 0)
+            throw new InvalidOperationException("File ảnh không hợp lệ.");
+
         // 1. Validate kích thước
         if (file.Length > MaxFileSizeBytes)
             throw new InvalidOperationException("Kích thước ảnh không được vượt quá 10MB.");
@@ -51,7 +54,8 @@ public class MinIOStorageService : IStorageService
         // Fallback check ContentType nếu extension bị thiếu
         if (string.IsNullOrEmpty(ext))
         {
-            ext = file.ContentType.ToLowerInvariant() switch
+            var contentType = file.ContentType?.ToLowerInvariant() ?? "";
+            ext = contentType switch
             {
                 "image/jpeg" => ".jpg",
                 "image/jpg" => ".jpg",
@@ -68,6 +72,16 @@ public class MinIOStorageService : IStorageService
         if (!objectKey.EndsWith(".webp", StringComparison.OrdinalIgnoreCase))
         {
             objectKey = Path.ChangeExtension(objectKey, ".webp");
+        }
+
+        // Đảm bảo bucket tồn tại
+        try
+        {
+            await _s3Client.PutBucketAsync(new PutBucketRequest { BucketName = bucketName });
+        }
+        catch (AmazonS3Exception ex) when (ex.ErrorCode == "BucketAlreadyExists" || ex.ErrorCode == "BucketAlreadyOwnedByYou")
+        {
+            // Bucket đã tồn tại
         }
 
         using var outputStream = new MemoryStream();
@@ -110,8 +124,7 @@ public class MinIOStorageService : IStorageService
         await _s3Client.PutObjectAsync(request);
 
         // 7. Trả về relative path
-        var protocol = _minioOptions.UseSSL ? "https" : "http";
-        return $"{protocol}://{_minioOptions.Endpoint}/{bucketName}/{objectKey}";
+        return $"{bucketName}/{objectKey}";
     }
 
     public async Task DeleteAsync(string relativePath)

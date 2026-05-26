@@ -1,14 +1,14 @@
+import { SafeAreaView } from 'react-native-safe-area-context';
 import React, { useState } from 'react';
-import { 
-    View, 
-    StyleSheet, 
-    TouchableOpacity, 
-    Text, 
-    Modal, 
-    SafeAreaView,
+import {
+    View,
+    StyleSheet,
+    TouchableOpacity,
+    Text,
+    Modal,
     ActivityIndicator,
     TextInput,
-    FlatList
+    FlatList,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 

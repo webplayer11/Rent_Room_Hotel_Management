@@ -68,5 +68,19 @@ export const voucherApi = {
       method: "DELETE",
     }) as Promise<{ isSuccess: boolean; message: string; data: any }>;
   },
+
+  /** Lấy voucher theo khách sạn (public) */
+  getHotelVouchers: (hotelId: string) => {
+    return apiFetch(`/api/vouchers/hotel/${hotelId}`, {
+      method: "GET",
+    }) as Promise<{ isSuccess: boolean; message: string; data: VoucherDto[] }>;
+  },
+
+  /** Kiểm tra / validate mã voucher */
+  validateVoucher: (code: string) => {
+    return apiFetch(`/api/vouchers/validate/${code}`, {
+      method: "GET",
+    }) as Promise<{ isSuccess: boolean; message: string; data: ValidateVoucherDto }>;
+  },
 };
 

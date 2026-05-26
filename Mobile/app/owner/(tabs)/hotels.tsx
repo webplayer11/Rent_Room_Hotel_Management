@@ -1,3 +1,4 @@
+import { SafeAreaView } from 'react-native-safe-area-context';
 import React, { useState, useCallback } from "react";
 import {
   View,
@@ -7,13 +8,12 @@ import {
   Image,
   TouchableOpacity,
   ActivityIndicator,
-  SafeAreaView,
   Platform,
 } from "react-native";
 import { useRouter, useFocusEffect } from "expo-router";
 import { MapPin, ChevronLeft } from "lucide-react-native";
 import { hotelApi } from "../../../src/shared/api/hotelApi";
-
+import { IMAGE_URL } from "../../../src/config";
 export default function HotelsTab() {
   const router = useRouter();
   const [hotels, setHotels] = useState<any[]>([]);
@@ -40,12 +40,15 @@ export default function HotelsTab() {
   );
 
   const getPrimaryImage = (images: any[]) => {
-    if (!images || images.length === 0) return null;
-    const primary = images.find((img) => img.isPrimary);
-    const url = primary ? primary.url : images[0].url;
-    if (url.startsWith("http")) return url;
-    return `http://192.168.0.105:9000/${url}`;
-  };
+  if (!images || images.length === 0) return null;
+
+  const primary = images.find((img) => img.isPrimary);
+  const url = primary ? primary.url : images[0].url;
+
+  return url.startsWith("http")
+    ? url
+    : `${IMAGE_URL}/${url}`;
+};
 
   const renderHotelItem = ({ item }: { item: any }) => {
     const imageUrl = getPrimaryImage(item.images);
@@ -59,23 +62,14 @@ export default function HotelsTab() {
     return (
       <View style={styles.card}>
         <View style={styles.imageContainer}>
-          {imageUrl ? (
-            <Image
-              source={{ uri: imageUrl }}
-              style={styles.image}
-              resizeMode="cover"
-            />
-          ) : (
-            <View style={[styles.image, styles.placeholderImage]}>
-              <Text style={{ color: "#9CA3AF" }}>Chưa có ảnh</Text>
-            </View>
-          )}
-
-          <View style={[styles.badge, { backgroundColor: statusBg }]}>
-            <Text style={[styles.badgeText, { color: statusColor }]}>
-              {statusText}
-            </Text>
-          </View>
+            {imageUrl ? (
+          <Image
+          source={{ uri: imageUrl }}
+          style={styles.image}
+          resizeMode="cover"/>) : (
+        <View style={[styles.image, styles.placeholderImage]}>
+           <Text style={{ color: "#9CA3AF" }}>Chưa có ảnh</Text>
+        </View>)}
         </View>
 
         <View style={styles.cardBody}>

@@ -1,3 +1,5 @@
+import { SafeAreaView } from 'react-native-safe-area-context';
+import Toast from 'react-native-toast-message';
 import React, { useState, useEffect, useCallback } from "react";
 import {
     View,
@@ -6,7 +8,6 @@ import {
     Image,
     ScrollView,
     TouchableOpacity,
-    SafeAreaView,
     Platform,
     ActivityIndicator,
     Alert,
@@ -46,11 +47,19 @@ export default function RoomDetailScreen() {
                     }
                 }
             } else {
-                Alert.alert("Lỗi", res.message || "Không thể tải thông tin chi tiết phòng");
+                Toast.show({
+                    type: 'error',
+                    text1: "Lỗi",
+                    text2: res.message || "Không thể tải thông tin chi tiết phòng"
+                });
             }
         } catch (error: any) {
             console.log("Error loading room detail:", error);
-            Alert.alert("Lỗi", "Không thể tải thông tin phòng");
+            Toast.show({
+                type: 'error',
+                text1: "Lỗi",
+                text2: "Không thể tải thông tin phòng"
+            });
         } finally {
             setLoading(false);
         }
@@ -120,13 +129,25 @@ export default function RoomDetailScreen() {
 
             const res = await roomApi.updateRoom(id, updatedPayload);
             if (res.isSuccess) {
-                Alert.alert("Thành công", "Đã cập nhật trạng thái phòng!");
+                Toast.show({
+                    type: 'success',
+                    text1: "Thành công",
+                    text2: "Đã cập nhật trạng thái phòng!"
+                });
                 loadRoomData(); // Reload details from API
             } else {
-                Alert.alert("Lỗi", res.message || "Cập nhật trạng thái thất bại");
+                Toast.show({
+                    type: 'error',
+                    text1: "Lỗi",
+                    text2: res.message || "Cập nhật trạng thái thất bại"
+                });
             }
         } catch (error: any) {
-            Alert.alert("Lỗi", error.message || "Đã xảy ra lỗi");
+            Toast.show({
+                type: 'error',
+                text1: "Lỗi",
+                text2: error.message || "Đã xảy ra lỗi"
+            });
         } finally {
             setStatusLoading(false);
         }

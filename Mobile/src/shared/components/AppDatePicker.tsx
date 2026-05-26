@@ -1,13 +1,6 @@
+import { SafeAreaView } from 'react-native-safe-area-context';
 import React, { useState, useMemo } from 'react';
-import { 
-  View, 
-  Text, 
-  StyleSheet, 
-  TouchableOpacity, 
-  Modal, 
-  SafeAreaView, 
-  Dimensions 
-} from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Modal, Dimensions } from 'react-native';
 import { CalendarList, LocaleConfig } from 'react-native-calendars';
 import { format, addDays, differenceInDays, isBefore, startOfDay, parseISO } from 'date-fns';
 import { vi } from 'date-fns/locale';

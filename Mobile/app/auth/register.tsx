@@ -1,7 +1,7 @@
+import Toast from 'react-native-toast-message';
 import { router } from "expo-router";
 import { useRef, useState } from "react";
 import {
-  Alert,
   KeyboardAvoidingView,
   Modal,
   Platform,
@@ -13,12 +13,31 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import DateTimePicker, {
   DateTimePickerEvent,
 } from "@react-native-community/datetimepicker";
 import { Ionicons } from "@expo/vector-icons";
+import { useForm, Controller } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
 
 import { authApi } from "../../src/shared/api/authApi";
+import { AppFormInput } from "../../src/shared/components/AppFormInput";
+
+const registerSchema = z.object({
+  fullName: z.string().min(1, "Vui lòng nhập họ và tên"),
+  email: z.string().min(1, "Vui lòng nhập email").email("Email không hợp lệ"),
+  password: z.string().min(6, "Mật khẩu phải có ít nhất 6 ký tự"),
+  confirmPassword: z.string().min(1, "Vui lòng nhập lại mật khẩu"),
+  phoneNumber: z.string().min(1, "Vui lòng nhập số điện thoại"),
+  address: z.string().optional(),
+}).refine((data) => data.password === data.confirmPassword, {
+  message: "Mật khẩu nhập lại không khớp",
+  path: ["confirmPassword"],
+});
+
+type RegisterFormValues = z.infer<typeof registerSchema>;
 
 /** Format a Date object → "dd/MM/yyyy" for display */
 function formatDisplay(date: Date): string {
@@ -37,30 +56,28 @@ function formatApi(date: Date): string {
 }
 
 export default function RegisterScreen() {
-  const [fullName, setFullName] = useState("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
+  const { control, handleSubmit } = useForm<RegisterFormValues>({
+    resolver: zodResolver(registerSchema),
+    mode: "onTouched",
+    defaultValues: {
+      fullName: "",
+      email: "",
+      password: "",
+      confirmPassword: "",
+      phoneNumber: "",
+      address: "",
+    }
+  });
 
-  const [phoneNumber, setPhoneNumber] = useState("");
-  
   // dateOfBirth stores the finalized Date object; null means not selected yet
   const [dateOfBirth, setDateOfBirth] = useState<Date | null>(null);
-  
-  // tempDate holds the temporary selected value in iOS bottom sheet before clicking "Xác nhận"
   const [tempDate, setTempDate] = useState<Date | null>(null);
-
-  // For web fallback: raw text input
   const [dateOfBirthText, setDateOfBirthText] = useState("");
-
-  // Controls visibility of DatePicker (iOS modal or Android dialog)
   const [showDatePicker, setShowDatePicker] = useState(false);
 
   // Gender states
   const [gender, setGender] = useState("");
   const [showGenderPicker, setShowGenderPicker] = useState(false);
-
-  const [address, setAddress] = useState("");
 
   // Password visibility states
   const [showPassword, setShowPassword] = useState(false);
@@ -69,17 +86,12 @@ export default function RegisterScreen() {
   // ScrollView Ref to handle auto-scrolling when input gets focused
   const scrollViewRef = useRef<ScrollView>(null);
 
-  /** Handles confirmation for iOS modal */
   const handleConfirmIOS = () => {
-    if (tempDate) {
-      setDateOfBirth(tempDate);
-    } else {
-      setDateOfBirth(new Date(2000, 0, 1));
-    }
+    if (tempDate) setDateOfBirth(tempDate);
+    else setDateOfBirth(new Date(2000, 0, 1));
     setShowDatePicker(false);
   };
 
-  /** Handles date changes from the DateTimePicker */
   const onDateChange = (event: DateTimePickerEvent, selected?: Date) => {
     if (Platform.OS === "android") {
       setShowDatePicker(false);
@@ -87,100 +99,61 @@ export default function RegisterScreen() {
         setDateOfBirth(selected);
       }
     } else if (Platform.OS === "ios") {
-      if (selected) {
-        setTempDate(selected);
-      }
+      if (selected) setTempDate(selected);
     }
   };
 
-  /** Build the dateOfBirth string for the API (yyyy-MM-dd) */
   const getDateOfBirthForApi = (): string | undefined => {
-    if (Platform.OS === "web") {
-      return dateOfBirthText.trim() || undefined;
-    }
+    if (Platform.OS === "web") return dateOfBirthText.trim() || undefined;
     return dateOfBirth ? formatApi(dateOfBirth) : undefined;
   };
 
-  const register = async () => {
+  const onSubmit = async (data: RegisterFormValues) => {
     try {
-      console.log("Bắt đầu đăng ký");
-
-      // Validate required text fields
-      if (!fullName.trim()) {
-        Alert.alert("Thông báo", "Vui lòng nhập họ và tên");
-        return;
-      }
-      if (!email.trim()) {
-        Alert.alert("Thông báo", "Vui lòng nhập email");
-        return;
-      }
-      if (!phoneNumber.trim()) {
-        Alert.alert("Thông báo", "Vui lòng nhập số điện thoại");
-        return;
-      }
-      if (!password) {
-        Alert.alert("Thông báo", "Vui lòng nhập mật khẩu");
-        return;
-      }
-      if (!confirmPassword) {
-        Alert.alert("Thông báo", "Vui lòng nhập lại mật khẩu");
-        return;
-      }
-      if (password !== confirmPassword) {
-        Alert.alert("Thông báo", "Mật khẩu nhập lại không khớp");
-        return;
-      }
-
       const dobForApi = getDateOfBirthForApi();
-
-      // Only send password to backend, exclude confirmPassword
       const res = await authApi.register({
-        fullName,
-        email,
-        password,
-        phoneNumber,
+        fullName: data.fullName,
+        email: data.email,
+        password: data.password,
+        phoneNumber: data.phoneNumber,
         dateOfBirth: dobForApi ? `${dobForApi}T00:00:00` : undefined,
         gender,
-        address,
+        address: data.address,
       });
 
-      console.log("REGISTER SUCCESS:", res);
-
-      Alert.alert(
-        "Thành công",
-        "Đăng ký thành công"
-      );
+      Toast.show({
+        type: 'success',
+        text1: "Thành công",
+        text2: "Đăng ký thành công"
+      });
 
       setTimeout(() => {
         router.replace("/auth/login");
       }, 1000);
 
     } catch (e: any) {
-      console.log("REGISTER ERROR:", e);
-
-      Alert.alert(
-        "Lỗi",
-        e.message || "Đăng ký thất bại"
-      );
+      Toast.show({
+        type: 'error',
+        text1: "Lỗi",
+        text2: e.message || "Đăng ký thất bại"
+      });
     }
   };
 
-  // ── Date field rendering ──────────────────────────────────────────────────
-
-  /** Web: simple TextInput fallback */
   const renderDateFieldWeb = () => (
-    <TextInput
-      placeholder="Ngày sinh (yyyy-MM-dd, vd: 2000-05-14)"
-      placeholderTextColor="#9CA3AF"
-      value={dateOfBirthText}
-      onChangeText={setDateOfBirthText}
-      style={input}
-    />
+    <View style={{ marginBottom: 16 }}>
+      <TextInput
+        placeholder="Ngày sinh (yyyy-MM-dd, vd: 2000-05-14)"
+        placeholderTextColor="#9CA3AF"
+        value={dateOfBirthText}
+        onChangeText={setDateOfBirthText}
+        style={input}
+      />
+    </View>
   );
 
-  /** Mobile (iOS/Android): clean simulated input that triggers picker */
   const renderDateFieldMobile = () => (
-    <>
+    <View style={{ marginBottom: 16 }}>
       <TouchableOpacity
         style={input}
         onPress={() => {
@@ -189,32 +162,15 @@ export default function RegisterScreen() {
         }}
         activeOpacity={0.7}
       >
-        <Text
-          style={{
-            fontSize: 15,
-            color: dateOfBirth ? "#1F2937" : "#9CA3AF",
-            lineHeight: 18,
-          }}
-        >
+        <Text style={{ fontSize: 15, color: dateOfBirth ? "#1F2937" : "#9CA3AF", lineHeight: 18 }}>
           {dateOfBirth ? formatDisplay(dateOfBirth) : "Ngày sinh"}
         </Text>
       </TouchableOpacity>
 
-      {/* iOS Bottom Sheet style modal picker */}
       {Platform.OS === "ios" && (
-        <Modal
-          visible={showDatePicker}
-          transparent={true}
-          animationType="slide"
-          onRequestClose={() => setShowDatePicker(false)}
-        >
+        <Modal visible={showDatePicker} transparent animationType="slide" onRequestClose={() => setShowDatePicker(false)}>
           <View style={modalOverlay}>
-            {/* Absolute backdrop underneath to close on click outside, avoiding touch conflict */}
-            <Pressable 
-              style={StyleSheet.absoluteFill} 
-              onPress={() => setShowDatePicker(false)}
-            />
-            
+            <Pressable style={StyleSheet.absoluteFill} onPress={() => setShowDatePicker(false)} />
             <View style={modalContainer}>
               <View style={modalHeader}>
                 <TouchableOpacity onPress={() => setShowDatePicker(false)} style={{ paddingVertical: 4 }}>
@@ -242,7 +198,6 @@ export default function RegisterScreen() {
         </Modal>
       )}
 
-      {/* Android native popups */}
       {Platform.OS === "android" && showDatePicker && (
         <DateTimePicker
           value={dateOfBirth || new Date(2000, 0, 1)}
@@ -252,7 +207,7 @@ export default function RegisterScreen() {
           onChange={onDateChange}
         />
       )}
-    </>
+    </View>
   );
 
   const renderDateField = () => {
@@ -260,41 +215,22 @@ export default function RegisterScreen() {
     return renderDateFieldMobile();
   };
 
-  // ── Gender field rendering ───────────────────────────────────────────────
-
   const renderGenderField = () => (
-    <>
+    <View style={{ marginBottom: 16 }}>
       <TouchableOpacity
         style={[input, genderPickerRow]}
         onPress={() => setShowGenderPicker(true)}
         activeOpacity={0.7}
       >
-        <Text
-          style={{
-            fontSize: 15,
-            color: gender ? "#1F2937" : "#9CA3AF",
-            flex: 1,
-          }}
-        >
+        <Text style={{ fontSize: 15, color: gender ? "#1F2937" : "#9CA3AF", flex: 1 }}>
           {gender || "Giới tính"}
         </Text>
         <Ionicons name="chevron-down" size={18} color="#9CA3AF" />
       </TouchableOpacity>
 
-      {/* Gender Bottom Sheet Modal */}
-      <Modal
-        visible={showGenderPicker}
-        transparent={true}
-        animationType="slide"
-        onRequestClose={() => setShowGenderPicker(false)}
-      >
+      <Modal visible={showGenderPicker} transparent animationType="slide" onRequestClose={() => setShowGenderPicker(false)}>
         <View style={modalOverlay}>
-          {/* Absolute backdrop underneath to close on click outside */}
-          <Pressable 
-            style={StyleSheet.absoluteFill} 
-            onPress={() => setShowGenderPicker(false)}
-          />
-          
+          <Pressable style={StyleSheet.absoluteFill} onPress={() => setShowGenderPicker(false)} />
           <View style={genderModalContainer}>
             <View style={modalHeader}>
               <TouchableOpacity onPress={() => setShowGenderPicker(false)} style={{ paddingVertical: 4 }}>
@@ -303,7 +239,6 @@ export default function RegisterScreen() {
               <Text style={modalTitleText}>Chọn giới tính</Text>
               <View style={{ width: 40 }} />
             </View>
-            
             <View style={genderOptionsWrapper}>
               {["Nam", "Nữ", "Khác"].map((option) => (
                 <TouchableOpacity
@@ -314,184 +249,146 @@ export default function RegisterScreen() {
                     setShowGenderPicker(false);
                   }}
                 >
-                  <Text style={[
-                    genderOptionText,
-                    gender === option && { color: "#5392F9", fontWeight: "bold" }
-                  ]}>
+                  <Text style={[genderOptionText, gender === option && { color: "#5392F9", fontWeight: "bold" }]}>
                     {option}
                   </Text>
-                  {gender === option && (
-                    <Ionicons name="checkmark" size={18} color="#5392F9" />
-                  )}
+                  {gender === option && <Ionicons name="checkmark" size={18} color="#5392F9" />}
                 </TouchableOpacity>
               ))}
             </View>
           </View>
         </View>
       </Modal>
-    </>
+    </View>
   );
 
-  // ─────────────────────────────────────────────────────────────────────────
-
   return (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === "ios" ? "padding" : undefined}
-      style={{ flex: 1, backgroundColor: "#F8F9FA" }}
-    >
-      <ScrollView
-        ref={scrollViewRef}
-        contentContainerStyle={{
-          flexGrow: 1,
-          justifyContent: "center",
-          backgroundColor: "#F8F9FA",
-          paddingHorizontal: 28,
-          paddingVertical: 40,
-          paddingBottom: 80, // Generous padding to prevent final fields from being cut off
-        }}
-        showsVerticalScrollIndicator={false}
-        keyboardShouldPersistTaps="handled"
+    <SafeAreaView style={{ flex: 1, backgroundColor: "#F8F9FA" }}>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
+        style={{ flex: 1, backgroundColor: "#F8F9FA" }}
       >
-        <Text
-          style={{
-            fontSize: 28,
-            fontWeight: "bold",
-            textAlign: "center",
-            color: "#1A1A1A",
-            marginBottom: 28,
+        <ScrollView
+          ref={scrollViewRef}
+          contentContainerStyle={{
+            flexGrow: 1,
+            justifyContent: "center",
+            backgroundColor: "#F8F9FA",
+            paddingHorizontal: 28,
+            paddingVertical: 40,
+            paddingBottom: 80,
           }}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
         >
-          Đăng ký
-        </Text>
+          <Text
+            style={{
+              fontSize: 28,
+              fontWeight: "bold",
+              textAlign: "center",
+              color: "#1A1A1A",
+              marginBottom: 28,
+            }}
+          >
+            Đăng ký
+          </Text>
 
-        <TextInput
-          placeholder="Họ và tên"
-          placeholderTextColor="#9CA3AF"
-          value={fullName}
-          onChangeText={setFullName}
-          style={input}
-        />
+          <AppFormInput
+            control={control}
+            name="fullName"
+            placeholder="Họ và tên"
+            containerStyle={{ marginBottom: 0 }}
+          />
 
-        <TextInput
-          placeholder="Email"
-          placeholderTextColor="#9CA3AF"
-          value={email}
-          onChangeText={setEmail}
-          autoCapitalize="none"
-          keyboardType="email-address"
-          style={input}
-        />
+          <AppFormInput
+            control={control}
+            name="email"
+            placeholder="Email"
+            keyboardType="email-address"
+            autoCapitalize="none"
+            containerStyle={{ marginBottom: 0 }}
+          />
 
-        {/* Password field with toggle visibility */}
-        <View style={[input, passwordInputContainer]}>
-          <TextInput
+          <AppFormInput
+            control={control}
+            name="password"
             placeholder="Mật khẩu"
-            placeholderTextColor="#9CA3AF"
-            value={password}
-            onChangeText={setPassword}
             secureTextEntry={!showPassword}
-            style={{ flex: 1, color: "#1F2937", fontSize: 15, paddingVertical: 14, paddingLeft: 0 }}
+            containerStyle={{ marginBottom: 0 }}
+            icon={() => (
+              <TouchableOpacity onPress={() => setShowPassword(!showPassword)} activeOpacity={0.7}>
+                <Ionicons name={showPassword ? "eye-outline" : "eye-off-outline"} size={20} color="#9CA3AF" />
+              </TouchableOpacity>
+            )}
           />
-          <TouchableOpacity
-            onPress={() => setShowPassword(!showPassword)}
-            activeOpacity={0.7}
-          >
-            <Ionicons
-              name={showPassword ? "eye-outline" : "eye-off-outline"}
-              size={20}
-              color="#9CA3AF"
-            />
-          </TouchableOpacity>
-        </View>
 
-        {/* Confirm Password field with toggle visibility */}
-        <View style={[input, passwordInputContainer]}>
-          <TextInput
+          <AppFormInput
+            control={control}
+            name="confirmPassword"
             placeholder="Nhập lại mật khẩu"
-            placeholderTextColor="#9CA3AF"
-            value={confirmPassword}
-            onChangeText={setConfirmPassword}
             secureTextEntry={!showConfirmPassword}
-            style={{ flex: 1, color: "#1F2937", fontSize: 15, paddingVertical: 14, paddingLeft: 0 }}
+            containerStyle={{ marginBottom: 0 }}
+            icon={() => (
+              <TouchableOpacity onPress={() => setShowConfirmPassword(!showConfirmPassword)} activeOpacity={0.7}>
+                <Ionicons name={showConfirmPassword ? "eye-outline" : "eye-off-outline"} size={20} color="#9CA3AF" />
+              </TouchableOpacity>
+            )}
           />
-          <TouchableOpacity
-            onPress={() => setShowConfirmPassword(!showConfirmPassword)}
-            activeOpacity={0.7}
-          >
-            <Ionicons
-              name={showConfirmPassword ? "eye-outline" : "eye-off-outline"}
-              size={20}
-              color="#9CA3AF"
-            />
-          </TouchableOpacity>
-        </View>
 
-        <TextInput
-          placeholder="Số điện thoại"
-          placeholderTextColor="#9CA3AF"
-          value={phoneNumber}
-          onChangeText={setPhoneNumber}
-          keyboardType="phone-pad"
-          style={input}
-        />
+          <AppFormInput
+            control={control}
+            name="phoneNumber"
+            placeholder="Số điện thoại"
+            keyboardType="phone-pad"
+            containerStyle={{ marginBottom: 0 }}
+          />
 
-        {renderDateField()}
+          {renderDateField()}
+          {renderGenderField()}
 
-        {renderGenderField()}
+          <AppFormInput
+            control={control}
+            name="address"
+            placeholder="Địa chỉ"
+            containerStyle={{ marginBottom: 0 }}
+            onFocus={() => {
+              setTimeout(() => {
+                scrollViewRef.current?.scrollToEnd({ animated: true });
+              }, 100);
+            }}
+          />
 
-        <TextInput
-          placeholder="Địa chỉ"
-          placeholderTextColor="#9CA3AF"
-          value={address}
-          onChangeText={setAddress}
-          style={input}
-          onFocus={() => {
-            // Scroll to the end of the scroll view after soft keyboard rises
-            setTimeout(() => {
-              scrollViewRef.current?.scrollToEnd({ animated: true });
-            }, 100);
-          }}
-        />
+          <Pressable onPress={handleSubmit(onSubmit)} style={button}>
+            <Text style={buttonText}>Đăng ký</Text>
+          </Pressable>
 
-        <Pressable onPress={register} style={button}>
-          <Text style={buttonText}>Đăng ký</Text>
-        </Pressable>
-
-        <Text
-          onPress={() => router.replace("/auth/login")}
-          style={link}
-        >
-          Đã có tài khoản? Đăng nhập
-        </Text>
-      </ScrollView>
-    </KeyboardAvoidingView>
+          <Text onPress={() => router.replace("/auth/login")} style={link}>
+            Đã có tài khoản? Đăng nhập
+          </Text>
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 }
 
 // ── Shared styles ──────────────────────────────────────────────────────────
 
 const input = {
-  borderWidth: 1,
-  borderColor: "rgba(83, 146, 249, 0.3)",
+  borderWidth: 1.5,
+  borderColor: "blue",
   backgroundColor: "#FFFFFF",
   color: "#1F2937",
   borderRadius: 12,
   paddingHorizontal: 16,
   paddingVertical: 14,
-  marginTop: 12,
-  fontSize: 15,
+  height: 52,
+  fontSize: 16,
 } as const;
 
 const genderPickerRow = {
   flexDirection: "row",
   alignItems: "center",
   justifyContent: "space-between",
-} as const;
-
-const passwordInputContainer = {
-  flexDirection: "row",
-  alignItems: "center",
-  paddingVertical: 0,
 } as const;
 
 const modalOverlay = {

@@ -35,6 +35,8 @@ export type CreateHotelPayload = {
   name: string;
   description: string;
   address: string;
+  latitude?: number;
+  longitude?: number;
   starRating?: number;
   checkInTime: string;
   checkOutTime: string;
@@ -48,6 +50,8 @@ export const hotelApi = {
     formData.append("Name", data.name);
     formData.append("Description", data.description);
     formData.append("Address", data.address);
+    if (data.latitude !== undefined) { formData.append("Latitude", String(data.latitude)); }
+    if (data.longitude !== undefined) { formData.append("Longitude", String(data.longitude)); }
     if (data.starRating !== undefined) { formData.append("StarRating", String(data.starRating)); }
     formData.append("CheckInTime", data.checkInTime);
     formData.append("CheckOutTime", data.checkOutTime);
@@ -76,5 +80,30 @@ export const hotelApi = {
     return apiFetch(`/api/hotels/${id}`, {
       method: "GET",
     }) as Promise<ApiResponse<HotelDto>>;
+  },
+
+  searchHotels: (params: {
+    location?: string;
+    latitude?: number;
+    longitude?: number;
+    radiusKm?: number;
+    checkInDate?: string;
+    checkOutDate?: string;
+    roomCount?: number;
+    guestCount?: number;
+  }) => {
+    const query = new URLSearchParams();
+    if (params.location) query.append("Location", params.location);
+    if (params.latitude) query.append("Latitude", params.latitude.toString());
+    if (params.longitude) query.append("Longitude", params.longitude.toString());
+    if (params.radiusKm) query.append("RadiusKm", params.radiusKm.toString());
+    if (params.checkInDate) query.append("CheckInDate", params.checkInDate);
+    if (params.checkOutDate) query.append("CheckOutDate", params.checkOutDate);
+    if (params.roomCount) query.append("RoomCount", params.roomCount.toString());
+    if (params.guestCount) query.append("GuestCount", params.guestCount.toString());
+
+    return apiFetch(`/api/hotels/search?${query.toString()}`, {
+      method: "GET",
+    }) as Promise<ApiResponse<any[]>>;
   },
 };

@@ -1,5 +1,6 @@
+import Toast from 'react-native-toast-message';
 import React from 'react';
-import { Alert, Pressable, ScrollView, StyleSheet, Text, View, Image } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, View, Image } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { AppButton } from '../../../shared/components/AppButton';
@@ -51,7 +52,6 @@ export function OwnerHotelDetailScreen() {
         <Text style={styles.headerTitle}>Chi tiết khách sạn</Text>
         <View style={{ width: 24 }} />
       </View>
-
       <ScrollView
         style={styles.container}
         contentContainerStyle={styles.content}
@@ -260,7 +260,11 @@ export function OwnerHotelDetailScreen() {
               <AppButton 
                 title="Xem trạng thái" 
                 variant="outline"
-                onPress={() => Alert.alert('Trạng thái', 'Hồ sơ đang được admin kiểm tra. Vui lòng chờ thêm.')} 
+                onPress={() => Toast.show({
+                  type: 'info',
+                  text1: 'Trạng thái',
+                  text2: 'Hồ sơ đang được admin kiểm tra. Vui lòng chờ thêm.'
+                })} 
               />
             )}
             {hotel.status === 'need_update' && (

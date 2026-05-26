@@ -1,3 +1,5 @@
+import { SafeAreaView } from 'react-native-safe-area-context';
+import Toast from 'react-native-toast-message';
 import React, { useState, useCallback } from "react";
 import {
     View,
@@ -6,7 +8,6 @@ import {
     Image,
     ScrollView,
     TouchableOpacity,
-    SafeAreaView,
     Platform,
     ActivityIndicator,
     Alert,
@@ -98,13 +99,25 @@ export default function HotelDetailScreen() {
                         try {
                             const res = await roomApi.deleteRoom(roomId);
                             if (res.isSuccess) {
-                                Alert.alert("Thành công", "Đã xóa phòng thành công");
+                                Toast.show({
+                                    type: 'success',
+                                    text1: "Thành công",
+                                    text2: "Đã xóa phòng thành công"
+                                });
                                 loadData();
                             } else {
-                                Alert.alert("Lỗi", res.message || "Xóa phòng thất bại");
+                                Toast.show({
+                                    type: 'error',
+                                    text1: "Lỗi",
+                                    text2: res.message || "Xóa phòng thất bại"
+                                });
                             }
                         } catch (error: any) {
-                            Alert.alert("Lỗi", error.message || "Không thể xóa phòng");
+                            Toast.show({
+                                type: 'error',
+                                text1: "Lỗi",
+                                text2: error.message || "Không thể xóa phòng"
+                            });
                         }
                     },
                 },
@@ -163,7 +176,6 @@ export default function HotelDetailScreen() {
                     </View>
                 </View>
             </View>
-
             <ScrollView style={styles.container} contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
                 {/* Banner Section */}
                 <View style={styles.bannerContainer}>
@@ -244,7 +256,11 @@ export default function HotelDetailScreen() {
 
                     <TouchableOpacity
                         style={styles.reportButton}
-                        onPress={() => Alert.alert("Báo cáo", "Tính năng báo cáo doanh thu & công suất phòng đang được chuẩn bị.")}
+                        onPress={() => Toast.show({
+                            type: 'info',
+                            text1: "Báo cáo",
+                            text2: "Tính năng báo cáo doanh thu & công suất phòng đang được chuẩn bị."
+                        })}
                     >
                         <Text style={styles.reportButtonText}>Xem báo cáo chi tiết</Text>
                     </TouchableOpacity>

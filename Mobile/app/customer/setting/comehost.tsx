@@ -1,3 +1,4 @@
+import Toast from 'react-native-toast-message';
 import React, { useState } from "react";
 import {
   View,
@@ -15,6 +16,7 @@ import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { authApi } from "../../../src/shared/api/authApi";
 
+
 export default function BecomeHostScreen() {
   const [companyName, setCompanyName] = useState("");
   const [taxCode, setTaxCode] = useState("");
@@ -25,7 +27,11 @@ export default function BecomeHostScreen() {
     const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
 
     if (!permission.granted) {
-      Alert.alert("Thông báo", "Bạn cần cấp quyền truy cập ảnh");
+      Toast.show({
+        type: 'info',
+        text1: "Thông báo",
+        text2: "Bạn cần cấp quyền truy cập ảnh"
+      });
       return;
     }
 
@@ -46,17 +52,29 @@ export default function BecomeHostScreen() {
 
   const handleSubmit = async () => {
     if (!companyName.trim()) {
-      Alert.alert("Lỗi", "Vui lòng nhập tên công ty");
+      Toast.show({
+        type: 'error',
+        text1: "Lỗi",
+        text2: "Vui lòng nhập tên công ty"
+      });
       return;
     }
 
     if (!taxCode.trim()) {
-      Alert.alert("Lỗi", "Vui lòng nhập mã số thuế");
+      Toast.show({
+        type: 'error',
+        text1: "Lỗi",
+        text2: "Vui lòng nhập mã số thuế"
+      });
       return;
     }
 
     if (businessLicenses.length === 0) {
-      Alert.alert("Lỗi", "Vui lòng chọn ít nhất 1 ảnh giấy phép kinh doanh");
+      Toast.show({
+        type: 'error',
+        text1: "Lỗi",
+        text2: "Vui lòng chọn ít nhất 1 ảnh giấy phép kinh doanh"
+      });
       return;
     }
 
@@ -80,7 +98,11 @@ export default function BecomeHostScreen() {
         ]
       );
     } catch (error: any) {
-      Alert.alert("Lỗi", error.message || "Gửi yêu cầu thất bại");
+      Toast.show({
+        type: 'error',
+        text1: "Lỗi",
+        text2: error.message || "Gửi yêu cầu thất bại"
+      });
     } finally {
       setLoading(false);
     }

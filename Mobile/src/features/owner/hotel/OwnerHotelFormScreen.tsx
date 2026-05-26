@@ -1,3 +1,4 @@
+import Toast from 'react-native-toast-message';
 import { ownerHotelApi } from './ownerHotelApi';
 import React, { useState } from 'react';
 import {
@@ -150,10 +151,11 @@ export function OwnerHotelFormScreen({ onBack }: OwnerHotelFormProps) {
     }
 
     if (errors.length > 0) {
-      Alert.alert(
-        'Vui lòng tải ảnh đại diện khách sạn và đầy đủ giấy tờ pháp lý.',
-        `Còn thiếu:\n• ${errors.join('\n• ')}`,
-      );
+      Toast.show({
+        type: 'info',
+        text1: 'Vui lòng tải ảnh đại diện khách sạn và đầy đủ giấy tờ pháp lý.',
+        text2: `Còn thiếu:\n• ${errors.join('\n• ')}`
+      });
       return;
     }
 
@@ -182,16 +184,21 @@ export function OwnerHotelFormScreen({ onBack }: OwnerHotelFormProps) {
 } catch (error: any) {
   console.log('Create hotel error:', error);
 
-  Alert.alert(
-    'Không thể gửi hồ sơ',
-    error?.message || 'Vui lòng kiểm tra Backend hoặc kết nối mạng.',
-  );
+  Toast.show({
+    type: 'info',
+    text1: 'Không thể gửi hồ sơ',
+    text2: error?.message || 'Vui lòng kiểm tra Backend hoặc kết nối mạng.'
+  });
 } finally {
   setSubmitting(false);
 }
   }
   function handleSaveDraft() {
-    Alert.alert('Lưu nháp', 'Đã lưu nháp hồ sơ khách sạn.');
+    Toast.show({
+      type: 'info',
+      text1: 'Lưu nháp',
+      text2: 'Đã lưu nháp hồ sơ khách sạn.'
+    });
   }
 
   // ---- Submitted success state ----

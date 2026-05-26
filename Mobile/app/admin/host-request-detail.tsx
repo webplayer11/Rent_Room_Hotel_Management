@@ -1,3 +1,5 @@
+import { SafeAreaView } from 'react-native-safe-area-context';
+import Toast from 'react-native-toast-message';
 import React, { useEffect, useState } from "react";
 import {
   View,
@@ -10,7 +12,6 @@ import {
   ScrollView,
   KeyboardAvoidingView,
   Platform,
-  SafeAreaView,
   Dimensions,
   ActivityIndicator,
   Alert,
@@ -24,7 +25,7 @@ import {
 } from "lucide-react-native";
 import { useLocalSearchParams, useRouter, Stack } from "expo-router";
 import { adminApi, PendingHostDto } from "../../src/shared/api/adminApi";
-
+import { IMAGE_URL } from "../../src/config";
 
 export default function HostRequestDetailScreen() {
   const router = useRouter();
@@ -49,10 +50,18 @@ export default function HostRequestDetailScreen() {
       if (result.isSuccess) {
         setHost(result.data);
       } else {
-        Alert.alert("Lỗi", result.message);
+        Toast.show({
+          type: 'error',
+          text1: "Lỗi",
+          text2: result.message
+        });
       }
     } catch (error: any) {
-      Alert.alert("Lỗi", error.message || "Không tải được chi tiết");
+      Toast.show({
+        type: 'error',
+        text1: "Lỗi",
+        text2: error.message || "Không tải được chi tiết"
+      });
     } finally {
       setLoading(false);
     }
@@ -73,10 +82,18 @@ export default function HostRequestDetailScreen() {
           try {
             setActionLoading(true);
             await adminApi.Approved(id);
-            Alert.alert("Thành công", "Đã duyệt Host");
+            Toast.show({
+              type: 'success',
+              text1: "Thành công",
+              text2: "Đã duyệt Host"
+            });
             router.back();
           } catch (error: any) {
-            Alert.alert("Lỗi", error.message || "Duyệt thất bại");
+            Toast.show({
+              type: 'error',
+              text1: "Lỗi",
+              text2: error.message || "Duyệt thất bại"
+            });
           } finally {
             setActionLoading(false);
           }
@@ -93,7 +110,11 @@ export default function HostRequestDetailScreen() {
     if (!id) return;
 
     if (!reason.trim()) {
-      Alert.alert("Thiếu lý do", "Vui lòng nhập lý do từ chối");
+      Toast.show({
+        type: 'error',
+        text1: "Thiếu lý do",
+        text2: "Vui lòng nhập lý do từ chối"
+      });
       return;
     }
 
@@ -102,10 +123,18 @@ export default function HostRequestDetailScreen() {
       await adminApi.Reject(id, reason.trim());
 
       setRejectModalVisible(false);
-      Alert.alert("Thành công", "Đã từ chối yêu cầu Host");
+      Toast.show({
+        type: 'success',
+        text1: "Thành công",
+        text2: "Đã từ chối yêu cầu Host"
+      });
       router.back();
     } catch (error: any) {
-      Alert.alert("Lỗi", error.message || "Từ chối thất bại");
+      Toast.show({
+        type: 'error',
+        text1: "Lỗi",
+        text2: error.message || "Từ chối thất bại"
+      });
     } finally {
       setActionLoading(false);
     }
@@ -188,13 +217,9 @@ host.businessLicenseUrls.length > 0 ? (
         >
           <Image
             source={{
-              uri: url.startsWith("http")
-                ? url
-                : `http://192.168.0.105:9000/${url}`,
-            }}
-            style={styles.licenseImage}
-            resizeMode="cover"
-          />
+              uri: url.startsWith("http")? url : `${IMAGE_URL}/${url}`,}}
+              style={styles.licenseImage}
+              resizeMode="cover"/>
 
           <View style={styles.maximizeIcon}>
             <Maximize2 size={20} color="#FFF" />

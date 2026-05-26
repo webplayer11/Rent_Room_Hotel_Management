@@ -1,3 +1,5 @@
+import { SafeAreaView } from 'react-native-safe-area-context';
+import Toast from 'react-native-toast-message';
 import React, { useState, useEffect } from "react";
 import {
   Alert,
@@ -11,7 +13,6 @@ import {
   ActivityIndicator,
   Switch,
   Platform,
-  SafeAreaView,
 } from "react-native";
 import * as ImagePicker from "expo-image-picker";
 import { useRouter, useLocalSearchParams } from "expo-router";
@@ -101,11 +102,19 @@ export default function CreateRoomScreen() {
               setImages(formattedImages);
             }
           } else {
-            Alert.alert("Lỗi", res.message || "Không thể tải thông tin phòng");
+            Toast.show({
+              type: 'error',
+              text1: "Lỗi",
+              text2: res.message || "Không thể tải thông tin phòng"
+            });
           }
         } catch (error: any) {
           console.log("Error fetching room details:", error);
-          Alert.alert("Lỗi", "Đã xảy ra lỗi khi tải dữ liệu phòng");
+          Toast.show({
+            type: 'error',
+            text1: "Lỗi",
+            text2: "Đã xảy ra lỗi khi tải dữ liệu phòng"
+          });
         } finally {
           setLoading(false);
         }
@@ -139,46 +148,78 @@ export default function CreateRoomScreen() {
 
   const handleSubmit = async () => {
     if (!hotelId && !isEditMode) {
-      Alert.alert("Lỗi", "Không tìm thấy thông tin khách sạn. Vui lòng thử lại.");
+      Toast.show({
+        type: 'error',
+        text1: "Lỗi",
+        text2: "Không tìm thấy thông tin khách sạn. Vui lòng thử lại."
+      });
       return;
     }
 
     if (!selectedRoomType.trim() || !roomNumber.trim()) {
-      Alert.alert("Thiếu thông tin", "Vui lòng nhập Số phòng và Loại phòng");
+      Toast.show({
+        type: 'error',
+        text1: "Thiếu thông tin",
+        text2: "Vui lòng nhập Số phòng và Loại phòng"
+      });
       return;
     }
 
     const finalRoomType = selectedRoomType === "Khác" ? customRoomType.trim() : selectedRoomType;
 
     if (selectedRoomType === "Khác" && !finalRoomType) {
-      Alert.alert("Thiếu thông tin", "Vui lòng nhập loại phòng khác");
+      Toast.show({
+        type: 'error',
+        text1: "Thiếu thông tin",
+        text2: "Vui lòng nhập loại phòng khác"
+      });
       return;
     }
 
     if (!capacity.trim() || isNaN(Number(capacity))) {
-      Alert.alert("Lỗi", "Sức chứa phải là một số hợp lệ");
+      Toast.show({
+        type: 'error',
+        text1: "Lỗi",
+        text2: "Sức chứa phải là một số hợp lệ"
+      });
       return;
     }
 
     if (!pricePerNight.trim() || isNaN(Number(pricePerNight))) {
-      Alert.alert("Lỗi", "Giá mỗi đêm phải là một số hợp lệ");
+      Toast.show({
+        type: 'error',
+        text1: "Lỗi",
+        text2: "Giá mỗi đêm phải là một số hợp lệ"
+      });
       return;
     }
 
     if (!bedCount.trim() || isNaN(Number(bedCount))) {
-      Alert.alert("Lỗi", "Số giường phải là một số hợp lệ");
+      Toast.show({
+        type: 'error',
+        text1: "Lỗi",
+        text2: "Số giường phải là một số hợp lệ"
+      });
       return;
     }
 
     if (images.length === 0) {
-      Alert.alert("Thiếu ảnh", "Vui lòng chọn ít nhất 1 ảnh cho phòng này");
+      Toast.show({
+        type: 'error',
+        text1: "Thiếu ảnh",
+        text2: "Vui lòng chọn ít nhất 1 ảnh cho phòng này"
+      });
       return;
     }
 
     const finalBedType = selectedBedType === "Khác" ? customBedType.trim() : selectedBedType;
 
     if (selectedBedType === "Khác" && !finalBedType) {
-      Alert.alert("Thiếu thông tin", "Vui lòng nhập loại giường khác");
+      Toast.show({
+        type: 'error',
+        text1: "Thiếu thông tin",
+        text2: "Vui lòng nhập loại giường khác"
+      });
       return;
     }
 
@@ -223,10 +264,18 @@ export default function CreateRoomScreen() {
           ]
         );
       } else {
-        Alert.alert("Lỗi", result.message || (isEditMode ? "Cập nhật phòng thất bại" : "Tạo phòng thất bại"));
+        Toast.show({
+          type: 'error',
+          text1: "Lỗi",
+          text2: result.message || (isEditMode ? "Cập nhật phòng thất bại" : "Tạo phòng thất bại")
+        });
       }
     } catch (error: any) {
-      Alert.alert("Lỗi", error.message || "Không thể thực hiện tác vụ");
+      Toast.show({
+        type: 'error',
+        text1: "Lỗi",
+        text2: error.message || "Không thể thực hiện tác vụ"
+      });
     } finally {
       setLoading(false);
     }

@@ -48,6 +48,7 @@ export type CreateRoomDto = {
   status?: string;
 };
 
+
 export const roomApi = {
   createRoom: (data: CreateRoomDto) => {
     const formData = new FormData();
@@ -75,6 +76,7 @@ export const roomApi = {
       } as any);
     });
 
+    
     return apiFetch("/api/rooms", {
       method: "POST",
       body: formData,

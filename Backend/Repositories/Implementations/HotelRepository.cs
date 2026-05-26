@@ -73,7 +73,9 @@ public class HotelRepository : IHotelRepository
             .Where(h => h.IsActive && h.IsApproved)
             .AsQueryable();
 
-        if (!string.IsNullOrWhiteSpace(request.Location))
+        // Nếu không có toạ độ (Latitude, Longitude), thì mới tìm kiếm text (Contains)
+        // Còn nếu đã có toạ độ, ta sẽ tìm kiếm theo bán kính thay vì text matching để trả về tất cả khách sạn trong bán kính.
+        if (!string.IsNullOrWhiteSpace(request.Location) && (!request.Latitude.HasValue || !request.Longitude.HasValue))
         {
             var locationLower = request.Location.ToLower();
             query = query.Where(h => (h.Name != null && h.Name.ToLower().Contains(locationLower)) ||
@@ -82,7 +84,7 @@ public class HotelRepository : IHotelRepository
 
         if (request.Latitude.HasValue && request.Longitude.HasValue)
         {
-            double radius = request.RadiusKm ?? 10.0;
+            double radius = request.RadiusKm ?? 50.0;
             double latDelta = radius / 111.32;
             double lngDelta = radius / (111.32 * Math.Cos(request.Latitude.Value * Math.PI / 180.0));
             double minLat = request.Latitude.Value - latDelta;
@@ -99,7 +101,7 @@ public class HotelRepository : IHotelRepository
 
         if (request.Latitude.HasValue && request.Longitude.HasValue)
         {
-            double radius = request.RadiusKm ?? 10.0;
+            double radius = request.RadiusKm ?? 50.0;
             hotels = hotels.Where(h => CalculateDistance(request.Latitude.Value, request.Longitude.Value, h.Latitude!.Value, h.Longitude!.Value) <= radius).ToList();
         }
 
@@ -109,7 +111,7 @@ public class HotelRepository : IHotelRepository
         {
             var availableRooms = new List<Room>();
 
-            foreach (var room in hotel.Rooms.Where(r => r.IsActive))
+            foreach (var room in hotel.Rooms.Where(r => r.IsActive && (string.IsNullOrEmpty(r.Status) || r.Status == "Available")))
             {
                 bool isRoomAvailable = true;
                 if (request.CheckInDate.HasValue && request.CheckOutDate.HasValue)
@@ -131,11 +133,21 @@ public class HotelRepository : IHotelRepository
                 }
             }
 
-            if (availableRooms.Count >= request.RoomCount &&
-                availableRooms.Sum(r => r.Capacity) >= request.GuestCount)
+            if (availableRooms.Count >= request.RoomCount)
             {
-                hotel.Rooms = availableRooms;
-                validHotels.Add(hotel);
+                // Sắp xếp các phòng trống theo sức chứa giảm dần
+                // và lấy ra số lượng phòng bằng với số lượng phòng khách yêu cầu (request.RoomCount)
+                // Tính tổng sức chứa của các phòng này xem có đủ cho số lượng khách (request.GuestCount) hay không
+                var maxCapacityForRequestedRooms = availableRooms
+                    .OrderByDescending(r => r.Capacity)
+                    .Take(request.RoomCount)
+                    .Sum(r => r.Capacity);
+
+                if (maxCapacityForRequestedRooms >= request.GuestCount)
+                {
+                    hotel.Rooms = availableRooms;
+                    validHotels.Add(hotel);
+                }
             }
         }
 

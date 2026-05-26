@@ -1,12 +1,6 @@
+import { SafeAreaView } from 'react-native-safe-area-context';
 import React from "react";
-import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  Alert,
-  SafeAreaView,
-} from "react-native";
+import { View, Text, StyleSheet, TouchableOpacity, Alert } from "react-native";
 import { router } from "expo-router";
 import { User, Mail, Shield, LogOut } from "lucide-react-native";
 import { tokenStorage } from "../../../src/shared/storage/tokenStorage";

@@ -1,17 +1,10 @@
+import Toast from 'react-native-toast-message';
 import React, {
   useMemo,
   useState,
   useCallback,
 } from "react";
-import {
-  View,
-  Text,
-  StyleSheet,
-  FlatList,
-  ActivityIndicator,
-  TouchableOpacity,
-  Alert,
-} from "react-native";
+import { View, Text, StyleSheet, FlatList, ActivityIndicator, TouchableOpacity } from "react-native";
 import {
   ChevronLeft,
 } from "lucide-react-native";
@@ -34,10 +27,18 @@ export default function PendingHotelsScreen() {
       if (result.isSuccess) {
         setHotels(result.data || []);
       } else {
-        Alert.alert("Lỗi", result.message);
+        Toast.show({
+          type: 'error',
+          text1: "Lỗi",
+          text2: result.message
+        });
       }
     } catch (error: any) {
-      Alert.alert("Lỗi", error.message || "Không tải được danh sách");
+      Toast.show({
+        type: 'error',
+        text1: "Lỗi",
+        text2: error.message || "Không tải được danh sách"
+      });
     } finally {
       setLoading(false);
     }

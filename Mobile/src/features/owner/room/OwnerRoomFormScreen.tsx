@@ -1,3 +1,4 @@
+import Toast from 'react-native-toast-message';
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, Pressable, TextInput, Alert, KeyboardAvoidingView, Platform, Image } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
@@ -39,7 +40,11 @@ export function OwnerRoomFormScreen() {
   const handlePickImage = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== 'granted') {
-      Alert.alert('Lỗi', 'Cần quyền truy cập thư viện ảnh để chọn ảnh phòng.');
+      Toast.show({
+        type: 'error',
+        text1: 'Lỗi',
+        text2: 'Cần quyền truy cập thư viện ảnh để chọn ảnh phòng.'
+      });
       return;
     }
 
@@ -57,19 +62,31 @@ export function OwnerRoomFormScreen() {
 
   const handleSave = () => {
     if (!form.hotelId || !form.name || !form.roomType || !form.capacity || !form.pricePerNight || !form.status) {
-      Alert.alert('Lỗi', 'Vui lòng điền đầy đủ các trường bắt buộc (*).');
+      Toast.show({
+        type: 'error',
+        text1: 'Lỗi',
+        text2: 'Vui lòng điền đầy đủ các trường bắt buộc (*).'
+      });
       return;
     }
 
     const capacityNum = parseInt(form.capacity, 10);
     if (isNaN(capacityNum) || capacityNum <= 0) {
-      Alert.alert('Lỗi', 'Sức chứa phải lớn hơn 0.');
+      Toast.show({
+        type: 'error',
+        text1: 'Lỗi',
+        text2: 'Sức chứa phải lớn hơn 0.'
+      });
       return;
     }
 
     const priceNum = parseInt(form.pricePerNight.replace(/\D/g, ''), 10);
     if (isNaN(priceNum) || priceNum <= 0) {
-      Alert.alert('Lỗi', 'Giá mỗi đêm phải lớn hơn 0.');
+      Toast.show({
+        type: 'error',
+        text1: 'Lỗi',
+        text2: 'Giá mỗi đêm phải lớn hơn 0.'
+      });
       return;
     }
 

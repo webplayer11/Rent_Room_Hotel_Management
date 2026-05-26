@@ -1,3 +1,4 @@
+import Toast from 'react-native-toast-message';
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, Pressable, TextInput, Alert, KeyboardAvoidingView, Platform } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
@@ -40,13 +41,21 @@ export function OwnerPromotionFormScreen() {
 
   const handleSave = () => {
     if (!form.title || !form.code || !form.hotelId || !form.discountPercent || !form.startDate || !form.endDate) {
-      Alert.alert('Lỗi', 'Vui lòng điền đầy đủ các trường bắt buộc (*).');
+      Toast.show({
+        type: 'error',
+        text1: 'Lỗi',
+        text2: 'Vui lòng điền đầy đủ các trường bắt buộc (*).'
+      });
       return;
     }
 
     const discount = parseInt(form.discountPercent, 10);
     if (isNaN(discount) || discount < 1 || discount > 100) {
-      Alert.alert('Lỗi', 'Phần trăm giảm giá phải từ 1 đến 100.');
+      Toast.show({
+        type: 'error',
+        text1: 'Lỗi',
+        text2: 'Phần trăm giảm giá phải từ 1 đến 100.'
+      });
       return;
     }
 
@@ -64,7 +73,11 @@ export function OwnerPromotionFormScreen() {
     const end = parseDate(form.endDate);
 
     if (end < start) {
-      Alert.alert('Lỗi', 'Ngày kết thúc không được trước ngày bắt đầu.');
+      Toast.show({
+        type: 'error',
+        text1: 'Lỗi',
+        text2: 'Ngày kết thúc không được trước ngày bắt đầu.'
+      });
       return;
     }
 
