@@ -1,5 +1,12 @@
 namespace RoomManagement.DTOs;
 
+public class RoomAmenityDto
+{
+    public string Id { get; set; } = default!;
+    public string? Name { get; set; }
+    public string? Icon { get; set; }
+}
+
 public class RoomImageDto
 {
     public string Id { get; set; } = default!;
@@ -25,6 +32,7 @@ public class RoomDto
     public bool IsSmokingAllowed { get; set; }
     public bool IsActive { get; set; }
     public List<RoomImageDto> Images { get; set; } = new();
+    public List<RoomAmenityDto> RoomAmenities { get; set; } = new();
 }
 
 public class CreateRoomDto
@@ -41,4 +49,5 @@ public class CreateRoomDto
     public double? RoomSize { get; set; }
     public bool IsSmokingAllowed { get; set; }
     public string? Status { get; set; }
+    public List<string> RoomAmenities { get; set; } = new();
 }

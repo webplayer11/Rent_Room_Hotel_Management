@@ -1,5 +1,13 @@
 namespace RoomManagement.DTOs;
 
+public class AmenityDto
+{
+    public string Id { get; set; } = default!;
+    public string? Name { get; set; }
+    public string? Icon { get; set; }
+    public string? Category { get; set; }
+}
+
 public class HotelImageDto
 {
     public string Id { get; set; } = default!;
@@ -24,7 +32,7 @@ public class HotelDto
     public bool IsApproved { get; set; }
     public string HostId { get; set; } = default!;
     public List<HotelImageDto> Images { get; set; } = new();
-
+    public List<AmenityDto> Amenities { get; set; } = new();
 }
 
 public class CreateHotelDto
@@ -38,6 +46,7 @@ public class CreateHotelDto
     public string? CheckInTime { get; set; }
     public string? CheckOutTime { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    public List<string> Amenities { get; set; } = new();
 }
 
 public class UpdateHotelDto : CreateHotelDto
