@@ -38,8 +38,12 @@ export default function HostRequestDetailScreen() {
   const [rejectModalVisible, setRejectModalVisible] = useState(false);
   const [reason, setReason] = useState("");
   const [fullScreenImage, setFullScreenImage] = useState<string | null>(null);
-  
-  
+
+  // Helper: backend trả về relative path (đã có bucket), VD: "host-documents/file.webp"
+  // Chỉ ghép IMAGE_URL phía trước, KHÔNG thêm bucket lần nữa.
+  const resolveImageUrl = (url: string) =>
+    url.startsWith("http") ? url : `${IMAGE_URL}/${url}`;
+
   const loadDetail = async () => {
     if (!id) return;
 
@@ -213,13 +217,13 @@ host.businessLicenseUrls.length > 0 ? (
         <TouchableOpacity
           key={index}
           style={styles.licenseImageContainer}
-          onPress={() => setFullScreenImage(url)}
+          onPress={() => setFullScreenImage(resolveImageUrl(url))}
         >
           <Image
-            source={{
-              uri: url.startsWith("http")? url : `${IMAGE_URL}/${url}`,}}
-              style={styles.licenseImage}
-              resizeMode="cover"/>
+            source={{ uri: resolveImageUrl(url) }}
+            style={styles.licenseImage}
+            resizeMode="cover"
+          />
 
           <View style={styles.maximizeIcon}>
             <Maximize2 size={20} color="#FFF" />
@@ -327,13 +331,14 @@ host.businessLicenseUrls.length > 0 ? (
               <X size={30} color="#FFF" />
             </TouchableOpacity>
 
-           <Image  source={{ uri: fullScreenImage }}
-            resizeMode="contain"
-            style={{
-            width: Dimensions.get("window").width,
-            height: Dimensions.get("window").height * 0.8,
-  }}
-/>
+            <Image
+              source={{ uri: fullScreenImage }}
+              resizeMode="contain"
+              style={{
+                width: Dimensions.get("window").width,
+                height: Dimensions.get("window").height * 0.8,
+              }}
+            />
           </View>
         </Modal>
       )}
