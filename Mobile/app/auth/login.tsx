@@ -1,7 +1,6 @@
 import { router } from "expo-router";
 import { useState, useMemo } from "react";
 import {
-  Alert,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -11,6 +10,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import Toast from "react-native-toast-message";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 
@@ -84,22 +84,24 @@ export default function LoginScreen() {
       } else if (roles.includes("Customer")) {
         router.replace("/customer/home");
       } else {
-        Alert.alert("Lỗi", "Tài khoản chưa được cấp quyền truy cập");
+        Toast.show({
+          type: "error",
+          text1: "Không có quyền truy cập",
+          text2: "Tài khoản chưa được cấp quyền truy cập",
+          position: "top",
+        });
       }
     } catch (e: any) {
-      Alert.alert(
-        "Đăng nhập thất bại",
-        e?.response?.data?.message ||
+      Toast.show({
+        type: "error",
+        text1: "Đăng nhập thất bại",
+        text2:
+          e?.response?.data?.message ||
           e?.message ||
-          "Email hoặc mật khẩu không chính xác",
-        [
-          { text: "Thử lại", style: "cancel" },
-          {
-            text: "Đăng ký ngay",
-            onPress: () => router.push("/auth/register"),
-          },
-        ]
-      );
+          "Email hoặc mật khẩu không chính xác. Bạn chưa có tài khoản?",
+        position: "top",
+        visibilityTime: 4000,
+      });
     } finally {
       setLoading(false);
     }

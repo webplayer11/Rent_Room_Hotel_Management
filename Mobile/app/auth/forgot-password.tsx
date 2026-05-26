@@ -1,7 +1,7 @@
 import { router } from "expo-router";
 import { useState, useMemo } from "react";
+import Toast from "react-native-toast-message";
 import {
-  Alert,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -48,7 +48,13 @@ export default function ForgotPasswordScreen() {
         params: { email, token },
       });
     } catch (e: any) {
-      Alert.alert("Lỗi", e.message || "Không thể gửi yêu cầu. Vui lòng thử lại.");
+      Toast.show({
+        type: "error",
+        text1: "Gửi yêu cầu thất bại",
+        text2: e?.response?.data?.message || e?.message || "Không thể gửi yêu cầu. Vui lòng thử lại.",
+        position: "top",
+        visibilityTime: 4000,
+      });
     } finally {
       setLoading(false);
     }

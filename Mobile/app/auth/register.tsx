@@ -1,7 +1,7 @@
 import { router } from "expo-router";
 import { useState, useMemo } from "react";
+import Toast from "react-native-toast-message";
 import {
-  Alert,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -194,10 +194,22 @@ export default function RegisterScreen() {
         address,
       });
 
-      Alert.alert("Thành công", "Đăng ký thành công");
-      setTimeout(() => router.replace("/auth/login"), 1000);
+      Toast.show({
+        type: "success",
+        text1: "Đăng ký thành công! 🎉",
+        text2: "Chuyển sang trang đăng nhập...",
+        position: "top",
+        visibilityTime: 2000,
+      });
+      setTimeout(() => router.replace("/auth/login"), 1500);
     } catch (e: any) {
-      Alert.alert("Lỗi", e.message || "Đăng ký thất bại");
+      Toast.show({
+        type: "error",
+        text1: "Đăng ký thất bại",
+        text2: e?.response?.data?.message || e?.message || "Vui lòng thử lại",
+        position: "top",
+        visibilityTime: 4000,
+      });
     }
   };
 

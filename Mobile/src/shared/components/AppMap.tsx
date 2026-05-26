@@ -12,8 +12,12 @@ import {
     Keyboard,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import MapView, { Region } from 'react-native-maps';
 import * as Location from 'expo-location';
+
+// NOTE: react-native-maps (MapView) không hoạt động trong Expo Go vì thiếu native module RNMapsAirModule.
+// Đã tạm thay bằng placeholder để app chạy ổn định cho demo.
+// Khi build dev/production client, hãy uncomment import bên dưới và xóa placeholder.
+// import MapView, { Region } from 'react-native-maps';
 
 interface AppMapProps {
     visible: boolean;
@@ -106,6 +110,7 @@ const AppMap = ({ visible, onClose, onSelectLocation }: AppMapProps) => {
             setLoading(false);
         }
     };
+
     return (
         <Modal 
             visible={visible} 
@@ -133,6 +138,7 @@ const AppMap = ({ visible, onClose, onSelectLocation }: AppMapProps) => {
                             value={searchText}
                             onChangeText={searchPlaces}
                             clearButtonMode="while-editing"
+                            autoFocus
                         />
                         {isSearching && <ActivityIndicator size="small" color="#2563EB" style={{ marginRight: 15 }} />}
                     </View>
@@ -173,16 +179,23 @@ const AppMap = ({ visible, onClose, onSelectLocation }: AppMapProps) => {
                     )}
                 </View>
 
+                {/* ── MAP PLACEHOLDER (thay cho MapView khi chạy Expo Go) ── */}
                 <View style={{ flex: 1 }}>
-                    <MapView
-                        style={styles.map}
-                        region={region}
-                        onRegionChangeComplete={(newRegion: Region) => setRegion(newRegion)}
-                        showsUserLocation={true}
-                    />
-                    
-                    <View style={styles.markerFixed}>
-                        <Ionicons name="location" size={40} color="#EF4444" />
+                    <View style={styles.mapPlaceholder}>
+                        <Ionicons name="map-outline" size={52} color="#93C5FD" />
+                        <Text style={styles.placeholderTitle}>Bản đồ không khả dụng</Text>
+                        <Text style={styles.placeholderSub}>
+                            Chức năng bản đồ yêu cầu bản build riêng.{"\n"}
+                            Hãy <Text style={{ fontWeight: '700', color: '#2563EB' }}>tìm kiếm địa điểm</Text> ở ô trên{"\n"}
+                            hoặc nhấn <Text style={{ fontWeight: '700', color: '#2563EB' }}>Dùng vị trí mặc định</Text>.
+                        </Text>
+
+                        <View style={styles.coordBox}>
+                            <Ionicons name="location" size={16} color="#EF4444" />
+                            <Text style={styles.coordText}>
+                                {region.latitude.toFixed(4)}, {region.longitude.toFixed(4)}
+                            </Text>
+                        </View>
                     </View>
 
                     <TouchableOpacity 
@@ -193,7 +206,7 @@ const AppMap = ({ visible, onClose, onSelectLocation }: AppMapProps) => {
                         {loading ? (
                             <ActivityIndicator color="#FFF" />
                         ) : (
-                            <Text style={styles.confirmText}>Xác nhận vị trí này</Text>
+                            <Text style={styles.confirmText}>Dùng vị trí mặc định (Hà Nội)</Text>
                         )}
                     </TouchableOpacity>
                 </View>
@@ -270,13 +283,41 @@ const styles = StyleSheet.create({
         color: '#64748B',
         marginTop: 1,
     },
-    map: { flex: 1 },
-    markerFixed: {
-        position: 'absolute',
-        top: '50%',
-        left: '50%',
-        marginLeft: -20,
-        marginTop: -40,
+    // ── Placeholder styles ──
+    mapPlaceholder: {
+        flex: 1,
+        backgroundColor: '#EFF6FF',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: 12,
+        paddingHorizontal: 32,
+    },
+    placeholderTitle: {
+        fontSize: 17,
+        fontWeight: '700',
+        color: '#1E3A8A',
+        marginTop: 8,
+    },
+    placeholderSub: {
+        fontSize: 14,
+        color: '#475569',
+        textAlign: 'center',
+        lineHeight: 22,
+    },
+    coordBox: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: '#FEF2F2',
+        borderRadius: 8,
+        paddingHorizontal: 12,
+        paddingVertical: 6,
+        gap: 6,
+        marginTop: 8,
+    },
+    coordText: {
+        fontSize: 13,
+        color: '#B91C1C',
+        fontWeight: '600',
     },
     confirmButton: {
         position: 'absolute',

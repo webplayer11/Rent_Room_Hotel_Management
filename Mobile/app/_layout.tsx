@@ -7,7 +7,7 @@ export default function RootLayout() {
   return (
     <SafeAreaProvider>
       <Stack screenOptions={{ headerShown: false }} />
-      <Toast />
+      <Toast topOffset={60} />
       <GlobalConfirmModal />
     </SafeAreaProvider>
   );
