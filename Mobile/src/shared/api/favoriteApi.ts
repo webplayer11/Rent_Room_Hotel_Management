@@ -9,7 +9,7 @@ export type FavoriteHotelDto = {
   id: string;
   name?: string;
   address?: string;
-  images?: { url?: string }[];
+  images?: { url?: string; isPrimary?: boolean }[];
   starRating?: number;
   latitude?: number;
   longitude?: number;
