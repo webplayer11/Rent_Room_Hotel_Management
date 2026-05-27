@@ -10,12 +10,14 @@ public class BookingService : IBookingService
 {
     private readonly IBookingRepository _bookingRepository;
     private readonly IRoomRepository _roomRepository;
+    private readonly IVoucherRepository _voucherRepository;
     private readonly IMapper _mapper;
 
-    public BookingService(IBookingRepository bookingRepository, IRoomRepository roomRepository, IMapper mapper)
+    public BookingService(IBookingRepository bookingRepository, IRoomRepository roomRepository, IVoucherRepository voucherRepository, IMapper mapper)
     {
         _bookingRepository = bookingRepository;
         _roomRepository = roomRepository;
+        _voucherRepository = voucherRepository;
         _mapper = mapper;
     }
 
@@ -45,20 +47,65 @@ public class BookingService : IBookingService
         int nights = (dto.CheckOutDate.DayNumber - dto.CheckInDate.DayNumber);
         if (nights <= 0) return null;
 
+        decimal unitPrice = room.DiscountPrice > 0 ? room.DiscountPrice : room.PricePerNight;
+        decimal totalPrice = unitPrice * nights;
+        decimal discountAmount = 0;
+        Voucher? appliedVoucher = null;
+
+        if (!string.IsNullOrEmpty(dto.VoucherCode))
+        {
+            appliedVoucher = await _voucherRepository.GetByCodeAsync(dto.VoucherCode);
+            if (appliedVoucher != null && appliedVoucher.IsActive && appliedVoucher.UsedCount < appliedVoucher.UsageLimit)
+            {
+                // Check if requirements are met
+                bool valid = true;
+                if (appliedVoucher.MinOrderAmount.HasValue && totalPrice < appliedVoucher.MinOrderAmount.Value) valid = false;
+                if (appliedVoucher.MinNights.HasValue && nights < appliedVoucher.MinNights.Value) valid = false;
+
+                if (valid)
+                {
+                    if (appliedVoucher.Type == "Percent")
+                    {
+                        discountAmount = totalPrice * (appliedVoucher.DiscountValue / 100m);
+                        if (appliedVoucher.MaxDiscountAmount.HasValue)
+                        {
+                            discountAmount = Math.Min(discountAmount, appliedVoucher.MaxDiscountAmount.Value);
+                        }
+                    }
+                    else
+                    {
+                        discountAmount = appliedVoucher.DiscountValue;
+                    }
+
+                    // Increment used count
+                    appliedVoucher.UsedCount++;
+                    await _voucherRepository.UpdateAsync(appliedVoucher);
+                }
+                else
+                {
+                    appliedVoucher = null;
+                }
+            }
+            else
+            {
+                appliedVoucher = null;
+            }
+        }
+
         var booking = new Booking
         {
             UserId = userId,
             RoomId = dto.RoomId,
-            VoucherId = dto.VoucherId,
+            VoucherId = appliedVoucher?.Id,
             BookingCode = GenerateBookingCode(),
             CheckInDate = dto.CheckInDate,
             CheckOutDate = dto.CheckOutDate,
             NumberOfNights = nights,
             GuestCount = dto.GuestCount,
-            UnitPrice = room.PricePerNight,
-            TotalPrice = room.PricePerNight * nights,
-            DiscountAmount = 0, // Placeholder for voucher calculation
-            FinalPrice = room.PricePerNight * nights, // Minus discount
+            UnitPrice = unitPrice,
+            TotalPrice = totalPrice,
+            DiscountAmount = discountAmount,
+            FinalPrice = Math.Max(0, totalPrice - discountAmount),
             SpecialRequest = dto.SpecialRequest,
             Status = "Pending"
         };

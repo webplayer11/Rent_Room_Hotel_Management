@@ -22,7 +22,7 @@ public class BookingDto
 public class CreateBookingDto
 {
     public string RoomId { get; set; } = default!;
-    public string? VoucherId { get; set; }
+    public string? VoucherCode { get; set; }
     public DateOnly CheckInDate { get; set; }
     public DateOnly CheckOutDate { get; set; }
     public int GuestCount { get; set; }

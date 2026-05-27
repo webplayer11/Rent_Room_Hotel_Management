@@ -1,18 +1,32 @@
-import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, Image, ActivityIndicator } from 'react-native';
+import React, { useEffect, useState, useCallback } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  FlatList,
+  TouchableOpacity,
+  Image,
+  ActivityIndicator,
+  StatusBar,
+  Platform,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Ionicons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
+import { Ionicons, Feather } from '@expo/vector-icons';
+import { useRouter, useFocusEffect } from 'expo-router';
 import { favoriteApi, FavoriteHotelDto } from '../../../src/shared/api/favoriteApi';
+import { IMAGE_URL } from '../../../src/config';
 
 const WishlistScreen = () => {
   const router = useRouter();
   const [favorites, setFavorites] = useState<FavoriteHotelDto[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    loadFavorites();
-  }, []);
+  // Reload mỗi khi tab này được focus (đảm bảo đồng bộ với list.tsx)
+  useFocusEffect(
+    useCallback(() => {
+      loadFavorites();
+    }, [])
+  );
 
   const loadFavorites = async () => {
     setLoading(true);
@@ -39,37 +53,74 @@ const WishlistScreen = () => {
     }
   };
 
+  const getImageUrl = (item: FavoriteHotelDto) => {
+    const url = item.images?.find((img: any) => img.isPrimary)?.url || item.images?.[0]?.url;
+    if (!url) return 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800';
+    return url.startsWith('http') ? url : `${IMAGE_URL}/${url}`;
+  };
+
   const renderItem = ({ item }: { item: FavoriteHotelDto }) => {
-    const basePrice = item.availableRooms?.[0]?.pricePerNight || 0;
-    
+    const starCount = item.starRating ? Math.round(item.starRating) : 0;
+    const minPrice = item.availableRooms && item.availableRooms.length > 0
+      ? Math.min(...item.availableRooms.map(r => r.pricePerNight))
+      : 0;
+
     return (
-      <TouchableOpacity 
+      <TouchableOpacity
         style={styles.card}
         onPress={() => router.push(`/customer/hotel/${item.id}`)}
+        activeOpacity={0.95}
       >
-        <Image 
-          source={{ uri: item.images?.[0]?.url || 'https://images.unsplash.com/photo-1566073771259-6a8506099945' }} 
-          style={styles.image} 
-        />
-        <TouchableOpacity 
-          style={styles.heartBtn}
-          onPress={() => removeFavorite(item.id)}
-        >
-          <Ionicons name="heart" size={20} color="#FF567D" />
-        </TouchableOpacity>
-        
-        <View style={styles.cardContent}>
-          <Text style={styles.name} numberOfLines={1}>{item.name}</Text>
-          <View style={styles.ratingRow}>
-            {[...Array(item.starRating || 0)].map((_, i) => (
-              <Ionicons key={i} name="star" size={12} color="#FFB100" />
-            ))}
+        <View style={styles.cardTop}>
+          {/* Ảnh */}
+          <View style={styles.imageContainer}>
+            <Image source={{ uri: getImageUrl(item) }} style={styles.image} />
+            <TouchableOpacity
+              style={styles.heartBtn}
+              onPress={() => removeFavorite(item.id)}
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            >
+              <Ionicons name="heart" size={22} color="#FF567D" />
+            </TouchableOpacity>
           </View>
-          <Text style={styles.address} numberOfLines={1}>{item.address}</Text>
-          
-          <View style={styles.priceRow}>
-            <Text style={styles.priceLabel}>Giá từ</Text>
-            <Text style={styles.priceVal}>{basePrice.toLocaleString('vi-VN')} ₫</Text>
+
+          {/* Nội dung */}
+          <View style={styles.cardContent}>
+            <Text style={styles.hotelName} numberOfLines={2}>{item.name || 'Chưa có tên'}</Text>
+
+            {/* Số sao */}
+            {starCount > 0 && (
+              <View style={styles.starsRow}>
+                {Array.from({ length: starCount }).map((_, i) => (
+                  <Ionicons key={i} name="star" size={12} color="#D97706" />
+                ))}
+              </View>
+            )}
+
+            <Text style={styles.locationText} numberOfLines={2}>
+              {item.address || 'Chưa có địa chỉ'}
+            </Text>
+
+            {/* Giá */}
+            <View style={styles.priceContainer}>
+              {minPrice > 0 ? (
+                <View style={styles.priceRow}>
+                  <Text style={styles.priceLabel}>Từ</Text>
+                  <Text style={styles.priceValue}>{minPrice.toLocaleString('vi-VN')}</Text>
+                  <Text style={styles.priceCurrency}> ₫/đêm</Text>
+                </View>
+              ) : (
+                <Text style={styles.noPriceText}>Liên hệ để biết giá</Text>
+              )}
+            </View>
+
+            {/* Nút xem chi tiết */}
+            <TouchableOpacity
+              style={styles.viewBtn}
+              onPress={() => router.push(`/customer/hotel/${item.id}`)}
+            >
+              <Text style={styles.viewBtnText}>Xem chi tiết</Text>
+            </TouchableOpacity>
           </View>
         </View>
       </TouchableOpacity>
@@ -78,60 +129,225 @@ const WishlistScreen = () => {
 
   return (
     <SafeAreaView style={styles.container}>
+      <StatusBar barStyle="dark-content" backgroundColor="#FFF" />
+
+      {/* Header */}
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Danh sách yêu thích</Text>
+        <Text style={styles.headerTitle}>Đã lưu</Text>
+        <TouchableOpacity style={styles.headerSearchBtn}>
+          <Feather name="search" size={22} color="#111" />
+        </TouchableOpacity>
       </View>
-      
+
       {loading ? (
         <View style={styles.center}>
           <ActivityIndicator size="large" color="#5392F9" />
         </View>
       ) : favorites.length === 0 ? (
         <View style={styles.emptyContainer}>
-          <Ionicons name="heart-dislike-outline" size={80} color="#CCC" />
-          <Text style={styles.emptyText}>Chưa có khách sạn nào được lưu</Text>
-          <Text style={styles.emptySubText}>Lưu khách sạn bạn thích để xem lại sau</Text>
+          <Ionicons name="heart-dislike-outline" size={90} color="#DDD" />
+          <Text style={styles.emptyTitle}>Chưa có khách sạn nào được lưu</Text>
+          <Text style={styles.emptySubTitle}>
+            Nhấn biểu tượng ❤️ trên danh sách khách sạn để lưu lại
+          </Text>
+          <TouchableOpacity
+            style={styles.exploreBtn}
+            onPress={() => router.push('/customer/(tabs)/home')}
+          >
+            <Text style={styles.exploreBtnText}>Khám phá khách sạn</Text>
+          </TouchableOpacity>
         </View>
       ) : (
-        <FlatList
-          data={favorites}
-          renderItem={renderItem}
-          keyExtractor={item => item.id}
-          contentContainerStyle={styles.listContent}
-          showsVerticalScrollIndicator={false}
-        />
+        <>
+          <View style={styles.countBar}>
+            <Text style={styles.countText}>{favorites.length} khách sạn đã lưu</Text>
+          </View>
+          <FlatList
+            data={favorites}
+            renderItem={renderItem}
+            keyExtractor={item => item.id}
+            contentContainerStyle={styles.listContent}
+            showsVerticalScrollIndicator={false}
+            style={{ backgroundColor: '#F3F4F6' }}
+          />
+        </>
       )}
     </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#F8F9FA' },
-  header: { paddingHorizontal: 20, paddingVertical: 15, backgroundColor: '#FFF' },
-  headerTitle: { fontSize: 20, fontWeight: 'bold', color: '#333' },
-  center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  emptyContainer: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 40 },
-  emptyText: { marginTop: 20, fontSize: 18, fontWeight: 'bold', color: '#333', textAlign: 'center' },
-  emptySubText: { marginTop: 10, fontSize: 14, color: '#999', textAlign: 'center' },
-  listContent: { padding: 15 },
-  card: { 
-    backgroundColor: '#FFF', borderRadius: 12, marginBottom: 15, 
-    overflow: 'hidden', elevation: 2, shadowColor: '#000', 
-    shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 5 
+  container: {
+    flex: 1,
+    backgroundColor: '#FFF',
+    paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight : 0,
   },
-  image: { width: '100%', height: 150 },
-  heartBtn: { 
-    position: 'absolute', top: 10, right: 10, 
-    backgroundColor: '#FFF', borderRadius: 20, padding: 6, 
-    elevation: 3 
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 20,
+    paddingVertical: 14,
+    backgroundColor: '#FFF',
+    borderBottomWidth: 1,
+    borderBottomColor: '#F1F5F9',
   },
-  cardContent: { padding: 15 },
-  name: { fontSize: 16, fontWeight: 'bold', color: '#333', marginBottom: 4 },
-  ratingRow: { flexDirection: 'row', marginBottom: 6 },
-  address: { fontSize: 13, color: '#666', marginBottom: 10 },
-  priceRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', borderTopWidth: 1, borderTopColor: '#EEE', paddingTop: 10 },
-  priceLabel: { fontSize: 12, color: '#999' },
-  priceVal: { fontSize: 16, fontWeight: 'bold', color: '#FF567D' }
+  headerTitle: {
+    fontSize: 22,
+    fontWeight: '800',
+    color: '#111827',
+  },
+  headerSearchBtn: {
+    padding: 4,
+  },
+  countBar: {
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    backgroundColor: '#FFF',
+    borderBottomWidth: 1,
+    borderBottomColor: '#E5E7EB',
+  },
+  countText: {
+    fontSize: 13,
+    color: '#6B7280',
+  },
+  center: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  emptyContainer: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 40,
+  },
+  emptyTitle: {
+    marginTop: 20,
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#1F2937',
+    textAlign: 'center',
+  },
+  emptySubTitle: {
+    marginTop: 10,
+    fontSize: 14,
+    color: '#9CA3AF',
+    textAlign: 'center',
+    lineHeight: 20,
+  },
+  exploreBtn: {
+    marginTop: 24,
+    backgroundColor: '#2563EB',
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 24,
+  },
+  exploreBtnText: {
+    color: '#FFF',
+    fontWeight: '700',
+    fontSize: 15,
+  },
+  listContent: {
+    padding: 12,
+    paddingBottom: 40,
+  },
+  card: {
+    backgroundColor: '#FFF',
+    borderRadius: 12,
+    marginBottom: 12,
+    overflow: 'hidden',
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.06,
+    shadowRadius: 6,
+  },
+  cardTop: {
+    flexDirection: 'row',
+  },
+  imageContainer: {
+    width: '35%',
+    height: 170,
+    position: 'relative',
+  },
+  image: {
+    width: '100%',
+    height: '100%',
+    resizeMode: 'cover',
+  },
+  heartBtn: {
+    position: 'absolute',
+    top: 8,
+    right: 8,
+    backgroundColor: 'rgba(255,255,255,0.9)',
+    borderRadius: 16,
+    padding: 5,
+    elevation: 2,
+  },
+  cardContent: {
+    flex: 1,
+    padding: 12,
+    justifyContent: 'space-between',
+  },
+  hotelName: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#111827',
+    lineHeight: 20,
+    marginBottom: 4,
+  },
+  starsRow: {
+    flexDirection: 'row',
+    marginBottom: 4,
+  },
+  locationText: {
+    fontSize: 12,
+    color: '#6B7280',
+    lineHeight: 16,
+    marginBottom: 6,
+  },
+  priceContainer: {
+    marginBottom: 8,
+  },
+  priceRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+  },
+  priceLabel: {
+    fontSize: 11,
+    color: '#9CA3AF',
+    marginRight: 4,
+    marginBottom: 1,
+  },
+  priceValue: {
+    fontSize: 17,
+    fontWeight: '700',
+    color: '#DC2626',
+  },
+  priceCurrency: {
+    fontSize: 11,
+    color: '#DC2626',
+    fontWeight: '600',
+    marginBottom: 2,
+  },
+  noPriceText: {
+    fontSize: 12,
+    color: '#9CA3AF',
+    fontStyle: 'italic',
+  },
+  viewBtn: {
+    borderWidth: 1,
+    borderColor: '#2563EB',
+    borderRadius: 6,
+    paddingVertical: 6,
+    alignItems: 'center',
+  },
+  viewBtnText: {
+    fontSize: 13,
+    color: '#2563EB',
+    fontWeight: '600',
+  },
 });
 
 export default WishlistScreen;

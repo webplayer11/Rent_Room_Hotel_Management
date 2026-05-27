@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import {
   View,
   Text,
@@ -8,14 +8,14 @@ import {
   TouchableOpacity,
   SafeAreaView,
   StatusBar,
-  ScrollView,
   ActivityIndicator,
   Platform
 } from 'react-native';
 import { Ionicons, Feather, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useRouter, useLocalSearchParams } from 'expo-router';
-import { format, differenceInDays, parseISO } from 'date-fns';
+import { format, parseISO, differenceInDays } from 'date-fns';
 import { hotelApi } from '../../../src/shared/api/hotelApi';
+import { favoriteApi } from '../../../src/shared/api/favoriteApi';
 import { IMAGE_URL } from '../../../src/config';
 
 type HotelSearchResult = {
@@ -36,22 +36,47 @@ export default function HotelListScreen() {
   const [loading, setLoading] = useState(true);
   const [hotels, setHotels] = useState<HotelSearchResult[]>([]);
   const [error, setError] = useState<string | null>(null);
+  // Set lưu các hotelId đã được yêu thích
+  const [favoriteIds, setFavoriteIds] = useState<Set<string>>(new Set());
 
-  const nights = useMemo(() => {
-    if (!params.checkIn || !params.checkOut) return 1;
+  let nights = 1;
+  if (params.checkIn && params.checkOut) {
     try {
       const start = parseISO(params.checkIn as string);
       const end = parseISO(params.checkOut as string);
-      const days = differenceInDays(end, start);
-      return days > 0 ? days : 1;
-    } catch (e) {
-      return 1;
-    }
-  }, [params.checkIn, params.checkOut]);
+      const d = differenceInDays(end, start);
+      if (d > 0) nights = d;
+    } catch (e) {}
+  }
+  const multiplier = nights;
 
   useEffect(() => {
+    loadFavoriteIds();
     loadHotels();
   }, [params.location, params.checkIn, params.checkOut, params.rooms, params.adults]);
+
+  const loadFavoriteIds = async () => {
+    try {
+      const res = await favoriteApi.getMyFavorites();
+      if (res.isSuccess && res.data) {
+        setFavoriteIds(new Set(res.data.map((h: any) => h.id)));
+      }
+    } catch (_) {}
+  };
+
+  const toggleFavorite = async (hotelId: string) => {
+    try {
+      const res = await favoriteApi.toggleFavorite(hotelId);
+      if (res.isSuccess) {
+        setFavoriteIds(prev => {
+          const next = new Set(prev);
+          if (res.data.isFavorited) next.add(hotelId);
+          else next.delete(hotelId);
+          return next;
+        });
+      }
+    } catch (_) {}
+  };
 
   const loadHotels = async () => {
     setLoading(true);
@@ -75,24 +100,25 @@ export default function HotelListScreen() {
             ? (primaryImage.startsWith("http") ? primaryImage : `${IMAGE_URL}/${primaryImage}`)
             : 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800';
 
-          // Tính giá nhỏ nhất từ các phòng trống
+          // Lấy giá thật từ danh sách phòng trống (giá rẻ nhất)
           let minPrice = 0;
           if (h.availableRooms && h.availableRooms.length > 0) {
-            minPrice = Math.min(...h.availableRooms.map((r: any) => r.pricePerNight));
+            minPrice = Math.min(...h.availableRooms.map((r: any) => {
+              return r.discountPrice && r.discountPrice > 0 && r.discountPrice < r.pricePerNight 
+                ? r.discountPrice 
+                : r.pricePerNight;
+            }));
           }
-
-          // Giả lập discount (vì BE chưa có)
-          const discount = Math.floor(Math.random() * 20) + 10; // Giảm 10-30%
 
           return {
             id: h.id,
-            name: h.name || 'Khách sạn chưa có tên',
+            name: h.name || 'Chưa có tên',
             address: h.address || 'Chưa có địa chỉ',
             image: imageUrl,
-            rating: h.starRating ? h.starRating : (Math.random() * (5 - 3.5) + 3.5).toFixed(1), // Giả lập rating nếu không có
-            basePrice: minPrice,
-            discountPercent: discount,
-            badges: h.isApproved ? ['Free Cancellation'] : [],
+            rating: h.starRating ?? 0,
+            basePrice: minPrice * multiplier,
+            discountPercent: 0,
+            badges: [],
           };
         });
         setHotels(mappedData);
@@ -107,23 +133,35 @@ export default function HotelListScreen() {
   };
 
   const renderHeader = () => {
-    let dateStr = '';
+    let dateStr = 'Th 3, 26 thg 5 - Th 4, 27 thg 5...';
     if (params.checkIn && params.checkOut) {
-      dateStr = `${format(parseISO(params.checkIn as string), 'dd MMM')} - ${format(parseISO(params.checkOut as string), 'dd MMM')} • ${params.adults || 2} Adults`;
+      try {
+        dateStr = `${format(parseISO(params.checkIn as string), 'dd MMM')} - ${format(parseISO(params.checkOut as string), 'dd MMM')}`;
+      } catch (e) {}
     }
 
     return (
       <View style={styles.header}>
         <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
-          <Feather name="arrow-left" size={24} color="#0F172A" />
+          <Feather name="chevron-left" size={28} color="#000" />
         </TouchableOpacity>
-        <View style={styles.headerCenter}>
-          <Text style={styles.headerTitle} numberOfLines={1}>{params.location || 'Gần bạn'}</Text>
-          {dateStr ? <Text style={styles.headerSubtitle}>{dateStr}</Text> : null}
+        <View style={styles.headerSearch}>
+          <Feather name="search" size={18} color="#000" style={styles.headerSearchIcon} />
+          <View style={{ flex: 1 }}>
+            <Text style={styles.headerSearchTitle} numberOfLines={1}>
+              {params.location || 'Hồ Chí Minh (6.389)'}
+            </Text>
+            <Text style={styles.headerSearchSubtitle} numberOfLines={1}>{dateStr}</Text>
+          </View>
         </View>
-        <TouchableOpacity style={styles.searchBtn}>
-          <Feather name="search" size={22} color="#0F172A" />
-        </TouchableOpacity>
+        <View style={styles.headerIcons}>
+          <TouchableOpacity style={styles.headerIconBtn}>
+            <MaterialCommunityIcons name="sync" size={24} color="#000" />
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.headerIconBtn}>
+            <Ionicons name="heart" size={24} color="#000" />
+          </TouchableOpacity>
+        </View>
       </View>
     );
   };
@@ -131,104 +169,119 @@ export default function HotelListScreen() {
   const renderFilterBar = () => {
     return (
       <View style={styles.filterBar}>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filterScroll}>
-          <TouchableOpacity style={styles.filterPill}>
-            <Ionicons name="options-outline" size={16} color="#475569" style={{ marginRight: 6 }} />
-            <Text style={styles.filterPillText}>Filters</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={[styles.filterPill, styles.filterPillActive]}>
-            <Text style={styles.filterPillTextActive}>Popularity</Text>
-            <Feather name="chevron-down" size={16} color="#FFF" style={{ marginLeft: 4 }} />
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.filterPill}>
-            <Text style={styles.filterPillText}>Price</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.filterPill}>
-            <Text style={styles.filterPillText}>Rating</Text>
-          </TouchableOpacity>
-        </ScrollView>
-      </View>
-    );
-  };
-
-  const renderSubHeader = () => {
-    return (
-      <View style={styles.subHeader}>
-        <Text style={styles.resultCount}>{hotels.length} properties found</Text>
-        <TouchableOpacity style={styles.mapBtn}>
-          <Feather name="map" size={14} color="#0F172A" style={{ marginRight: 4 }} />
-          <Text style={styles.mapBtnText}>View Map</Text>
+        <TouchableOpacity style={styles.filterTab}>
+          <Text style={styles.filterTabText}>Bộ lọc</Text>
+          <Feather name="chevron-down" size={16} color="#475569" style={{ marginLeft: 4 }} />
+        </TouchableOpacity>
+        <View style={styles.filterDivider} />
+        <TouchableOpacity style={styles.filterTab}>
+          <Text style={styles.filterTabText}>Giá tiền</Text>
+          <Feather name="chevron-down" size={16} color="#475569" style={{ marginLeft: 4 }} />
+        </TouchableOpacity>
+        <View style={styles.filterDivider} />
+        <TouchableOpacity style={styles.filterTab}>
+          <Text style={styles.filterTabText}>Sắp xếp</Text>
+          <Feather name="chevron-down" size={16} color="#475569" style={{ marginLeft: 4 }} />
         </TouchableOpacity>
       </View>
     );
   };
 
+  const renderPromoBanner = () => (
+    <View style={styles.promoBanner}>
+      <MaterialCommunityIcons name="tag" size={20} color="#059669" />
+      <Text style={styles.promoText}>Được GIẢM thêm 10% chỉ trong vòng 60 phút nữa!</Text>
+      <TouchableOpacity>
+        <Text style={styles.promoAction}>Kích hoạt</Text>
+      </TouchableOpacity>
+    </View>
+  );
+
   const renderHotelItem = ({ item }: { item: HotelSearchResult }) => {
-    // Tính giá
-    const priceAfterDiscount = item.basePrice * (1 - item.discountPercent / 100);
+    const starCount = item.rating ? Math.round(Number(item.rating)) : 0;
+    const isFav = favoriteIds.has(item.id);
 
     return (
-      <View style={styles.card}>
-        <View style={styles.imageContainer}>
-          <Image source={{ uri: item.image }} style={styles.image} />
-          <TouchableOpacity style={styles.heartBtn}>
-            <Ionicons name="heart-outline" size={22} color="#FFF" />
-          </TouchableOpacity>
-          <View style={styles.topRatedBadge}>
-            <Text style={styles.topRatedText}>TOP RATED</Text>
-          </View>
-        </View>
-
-        <View style={styles.cardContent}>
-          <View style={styles.titleRow}>
-            <Text style={styles.hotelName} numberOfLines={1}>{item.name}</Text>
-            <View style={styles.ratingBadge}>
-              <Ionicons name="star" size={12} color="#000" />
-              <Text style={styles.ratingText}>{item.rating}</Text>
-            </View>
-          </View>
-
-          <Text style={styles.addressText} numberOfLines={1}>{item.address}</Text>
-
-          <View style={styles.badgesRow}>
-            {item.badges.includes('Free Cancellation') && (
-              <View style={styles.freeCancelBadge}>
-                <Feather name="check-circle" size={12} color="#059669" />
-                <Text style={styles.freeCancelText}>Free Cancellation</Text>
-              </View>
-            )}
-            <View style={styles.specialOfferBadge}>
-              <Feather name="tag" size={12} color="#475569" />
-              <Text style={styles.specialOfferText}>Special Offer</Text>
-            </View>
-          </View>
-
-          <View style={styles.footerRow}>
-            <View style={styles.priceContainer}>
-              <Text style={styles.oldPrice}>
-                {item.basePrice > 0 ? (item.basePrice.toLocaleString('vi-VN') + ' ₫') : ''}
-              </Text>
-              <Text style={styles.currentPrice}>
-                {priceAfterDiscount > 0 ? (priceAfterDiscount.toLocaleString('vi-VN') + ' ₫') : 'Hết phòng'}
-              </Text>
-              <Text style={styles.perNight}>per night</Text>
-            </View>
-
+      <TouchableOpacity 
+        style={styles.card}
+        onPress={() => router.push({
+          pathname: `/customer/hotel/[id]`,
+          params: {
+            id: item.id,
+            checkIn: params.checkIn,
+            checkOut: params.checkOut,
+            rooms: params.rooms,
+            adults: params.adults
+          }
+        })}
+        activeOpacity={0.95}
+      >
+        <View style={styles.cardTop}>
+          <View style={styles.imageContainer}>
+            <Image source={{ uri: item.image }} style={styles.image} />
             <TouchableOpacity 
-              style={styles.viewDealBtn}
-              onPress={() => router.push(`/customer/hotel/${item.id}`)}
+              style={styles.heartBtn}
+              onPress={() => toggleFavorite(item.id)}
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
             >
-              <Text style={styles.viewDealText}>View Deal</Text>
+              <Ionicons 
+                name={isFav ? 'heart' : 'heart-outline'} 
+                size={24} 
+                color={isFav ? '#FF567D' : '#111'} 
+              />
             </TouchableOpacity>
           </View>
+          
+          <View style={styles.cardContent}>
+            <Text style={styles.hotelName} numberOfLines={2}>{item.name}</Text>
+            
+            {/* Số sao thật */}
+            {starCount > 0 && (
+              <View style={styles.starsRow}>
+                {Array.from({ length: starCount }).map((_, i) => (
+                  <Ionicons key={i} name="star" size={12} color="#D97706" />
+                ))}
+              </View>
+            )}
+
+            <Text style={styles.locationText} numberOfLines={2}>{item.address}</Text>
+
+            {/* Điểm đánh giá thật */}
+            {starCount > 0 && (
+              <View style={styles.ratingRow}>
+                <View style={styles.ratingScore}>
+                  <Text style={styles.ratingScoreText}>{item.rating}</Text>
+                </View>
+                <Text style={styles.ratingLabel}>
+                  {starCount >= 5 ? 'Tuyệt vời' : starCount >= 4 ? 'Rất tốt' : starCount >= 3 ? 'Tốt' : 'Hài Lòng'}
+                </Text>
+              </View>
+            )}
+
+            <View style={styles.priceContainer}>
+              {item.basePrice > 0 ? (
+                <>
+                  <View style={styles.currentPriceRow}>
+                    <Text style={styles.currentPrice}>{item.basePrice.toLocaleString('vi-VN')}</Text>
+                    <Text style={styles.currencySymbol}>₫</Text>
+                  </View>
+                  <Text style={{ fontSize: 11, color: '#6B7280', marginTop: 2 }}>
+                    Giá cho {nights} đêm, 1 phòng
+                  </Text>
+                </>
+              ) : (
+                <Text style={styles.noPriceText}>Liên hệ để biết giá</Text>
+              )}
+            </View>
+          </View>
         </View>
-      </View>
+      </TouchableOpacity>
     );
   };
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="dark-content" />
+      <StatusBar barStyle="dark-content" backgroundColor="#FFF" />
       {renderHeader()}
       {renderFilterBar()}
       
@@ -245,9 +298,10 @@ export default function HotelListScreen() {
           data={hotels}
           renderItem={renderHotelItem}
           keyExtractor={(item) => item.id}
-          ListHeaderComponent={renderSubHeader}
+          ListHeaderComponent={renderPromoBanner}
           contentContainerStyle={styles.listContainer}
           showsVerticalScrollIndicator={false}
+          style={{ backgroundColor: '#F3F4F6' }}
         />
       )}
     </SafeAreaView>
@@ -257,7 +311,7 @@ export default function HotelListScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F8FAFC', // Slate 50
+    backgroundColor: '#FFF',
     paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight : 0,
   },
   center: {
@@ -268,104 +322,107 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
     backgroundColor: '#FFF',
   },
   backBtn: {
     padding: 4,
+    marginRight: 8,
   },
-  headerCenter: {
+  headerSearch: {
     flex: 1,
-    paddingHorizontal: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F3F4F6',
+    borderRadius: 20,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
   },
-  headerTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#0F172A', // Slate 900
-    marginBottom: 2,
+  headerSearchIcon: {
+    marginRight: 8,
   },
-  headerSubtitle: {
-    fontSize: 13,
-    color: '#64748B', // Slate 500
+  headerSearchTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#111827',
   },
-  searchBtn: {
-    padding: 4,
+  headerSearchSubtitle: {
+    fontSize: 12,
+    color: '#6B7280',
+    marginTop: 2,
+  },
+  headerIcons: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginLeft: 12,
+    gap: 12,
+  },
+  headerIconBtn: {
+    padding: 2,
   },
   filterBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
     backgroundColor: '#FFF',
     borderBottomWidth: 1,
-    borderBottomColor: '#F1F5F9', // Slate 100
+    borderBottomColor: '#E5E7EB',
+    borderTopWidth: 1,
+    borderTopColor: '#E5E7EB',
   },
-  filterScroll: {
-    paddingHorizontal: 16,
+  filterTab: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
     paddingVertical: 12,
-    alignItems: 'center',
   },
-  filterPill: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: '#E2E8F0', // Slate 200
-    backgroundColor: '#FFF',
-    marginRight: 10,
+  filterTabText: {
+    fontSize: 13,
+    color: '#374151',
   },
-  filterPillActive: {
-    backgroundColor: '#0F172A', // Slate 900
-    borderColor: '#0F172A',
-  },
-  filterPillText: {
-    fontSize: 14,
-    color: '#475569', // Slate 600
-    fontWeight: '500',
-  },
-  filterPillTextActive: {
-    fontSize: 14,
-    color: '#FFF',
-    fontWeight: '500',
-  },
-  subHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 16,
-  },
-  resultCount: {
-    fontSize: 14,
-    color: '#64748B',
-  },
-  mapBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  mapBtnText: {
-    fontSize: 14,
-    color: '#0F172A',
-    fontWeight: '500',
+  filterDivider: {
+    width: 1,
+    height: 20,
+    backgroundColor: '#E5E7EB',
   },
   listContainer: {
     paddingBottom: 24,
   },
+  promoBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#ECFDF5',
+    margin: 12,
+    padding: 12,
+    borderRadius: 8,
+  },
+  promoText: {
+    flex: 1,
+    fontSize: 13,
+    color: '#065F46',
+    fontWeight: '600',
+    marginLeft: 8,
+  },
+  promoAction: {
+    fontSize: 13,
+    color: '#2563EB',
+    fontWeight: '600',
+  },
   card: {
     backgroundColor: '#FFF',
-    borderRadius: 16,
-    marginHorizontal: 16,
-    marginBottom: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 10,
-    elevation: 3,
-    overflow: 'hidden', // Để bo góc ảnh phía trên
+    marginBottom: 8,
+    padding: 12,
+  },
+  cardTop: {
+    flexDirection: 'row',
   },
   imageContainer: {
-    width: '100%',
-    height: 200,
+    width: '32%',
+    height: 190,
     position: 'relative',
+    borderRadius: 8,
+    overflow: 'hidden',
   },
   image: {
     width: '100%',
@@ -374,132 +431,79 @@ const styles = StyleSheet.create({
   },
   heartBtn: {
     position: 'absolute',
-    top: 12,
-    right: 12,
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: 'rgba(0,0,0,0.2)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  topRatedBadge: {
-    position: 'absolute',
-    bottom: 12,
-    left: 12,
-    backgroundColor: '#FDE68A', // Vàng nhạt (amber-200)
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 6,
-  },
-  topRatedText: {
-    fontSize: 10,
-    fontWeight: '800',
-    color: '#92400E', // Nâu đậm (amber-800)
-    letterSpacing: 0.5,
+    top: 8,
+    right: 8,
+    backgroundColor: 'rgba(255,255,255,0.8)',
+    borderRadius: 15,
+    padding: 2,
   },
   cardContent: {
-    padding: 16,
-  },
-  titleRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 6,
+    flex: 1,
+    paddingLeft: 12,
   },
   hotelName: {
-    flex: 1,
-    fontSize: 17,
+    fontSize: 15,
     fontWeight: '700',
-    color: '#0F172A',
-    marginRight: 10,
+    color: '#111827',
+    marginBottom: 4,
+    lineHeight: 20,
   },
-  ratingBadge: {
+  starsRow: {
+    flexDirection: 'row',
+    marginBottom: 4,
+  },
+  locationText: {
+    fontSize: 12,
+    color: '#4B5563',
+    marginBottom: 6,
+    lineHeight: 16,
+  },
+  ratingRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FDE68A', // Giống badge
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 6,
+    marginBottom: 8,
   },
-  ratingText: {
-    fontSize: 13,
+  ratingScore: {
+    backgroundColor: '#2563EB',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 10,
+    borderBottomLeftRadius: 2,
+    marginRight: 6,
+  },
+  ratingScoreText: {
+    color: '#FFF',
+    fontSize: 12,
     fontWeight: '700',
-    color: '#000',
-    marginLeft: 4,
   },
-  addressText: {
-    fontSize: 13,
-    color: '#64748B',
-    marginBottom: 12,
-  },
-  badgesRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8, // Khoảng cách giữa các badge (hỗ trợ RN mới)
-    marginBottom: 16,
-  },
-  freeCancelBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#D1FAE5', // Xanh lá nhạt (emerald-100)
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 6,
-  },
-  freeCancelText: {
+  ratingLabel: {
     fontSize: 12,
-    fontWeight: '500',
-    color: '#059669', // Xanh lá đậm (emerald-600)
-    marginLeft: 4,
-  },
-  specialOfferBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#F1F5F9', // Xám nhạt (slate-100)
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 6,
-  },
-  specialOfferText: {
-    fontSize: 12,
-    fontWeight: '500',
-    color: '#475569',
-    marginLeft: 4,
-  },
-  footerRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-end',
+    color: '#2563EB',
+    fontWeight: '600',
   },
   priceContainer: {
-    flex: 1,
+    alignItems: 'flex-end',
+    marginTop: 'auto',
   },
-  oldPrice: {
-    fontSize: 13,
-    color: '#94A3B8', // Slate 400
-    textDecorationLine: 'line-through',
-    marginBottom: 2,
+  currentPriceRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
   },
   currentPrice: {
-    fontSize: 22,
-    fontWeight: '800',
-    color: '#0F172A',
-  },
-  perNight: {
-    fontSize: 12,
-    color: '#64748B',
-    marginTop: 2,
-  },
-  viewDealBtn: {
-    backgroundColor: '#0F172A', // Xanh đen đậm
-    paddingHorizontal: 20,
-    paddingVertical: 12,
-    borderRadius: 8,
-  },
-  viewDealText: {
-    fontSize: 14,
+    fontSize: 20,
     fontWeight: '700',
-    color: '#FFF',
+    color: '#DC2626',
+  },
+  currencySymbol: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#DC2626',
+    marginBottom: 2,
+    marginLeft: 3,
+  },
+  noPriceText: {
+    fontSize: 13,
+    color: '#6B7280',
+    fontStyle: 'italic',
   },
 });
