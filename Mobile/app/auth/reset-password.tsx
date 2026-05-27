@@ -1,7 +1,7 @@
 import { router, useLocalSearchParams } from "expo-router";
 import { useState } from "react";
+import Toast from "react-native-toast-message";
 import {
-  Alert,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -26,11 +26,22 @@ export default function ResetPasswordScreen() {
         newPassword
       );
 
-      Alert.alert("Thành công", "Đổi mật khẩu thành công");
-
-      router.replace("/auth/login");
+      Toast.show({
+        type: "success",
+        text1: "Đổi mật khẩu thành công! ✓",
+        text2: "Đang chuyển sang trang đăng nhập...",
+        position: "top",
+        visibilityTime: 2000,
+      });
+      setTimeout(() => router.replace("/auth/login"), 1500);
     } catch (e: any) {
-      Alert.alert("Lỗi", e.message);
+      Toast.show({
+        type: "error",
+        text1: "Đổi mật khẩu thất bại",
+        text2: e?.response?.data?.message || e?.message || "Vui lòng thử lại",
+        position: "top",
+        visibilityTime: 4000,
+      });
     }
   };
 

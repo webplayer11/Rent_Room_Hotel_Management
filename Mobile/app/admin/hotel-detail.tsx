@@ -363,7 +363,7 @@ export default function HotelDetailScreen() {
               source={{
                 uri: fullScreenImage.startsWith("http")
                   ? fullScreenImage
-                  : `http://192.168.0.105:9000/${fullScreenImage}`
+                  : `${IMAGE_URL}/${fullScreenImage}`
               }}
               resizeMode="contain"
               style={{
