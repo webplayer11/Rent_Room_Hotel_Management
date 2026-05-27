@@ -41,6 +41,7 @@ export type CreateHotelPayload = {
   checkInTime: string;
   checkOutTime: string;
   images: any[];
+  amenities?: string[];
 };
 
 export const hotelApi = {
@@ -53,6 +54,9 @@ export const hotelApi = {
     if (data.latitude !== undefined) { formData.append("Latitude", String(data.latitude)); }
     if (data.longitude !== undefined) { formData.append("Longitude", String(data.longitude)); }
     if (data.starRating !== undefined) { formData.append("StarRating", String(data.starRating)); }
+    if (data.amenities && data.amenities.length > 0) {
+      data.amenities.forEach((name) => formData.append("Amenities", name));
+    }
     formData.append("CheckInTime", data.checkInTime);
     formData.append("CheckOutTime", data.checkOutTime);
     data.images.forEach((image, index) => {

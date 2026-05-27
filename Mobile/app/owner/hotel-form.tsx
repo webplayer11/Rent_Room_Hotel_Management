@@ -1,389 +1,316 @@
 import Toast from 'react-native-toast-message';
 import React, { useState } from "react";
 import {
-  Alert,
-  Image,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
-  ActivityIndicator,
-  Platform,
-  Modal,
+  Alert, Image, Pressable, ScrollView, StyleSheet, Text,
+  TextInput, View, ActivityIndicator, Modal, KeyboardAvoidingView, FlatList, Platform,
 } from "react-native";
-import DateTimePicker from "@react-native-community/datetimepicker";
+import { SafeAreaView } from "react-native-safe-area-context";
 import * as ImagePicker from "expo-image-picker";
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { hotelApi } from "../../src/shared/api/hotelApi";
 import AppMap from "../../src/shared/components/AppMap";
+import AmenityPicker from "../../src/shared/components/AmenityPicker";
 
-type HotelImage = {
-  id: string;
-  uri: string;
-  fileName?: string | null;
-  mimeType?: string | null;
-};
+type HotelImage = { id: string; uri: string; fileName?: string | null; mimeType?: string | null };
+type Step1Data = { name: string; description: string; starRating: string; checkInTime: string; checkOutTime: string };
+type Step2Data = { street: string; district: string; city: string; latitude?: number; longitude?: number; selectedLocation: string };
+
+const STEPS = ["Thông tin", "Tiện ích", "Vị trí", "Hình ảnh"];
 
 export default function CreateHotelScreen() {
   const router = useRouter();
-
-  const [name, setName] = useState("");
-  const [street, setStreet] = useState("");
-  const [district, setDistrict] = useState("");
-  const [city, setCity] = useState("");
-  const [description, setDescription] = useState("");
-  const [starRating, setStarRating] = useState("");
-  const [checkInTime, setCheckInTime] = useState("");
-  const [checkOutTime, setCheckOutTime] = useState("");
-  const [images, setImages] = useState<HotelImage[]>([]);
+  const [step, setStep] = useState(0);
   const [loading, setLoading] = useState(false);
-
-  const [latitude, setLatitude] = useState<number | undefined>(undefined);
-  const [longitude, setLongitude] = useState<number | undefined>(undefined);
+  const [step1, setStep1] = useState<Step1Data>({ name: "", description: "", starRating: "", checkInTime: "", checkOutTime: "" });
+  const [amenities, setAmenities] = useState<string[]>([]);
+  const [step2, setStep2] = useState<Step2Data>({ street: "", district: "", city: "", latitude: undefined, longitude: undefined, selectedLocation: "" });
   const [mapVisible, setMapVisible] = useState(false);
-  const [selectedLocation, setSelectedLocation] = useState("");
+  const [images, setImages] = useState<HotelImage[]>([]);
 
-  const onSelectLocation = (address: string, coords?: { latitude: number; longitude: number }) => {
-    setSelectedLocation(address);
-    if (coords) {
-      setLatitude(coords.latitude);
-      setLongitude(coords.longitude);
+  const validate = (): string | null => {
+    if (step === 0) {
+      if (!step1.name.trim()) return "Vui lòng nhập tên khách sạn";
+      if (!step1.description.trim()) return "Vui lòng nhập mô tả khách sạn";
     }
-    setMapVisible(false);
+    if (step === 2) {
+      if (!step2.latitude || !step2.longitude) return "Vui lòng chọn vị trí trên bản đồ";
+      if (!step2.street.trim()) return "Vui lòng nhập số nhà / đường";
+      if (!step2.district.trim()) return "Vui lòng nhập quận / huyện";
+      if (!step2.city.trim()) return "Vui lòng nhập tỉnh / thành phố";
+    }
+    if (step === 3 && images.length === 0) return "Vui lòng chọn ít nhất 1 ảnh";
+    return null;
   };
+
+  const handleNext = () => {
+    const err = validate();
+    if (err) { Toast.show({ type: "error", text1: "Thiếu thông tin", text2: err }); return; }
+    setStep((s) => s + 1);
+  };
+
+  const handleBack = () => { if (step === 0) { router.back(); return; } setStep((s) => s - 1); };
 
   const pickImages = async () => {
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ["images"],
-      allowsMultipleSelection: true,
-      quality: 0.8,
-    });
-
+    const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ["images"], allowsMultipleSelection: true, quality: 0.8 });
     if (!result.canceled) {
-      const selected = result.assets.map((asset, index) => ({
-        id: `${Date.now()}-${index}`,
-        uri: asset.uri,
-        fileName: asset.fileName || `hotel_${index}.jpg`,
-        mimeType: asset.mimeType || "image/jpeg",
-      }));
-
-      setImages((prev) => [...prev, ...selected]);
+      setImages((prev) => [...prev, ...result.assets.map((a, i) => ({ id: `${Date.now()}-${i}`, uri: a.uri, fileName: a.fileName || `hotel_${i}.jpg`, mimeType: a.mimeType || "image/jpeg" }))]);
     }
-  };
-
-  const removeImage = (id: string) => {
-    setImages((prev) => prev.filter((img) => img.id !== id));
   };
 
   const handleSubmit = async () => {
-    if (!name.trim()) {
-      Toast.show({
-        type: 'error',
-        text1: "Thiếu tên",
-        text2: "Vui lòng nhập tên khách sạn"
-      });
-      return;
-    }
-
-    if (!street.trim() || !district.trim() || !city.trim()) {
-      Toast.show({
-        type: 'error',
-        text1: "Thiếu địa chỉ",
-        text2: "Vui lòng nhập đầy đủ địa chỉ"
-      });
-      return;
-    }
-
-    if (!latitude || !longitude) {
-      Toast.show({
-        type: 'error',
-        text1: "Thiếu vị trí bản đồ",
-        text2: "Vui lòng chọn vị trí khách sạn trên bản đồ"
-      });
-      return;
-    }
-
-    if (!description.trim()) {
-      Toast.show({
-        type: 'error',
-        text1: "Thiếu mô tả",
-        text2: "Vui lòng nhập mô tả khách sạn"
-      });
-      return;
-    }
-
-    if (images.length === 0) {
-      Toast.show({
-        type: 'error',
-        text1: "Thiếu ảnh",
-        text2: "Vui lòng chọn ít nhất 1 ảnh khách sạn"
-      });
-      return;
-    }
-
+    const err = validate();
+    if (err) { Toast.show({ type: "error", text1: "Thiếu ảnh", text2: err }); return; }
     try {
       setLoading(true);
-
-      const address = [street, district, city].join(", ");
-
       const result = await hotelApi.createHotel({
-        name: name.trim(),
-        description: description.trim(),
-        address,
-        latitude,
-        longitude,
-        starRating: starRating.trim() ? Number(starRating) : undefined,
-        checkInTime,
-        checkOutTime,
-        images,
+        name: step1.name.trim(), description: step1.description.trim(),
+        address: [step2.street, step2.district, step2.city].join(", "),
+        latitude: step2.latitude, longitude: step2.longitude,
+        starRating: step1.starRating ? Number(step1.starRating) : undefined,
+        checkInTime: step1.checkInTime, checkOutTime: step1.checkOutTime,
+        amenities, images,
       });
-
       if (result.isSuccess) {
-        Alert.alert("Thành công", "Khách sạn đã được gửi chờ admin duyệt", [
-          {
-            text: "OK",
-            onPress: () => router.back(),
-          },
-        ]);
+        Alert.alert("Thành công 🎉", "Khách sạn đã được gửi chờ admin duyệt", [{ text: "OK", onPress: () => router.back() }]);
       } else {
-        Toast.show({
-          type: 'error',
-          text1: "Lỗi",
-          text2: result.message || "Tạo khách sạn thất bại"
-        });
+        Toast.show({ type: "error", text1: "Lỗi", text2: result.message || "Tạo khách sạn thất bại" });
       }
-    } catch (error: any) {
-      Toast.show({
-        type: 'error',
-        text1: "Lỗi",
-        text2: error.message || "Không thể tạo khách sạn"
-      });
-    } finally {
-      setLoading(false);
-    }
+    } catch (e: any) {
+      Toast.show({ type: "error", text1: "Lỗi", text2: e.message || "Không thể tạo khách sạn" });
+    } finally { setLoading(false); }
   };
 
   return (
-    <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
-      <View style={styles.header}>
-        <Pressable style={styles.backBtn} onPress={() => router.back()}>
-          <Ionicons name="arrow-back" size={22} color="#111827" />
-        </Pressable>
-
-        <View>
-          <Text style={styles.title}>Thêm khách sạn</Text>
-          <Text style={styles.subtitle}>Điền thông tin để gửi admin duyệt</Text>
-        </View>
-      </View>
-
-      <View style={styles.card}>
-        <Text style={styles.sectionTitle}>Thông tin cơ bản</Text>
-
-        <Input label="Tên khách sạn *" value={name} onChangeText={setName} />
-        
-        <View style={{ marginBottom: 14 }}>
-          <Text style={styles.label}>Vị trí trên bản đồ *</Text>
-          <Pressable 
-            style={[styles.input, { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }]}
-            onPress={() => setMapVisible(true)}
-          >
-            <Text style={{ color: selectedLocation ? "#111827" : "#9CA3AF", flex: 1 }} numberOfLines={1}>
-              {selectedLocation || "Chạm để mở bản đồ chọn vị trí"}
-            </Text>
-            <Ionicons name="map-outline" size={20} color="#9CA3AF" />
-          </Pressable>
-          {latitude && longitude && (
-            <Text style={styles.hint}>Đã lưu toạ độ: {latitude.toFixed(4)}, {longitude.toFixed(4)}</Text>
-          )}
-        </View>
-
-        <Input label="Số nhà / đường *" value={street} onChangeText={setStreet} />
-        <Input label="Quận / huyện *" value={district} onChangeText={setDistrict} />
-        <Input label="Tỉnh / thành phố *" value={city} onChangeText={setCity} />
-
-        <Text style={styles.label}>Mô tả khách sạn *</Text>
-        <TextInput
-          style={[styles.input, styles.textArea]}
-          value={description}
-          onChangeText={setDescription}
-          placeholder="Giới thiệu ngắn về khách sạn"
-          multiline
-          textAlignVertical="top"
-        />
-
-        <StarRatingField
-          label="Số sao (Tuỳ chọn)"
-          value={starRating}
-          onChange={setStarRating}
-        />
-
-        <TimePickerField
-          label="Giờ nhận phòng"
-          value={checkInTime}
-          onChange={setCheckInTime}
-        />
-
-        <TimePickerField
-          label="Giờ trả phòng"
-          value={checkOutTime}
-          onChange={setCheckOutTime}
-        />
-      </View>
-
-      <View style={styles.card}>
-        <Text style={styles.sectionTitle}>Hình ảnh khách sạn *</Text>
-
-        <Pressable style={styles.uploadBtn} onPress={pickImages}>
-          <Ionicons name="cloud-upload-outline" size={22} color="#2563EB" />
-          <Text style={styles.uploadText}>Chọn ảnh khách sạn</Text>
-        </Pressable>
-
-        {images.map((img, index) => (
-          <View key={img.id} style={styles.imageBox}>
-            <Image source={{ uri: img.uri }} style={styles.preview} />
-            <View style={styles.imageInfo}>
-              <Text style={styles.imageName} numberOfLines={1}>
-                {index === 0 ? "Ảnh đại diện - " : ""}
-                {img.fileName}
-              </Text>
-
-              <Pressable onPress={() => removeImage(img.id)}>
-                <Text style={styles.removeText}>Xóa</Text>
-              </Pressable>
-            </View>
+    <SafeAreaView style={s.safe}>
+      <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : undefined}>
+        {/* Header */}
+        <View style={s.header}>
+          <Pressable style={s.backBtn} onPress={handleBack}><Ionicons name="arrow-back" size={22} color="#111827" /></Pressable>
+          <View style={{ flex: 1 }}>
+            <Text style={s.title}>Thêm khách sạn</Text>
+            <Text style={s.subtitle}>Bước {step + 1}/{STEPS.length} — {STEPS[step]}</Text>
           </View>
-        ))}
-
-
-      </View>
-
-      <Pressable
-        style={[styles.submitBtn, loading && { opacity: 0.6 }]}
-        onPress={handleSubmit}
-        disabled={loading}
-      >
-        {loading ? (
-          <ActivityIndicator color="#FFF" />
-        ) : (
-          <Text style={styles.submitText}>Gửi duyệt</Text>
-        )}
-      </Pressable>
-
-      <AppMap
-        visible={mapVisible}
-        onClose={() => setMapVisible(false)}
-        onSelectLocation={onSelectLocation}
-      />
-    </ScrollView>
+        </View>
+        {/* Progress */}
+        <View style={s.progressRow}>
+          {STEPS.map((label, i) => (
+            <View key={i} style={s.stepWrap}>
+              <View style={[s.dot, i <= step && s.dotActive]}>
+                {i < step ? <Ionicons name="checkmark" size={13} color="#FFF" /> : <Text style={[s.dotNum, i === step && { color: "#FFF" }]}>{i + 1}</Text>}
+              </View>
+              <Text style={[s.stepLabel, i === step && { color: "#2563EB" }]}>{label}</Text>
+              {i < STEPS.length - 1 && <View style={[s.line, i < step && s.lineActive]} />}
+            </View>
+          ))}
+        </View>
+        {/* Content */}
+        <ScrollView style={{ flex: 1 }} contentContainerStyle={s.content} keyboardShouldPersistTaps="handled">
+          {step === 0 && <StepBasic data={step1} onChange={(k, v) => setStep1((p) => ({ ...p, [k]: v }))} />}
+          {step === 1 && (
+            <View style={s.card}>
+              <Text style={s.sectionTitle}>✨ Tiện ích khách sạn</Text>
+              <Text style={s.hint}>Chọn các tiện ích khách sạn của bạn (không bắt buộc)</Text>
+              <View style={{ height: 12 }} />
+              <AmenityPicker selected={amenities} onChange={setAmenities} />
+              {amenities.length > 0 && (
+                <Text style={[s.hint, { marginTop: 12, color: "#2563EB", fontWeight: "700" }]}>
+                  Đã chọn {amenities.length} tiện ích
+                </Text>
+              )}
+            </View>
+          )}
+          {step === 2 && (
+            <StepLocation
+              data={step2}
+              onChange={(k, v) => setStep2((p) => ({ ...p, [k]: v }))}
+              mapVisible={mapVisible}
+              setMapVisible={setMapVisible}
+            />
+          )}
+          {step === 3 && (
+            <StepPhotos
+              images={images} onPick={pickImages} onRemove={(id) => setImages((p) => p.filter((i) => i.id !== id))}
+              step1={step1} step2={step2} amenityCount={amenities.length}
+            />
+          )}
+        </ScrollView>
+        {/* Footer */}
+        <View style={s.footer}>
+          <Pressable style={s.secBtn} onPress={handleBack}><Text style={s.secBtnTxt}>{step === 0 ? "Hủy" : "Quay lại"}</Text></Pressable>
+          {step < 3
+            ? <Pressable style={s.primBtn} onPress={handleNext}><Text style={s.primBtnTxt}>Tiếp tục</Text><Ionicons name="arrow-forward" size={18} color="#FFF" /></Pressable>
+            : <Pressable style={[s.primBtn, loading && { opacity: 0.6 }]} onPress={handleSubmit} disabled={loading}>
+                {loading ? <ActivityIndicator color="#FFF" /> : <><Ionicons name="cloud-upload-outline" size={18} color="#FFF" /><Text style={s.primBtnTxt}>Tạo khách sạn</Text></>}
+              </Pressable>
+          }
+        </View>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 }
 
-function Input(props: any) {
+// ── Step 1: Basic Info ─────────────────────────────────────────────────────────
+function StepBasic({ data, onChange }: { data: Step1Data; onChange: (k: keyof Step1Data, v: string) => void }) {
   return (
-    <View style={{ marginBottom: 14 }}>
-      <Text style={styles.label}>{props.label}</Text>
-      <TextInput
-        {...props}
-        style={styles.input}
-        placeholderTextColor="#9CA3AF"
-      />
+    <View style={s.card}>
+      <Text style={s.sectionTitle}>📋 Thông tin cơ bản</Text>
+      <FieldInput label="Tên khách sạn *" value={data.name} onChangeText={(v) => onChange("name", v)} placeholder="Nhập tên khách sạn" />
+      <Text style={s.label}>Mô tả khách sạn *</Text>
+      <TextInput style={[s.input, s.textArea]} value={data.description} onChangeText={(v) => onChange("description", v)} placeholder="Giới thiệu ngắn về khách sạn" multiline textAlignVertical="top" placeholderTextColor="#9CA3AF" />
+      <StarField label="Số sao (Tuỳ chọn)" value={data.starRating} onChange={(v) => onChange("starRating", v)} />
+      <TimeField label="Giờ nhận phòng" value={data.checkInTime} onChange={(v) => onChange("checkInTime", v)} />
+      <TimeField label="Giờ trả phòng" value={data.checkOutTime} onChange={(v) => onChange("checkOutTime", v)} />
     </View>
   );
 }
 
-function TimePickerField({ label, value, onChange }: { label: string, value: string, onChange: (v: string) => void }) {
+// ── Step 2 (now Step 3): Location ──────────────────────────────────────────────
+function StepLocation({ data, onChange, mapVisible, setMapVisible }: { data: Step2Data; onChange: (k: keyof Step2Data, v: any) => void; mapVisible: boolean; setMapVisible: (v: boolean) => void }) {
+  return (
+    <View style={s.card}>
+      <Text style={s.sectionTitle}>📍 Vị trí khách sạn</Text>
+      <Text style={s.label}>Vị trí trên bản đồ *</Text>
+      <Pressable style={[s.input, { flexDirection: "row", justifyContent: "space-between", alignItems: "center" }]} onPress={() => setMapVisible(true)}>
+        <Text style={{ color: data.selectedLocation ? "#111827" : "#9CA3AF", flex: 1 }} numberOfLines={1}>{data.selectedLocation || "Chạm để mở bản đồ"}</Text>
+        <Ionicons name="map-outline" size={20} color="#9CA3AF" />
+      </Pressable>
+      {data.latitude && data.longitude && <Text style={s.hint}>✓ Toạ độ: {data.latitude.toFixed(4)}, {data.longitude.toFixed(4)}</Text>}
+      <View style={{ height: 14 }} />
+      <FieldInput label="Số nhà / đường *" value={data.street} onChangeText={(v) => onChange("street", v)} placeholder="Ví dụ: 123 Lý Thường Kiệt" />
+      <FieldInput label="Quận / huyện *" value={data.district} onChangeText={(v) => onChange("district", v)} placeholder="Ví dụ: Hoàn Kiếm" />
+      <FieldInput label="Tỉnh / thành phố *" value={data.city} onChangeText={(v) => onChange("city", v)} placeholder="Ví dụ: Hà Nội" />
+      <AppMap visible={mapVisible} onClose={() => setMapVisible(false)} onSelectLocation={(addr, coords) => { onChange("selectedLocation", addr); if (coords) { onChange("latitude", coords.latitude); onChange("longitude", coords.longitude); } setMapVisible(false); }} />
+    </View>
+  );
+}
+
+// ── Step 4: Photos & Review ────────────────────────────────────────────────────
+function StepPhotos({ images, onPick, onRemove, step1, step2, amenityCount }: { images: HotelImage[]; onPick: () => void; onRemove: (id: string) => void; step1: Step1Data; step2: Step2Data; amenityCount: number }) {
+  return (
+    <View>
+      <View style={[s.card, { marginBottom: 12 }]}>
+        <Text style={s.sectionTitle}>📝 Xem lại thông tin</Text>
+        <ReviewRow icon="business-outline" label="Tên" value={step1.name} />
+        <ReviewRow icon="star-outline" label="Số sao" value={step1.starRating ? `${step1.starRating} sao` : "Chưa chọn"} />
+        <ReviewRow icon="sparkles-outline" label="Tiện ích" value={amenityCount > 0 ? `${amenityCount} tiện ích đã chọn` : "Không có"} />
+        <ReviewRow icon="time-outline" label="Check-in" value={step1.checkInTime || "Chưa chọn"} />
+        <ReviewRow icon="time-outline" label="Check-out" value={step1.checkOutTime || "Chưa chọn"} />
+        <ReviewRow icon="location-outline" label="Địa chỉ" value={[step2.street, step2.district, step2.city].filter(Boolean).join(", ") || "Chưa nhập"} />
+      </View>
+      <View style={s.card}>
+        <Text style={s.sectionTitle}>🖼️ Hình ảnh *</Text>
+        <Pressable style={s.uploadBtn} onPress={onPick}>
+          <Ionicons name="cloud-upload-outline" size={22} color="#2563EB" />
+          <Text style={s.uploadTxt}>Chọn ảnh ({images.length} đã chọn)</Text>
+        </Pressable>
+        {images.length === 0 && <Text style={[s.hint, { textAlign: "center", marginTop: 8 }]}>Chọn ít nhất 1 ảnh</Text>}
+        <View style={s.imgGrid}>
+          {images.map((img, i) => (
+            <View key={img.id} style={s.imgCell}>
+              <Image source={{ uri: img.uri }} style={s.gridImg} />
+              {i === 0 && <View style={s.badge}><Text style={s.badgeTxt}>Đại diện</Text></View>}
+              <Pressable style={s.removeBtn} onPress={() => onRemove(img.id)}><Ionicons name="close-circle" size={22} color="#EF4444" /></Pressable>
+            </View>
+          ))}
+        </View>
+      </View>
+    </View>
+  );
+}
+
+// ── Sub-components ──────────────────────────────────────────────────────────────
+function FieldInput({ label, value, onChangeText, placeholder }: { label: string; value: string; onChangeText: (v: string) => void; placeholder?: string }) {
+  return (
+    <View style={{ marginBottom: 14 }}>
+      <Text style={s.label}>{label}</Text>
+      <TextInput style={s.input} value={value} onChangeText={onChangeText} placeholder={placeholder} placeholderTextColor="#9CA3AF" />
+    </View>
+  );
+}
+
+function ReviewRow({ icon, label, value }: { icon: any; label: string; value: string }) {
+  return (
+    <View style={s.reviewRow}>
+      <Ionicons name={icon} size={15} color="#6B7280" />
+      <Text style={s.reviewLabel}>{label}:</Text>
+      <Text style={s.reviewValue} numberOfLines={2}>{value}</Text>
+    </View>
+  );
+}
+
+// Generate 30-min slots: 00:00, 00:30 ... 23:30
+const TIME_SLOTS: string[] = Array.from({ length: 48 }, (_, i) => {
+  const h = Math.floor(i / 2).toString().padStart(2, "0");
+  const m = i % 2 === 0 ? "00" : "30";
+  return `${h}:${m}`;
+});
+
+function TimeField({ label, value, onChange }: { label: string; value: string; onChange: (v: string) => void }) {
   const [show, setShow] = useState(false);
-
-  const date = new Date();
-  if (value) {
-    const [h, m] = value.split(':');
-    date.setHours(parseInt(h, 10) || 0, parseInt(m, 10) || 0, 0);
-  }
-
-  const handleChange = (event: any, selectedDate?: Date) => {
-    if (Platform.OS === 'android') setShow(false);
-    if (selectedDate) {
-      const hours = selectedDate.getHours().toString().padStart(2, '0');
-      const mins = selectedDate.getMinutes().toString().padStart(2, '0');
-      onChange(`${hours}:${mins}`);
-    }
-  };
 
   return (
     <View style={{ marginBottom: 14 }}>
-      <Text style={styles.label}>{label}</Text>
+      <Text style={s.label}>{label}</Text>
       <Pressable
-        style={[styles.input, { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }]}
+        style={[s.input, { flexDirection: "row", justifyContent: "space-between", alignItems: "center" }]}
         onPress={() => setShow(true)}
       >
-        <Text style={{ color: value ? "#111827" : "#9CA3AF" }}>
-          {value || "Chọn giờ"}
-        </Text>
+        <Text style={{ color: value ? "#111827" : "#9CA3AF" }}>{value || "Chọn giờ"}</Text>
         <Ionicons name="time-outline" size={20} color="#9CA3AF" />
       </Pressable>
 
-      {Platform.OS === 'ios' ? (
-        <Modal visible={show} transparent animationType="slide">
-          <View style={styles.modalOverlay}>
-            <View style={styles.modalContent}>
-              <View style={styles.modalHeader}>
-                <Pressable onPress={() => setShow(false)}>
-                  <Text style={styles.modalDoneText}>Xong</Text>
-                </Pressable>
-              </View>
-              <DateTimePicker
-                value={date}
-                mode="time"
-                is24Hour={true}
-                display="spinner"
-                onChange={handleChange}
-              />
+      <Modal visible={show} transparent animationType="slide" onRequestClose={() => setShow(false)}>
+        <Pressable style={s.mOverlay} onPress={() => setShow(false)}>
+          <Pressable style={s.timeModal} onPress={(e) => e.stopPropagation()}>
+            {/* Header */}
+            <View style={s.mHeader}>
+              <Text style={{ fontSize: 15, fontWeight: "700", color: "#111827" }}>{label}</Text>
+              <Pressable onPress={() => setShow(false)}>
+                <Text style={s.mDone}>Xong</Text>
+              </Pressable>
             </View>
-          </View>
-        </Modal>
-      ) : (
-        show && (
-          <DateTimePicker
-            value={date}
-            mode="time"
-            is24Hour={true}
-            display="spinner"
-            onChange={handleChange}
-          />
-        )
-      )}
+            {/* Time list */}
+            <FlatList
+              data={TIME_SLOTS}
+              keyExtractor={(item) => item}
+              style={{ maxHeight: 320 }}
+              initialScrollIndex={Math.max(0, TIME_SLOTS.indexOf(value))}
+              getItemLayout={(_, index) => ({ length: 52, offset: 52 * index, index })}
+              showsVerticalScrollIndicator={false}
+              renderItem={({ item }) => {
+                const active = item === value;
+                return (
+                  <Pressable
+                    style={[s.timeSlot, active && s.timeSlotActive]}
+                    onPress={() => { onChange(item); setShow(false); }}
+                  >
+                    <Ionicons name="time-outline" size={18} color={active ? "#2563EB" : "#9CA3AF"} />
+                    <Text style={[s.timeSlotTxt, active && s.timeSlotTxtActive]}>{item}</Text>
+                    {active && <Ionicons name="checkmark-circle" size={20} color="#2563EB" style={{ marginLeft: "auto" }} />}
+                  </Pressable>
+                );
+              }}
+            />
+          </Pressable>
+        </Pressable>
+      </Modal>
     </View>
   );
 }
 
-function StarRatingField({ label, value, onChange }: { label: string, value: string, onChange: (v: string) => void }) {
-  const currentRating = parseInt(value) || 0;
-
+function StarField({ label, value, onChange }: { label: string; value: string; onChange: (v: string) => void }) {
+  const cur = parseInt(value) || 0;
   return (
     <View style={{ marginBottom: 14 }}>
-      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-        <Text style={styles.label}>{label}</Text>
-        {currentRating > 0 && (
-          <Pressable onPress={() => onChange("")}>
-            <Text style={{ fontSize: 13, color: "#EF4444", fontWeight: "600", marginBottom: 6 }}>Bỏ chọn</Text>
-          </Pressable>
-        )}
+      <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
+        <Text style={s.label}>{label}</Text>
+        {cur > 0 && <Pressable onPress={() => onChange("")}><Text style={{ fontSize: 13, color: "#EF4444", fontWeight: "600", marginBottom: 6 }}>Bỏ chọn</Text></Pressable>}
       </View>
-      <View style={{ flexDirection: 'row', gap: 12, marginTop: 4 }}>
-        {[1, 2, 3, 4, 5].map((star) => (
-          <Pressable
-            key={star}
-            onPress={() => onChange(star.toString())}
-            style={{ paddingVertical: 4, paddingRight: 8 }}
-          >
-            <Ionicons
-              name={star <= currentRating ? "star" : "star-outline"}
-              size={36}
-              color={star <= currentRating ? "#F59E0B" : "#D1D5DB"}
-            />
+      <View style={{ flexDirection: "row", gap: 12, marginTop: 4 }}>
+        {[1, 2, 3, 4, 5].map((i) => (
+          <Pressable key={i} onPress={() => onChange(i.toString())} style={{ paddingVertical: 4, paddingRight: 8 }}>
+            <Ionicons name={i <= cur ? "star" : "star-outline"} size={36} color={i <= cur ? "#F59E0B" : "#D1D5DB"} />
           </Pressable>
         ))}
       </View>
@@ -391,161 +318,50 @@ function StarRatingField({ label, value, onChange }: { label: string, value: str
   );
 }
 
-const styles = StyleSheet.create({
-  screen: {
-    flex: 1,
-    backgroundColor: "#F8FAFC",
-  },
-  content: {
-    padding: 16,
-    paddingTop: 50,
-    paddingBottom: 40,
-  },
-  header: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 12,
-    marginBottom: 20,
-  },
-  backBtn: {
-    width: 42,
-    height: 42,
-    borderRadius: 21,
-    backgroundColor: "#FFFFFF",
-    alignItems: "center",
-    justifyContent: "center",
-    borderWidth: 1,
-    borderColor: "#E5E7EB",
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: "800",
-    color: "#1E3A8A",
-  },
-  subtitle: {
-    fontSize: 13,
-    color: "#6B7280",
-    marginTop: 3,
-  },
-  card: {
-    backgroundColor: "#FFFFFF",
-    borderRadius: 18,
-    padding: 16,
-    marginBottom: 16,
-    borderWidth: 1,
-    borderColor: "#E5E7EB",
-  },
-  sectionTitle: {
-    fontSize: 17,
-    fontWeight: "800",
-    color: "#111827",
-    marginBottom: 14,
-  },
-  label: {
-    fontSize: 13,
-    fontWeight: "700",
-    color: "#374151",
-    marginBottom: 6,
-  },
-  input: {
-    backgroundColor: "#F8FAFC",
-    borderWidth: 1,
-    borderColor: "#E5E7EB",
-    borderRadius: 12,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    fontSize: 14,
-    color: "#111827",
-  },
-  textArea: {
-    height: 100,
-    marginBottom: 14,
-  },
-  uploadBtn: {
-    borderWidth: 1,
-    borderStyle: "dashed",
-    borderColor: "#2563EB",
-    backgroundColor: "#DBEAFE",
-    borderRadius: 14,
-    paddingVertical: 16,
-    alignItems: "center",
-    justifyContent: "center",
-    flexDirection: "row",
-    gap: 8,
-    marginBottom: 14,
-  },
-  uploadText: {
-    color: "#2563EB",
-    fontWeight: "800",
-  },
-  imageBox: {
-    marginBottom: 12,
-  },
-  preview: {
-    width: "100%",
-    height: 160,
-    borderRadius: 14,
-    backgroundColor: "#E5E7EB",
-  },
-  imageInfo: {
-    marginTop: 8,
-    backgroundColor: "#ECFDF5",
-    borderRadius: 12,
-    padding: 12,
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-  },
-  imageName: {
-    flex: 1,
-    fontSize: 13,
-    fontWeight: "600",
-    color: "#111827",
-    marginRight: 10,
-  },
-  removeText: {
-    color: "#DC2626",
-    fontWeight: "800",
-  },
-  hint: {
-    color: "#6B7280",
-    fontSize: 12,
-    marginTop: 4,
-  },
-  submitBtn: {
-    backgroundColor: "#2563EB",
-    height: 56,
-    borderRadius: 16,
-    alignItems: "center",
-    justifyContent: "center",
-    marginTop: 4,
-  },
-  submitText: {
-    color: "#FFFFFF",
-    fontSize: 16,
-    fontWeight: "800",
-  },
-  modalOverlay: {
-    flex: 1,
-    justifyContent: "flex-end",
-    backgroundColor: "rgba(0,0,0,0.5)",
-  },
-  modalContent: {
-    backgroundColor: "#FFFFFF",
-    paddingBottom: 30,
-    borderTopLeftRadius: 16,
-    borderTopRightRadius: 16,
-  },
-  modalHeader: {
-    flexDirection: "row",
-    justifyContent: "flex-end",
-    padding: 16,
-    borderBottomWidth: 1,
-    borderColor: "#E5E7EB",
-  },
-  modalDoneText: {
-    color: "#2563EB",
-    fontWeight: "800",
-    fontSize: 16,
-  },
+// ── Styles ──────────────────────────────────────────────────────────────────────
+const s = StyleSheet.create({
+  safe: { flex: 1, backgroundColor: "#F8FAFC" },
+  header: { flexDirection: "row", alignItems: "center", gap: 12, paddingHorizontal: 16, paddingVertical: 12, backgroundColor: "#FFF", borderBottomWidth: 1, borderBottomColor: "#E5E7EB" },
+  backBtn: { width: 40, height: 40, borderRadius: 20, backgroundColor: "#F3F4F6", alignItems: "center", justifyContent: "center" },
+  title: { fontSize: 18, fontWeight: "800", color: "#1E3A8A" },
+  subtitle: { fontSize: 12, color: "#6B7280", marginTop: 1 },
+  progressRow: { flexDirection: "row", alignItems: "flex-start", paddingHorizontal: 12, paddingVertical: 12, backgroundColor: "#FFF", borderBottomWidth: 1, borderBottomColor: "#E5E7EB" },
+  stepWrap: { flex: 1, alignItems: "center", position: "relative" },
+  dot: { width: 26, height: 26, borderRadius: 13, backgroundColor: "#E5E7EB", alignItems: "center", justifyContent: "center", marginBottom: 4 },
+  dotActive: { backgroundColor: "#2563EB" },
+  dotNum: { fontSize: 12, fontWeight: "700", color: "#6B7280" },
+  stepLabel: { fontSize: 10, fontWeight: "600", color: "#9CA3AF", textAlign: "center" },
+  line: { position: "absolute", top: 13, left: "58%", right: "-38%", height: 2, backgroundColor: "#E5E7EB", zIndex: -1 },
+  lineActive: { backgroundColor: "#2563EB" },
+  content: { padding: 16, paddingBottom: 24 },
+  card: { backgroundColor: "#FFF", borderRadius: 18, padding: 16, marginBottom: 16, borderWidth: 1, borderColor: "#E5E7EB" },
+  sectionTitle: { fontSize: 16, fontWeight: "800", color: "#111827", marginBottom: 14 },
+  label: { fontSize: 13, fontWeight: "700", color: "#374151", marginBottom: 6 },
+  input: { backgroundColor: "#F8FAFC", borderWidth: 1, borderColor: "#E5E7EB", borderRadius: 12, paddingHorizontal: 14, paddingVertical: 12, fontSize: 14, color: "#111827" },
+  textArea: { height: 100, marginBottom: 14 },
+  hint: { color: "#6B7280", fontSize: 12, marginTop: 4 },
+  uploadBtn: { borderWidth: 1, borderStyle: "dashed", borderColor: "#2563EB", backgroundColor: "#DBEAFE", borderRadius: 14, paddingVertical: 16, alignItems: "center", justifyContent: "center", flexDirection: "row", gap: 8, marginBottom: 14 },
+  uploadTxt: { color: "#2563EB", fontWeight: "800" },
+  imgGrid: { flexDirection: "row", flexWrap: "wrap", gap: 10 },
+  imgCell: { width: "47%", position: "relative" },
+  gridImg: { width: "100%", aspectRatio: 4 / 3, borderRadius: 12, backgroundColor: "#E5E7EB" },
+  badge: { position: "absolute", top: 6, left: 6, backgroundColor: "#2563EB", borderRadius: 6, paddingHorizontal: 8, paddingVertical: 3 },
+  badgeTxt: { color: "#FFF", fontSize: 11, fontWeight: "700" },
+  removeBtn: { position: "absolute", top: 4, right: 4 },
+  reviewRow: { flexDirection: "row", alignItems: "flex-start", marginBottom: 10, gap: 8 },
+  reviewLabel: { fontSize: 13, fontWeight: "700", color: "#6B7280", width: 68 },
+  reviewValue: { fontSize: 13, color: "#111827", flex: 1 },
+  footer: { flexDirection: "row", gap: 10, paddingHorizontal: 16, paddingVertical: 12, backgroundColor: "#FFF", borderTopWidth: 1, borderTopColor: "#E5E7EB" },
+  secBtn: { flex: 1, height: 50, borderRadius: 14, alignItems: "center", justifyContent: "center", borderWidth: 1.5, borderColor: "#D1D5DB", backgroundColor: "#F9FAFB" },
+  secBtnTxt: { fontSize: 15, fontWeight: "700", color: "#374151" },
+  primBtn: { flex: 2, height: 50, borderRadius: 14, alignItems: "center", justifyContent: "center", backgroundColor: "#2563EB", flexDirection: "row", gap: 8 },
+  primBtnTxt: { fontSize: 15, fontWeight: "800", color: "#FFF" },
+  mOverlay: { flex: 1, justifyContent: "flex-end", backgroundColor: "rgba(0,0,0,0.5)" },
+  timeModal: { backgroundColor: "#FFF", borderTopLeftRadius: 20, borderTopRightRadius: 20, paddingBottom: 30 },
+  mHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", padding: 16, borderBottomWidth: 1, borderColor: "#E5E7EB" },
+  mDone: { color: "#2563EB", fontWeight: "800", fontSize: 16 },
+  timeSlot: { flexDirection: "row", alignItems: "center", gap: 12, paddingHorizontal: 20, paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: "#F3F4F6", height: 52 },
+  timeSlotActive: { backgroundColor: "#EFF6FF" },
+  timeSlotTxt: { fontSize: 15, color: "#374151", fontWeight: "500" },
+  timeSlotTxtActive: { color: "#2563EB", fontWeight: "700" },
 });
