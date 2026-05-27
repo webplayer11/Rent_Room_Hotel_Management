@@ -47,7 +47,7 @@ public class BookingService : IBookingService
         int nights = (dto.CheckOutDate.DayNumber - dto.CheckInDate.DayNumber);
         if (nights <= 0) return null;
 
-        decimal unitPrice = room.DiscountPrice > 0 ? room.DiscountPrice : room.PricePerNight;
+        decimal unitPrice = (room.DiscountPrice ?? 0) > 0 ? room.DiscountPrice.Value : room.PricePerNight;
         decimal totalPrice = unitPrice * nights;
         decimal discountAmount = 0;
         Voucher? appliedVoucher = null;

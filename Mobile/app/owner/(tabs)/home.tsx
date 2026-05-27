@@ -1,5 +1,6 @@
 import React, { useState, useCallback } from 'react';
 import { StyleSheet, ScrollView, View, RefreshControl, StatusBar } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from 'expo-router';
 import { HomeHeader } from '../components/HomeHeader';
 import { HotelSwitcher } from '../components/HotelSwitcher';
@@ -72,7 +73,7 @@ export default function OwnerHome() {
   }, []);
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.safeArea}>
       <StatusBar barStyle="dark-content" />
       <ScrollView 
         contentContainerStyle={styles.content}
@@ -89,18 +90,17 @@ export default function OwnerHome() {
         <RecentBookings />
       </ScrollView>
       <FloatingActionButton />
-    </View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  safeArea: {
     flex: 1,
-    backgroundColor: '#F9FAFB', // Light gray background to make cards pop nicely
+    backgroundColor: '#F9FAFB',
   },
   content: {
     padding: 16,
-    paddingTop: 60, // Space for status bar if not handled by safe area
-    paddingBottom: 100, // Space for fab and bottom nav
+    paddingBottom: 100,
   }
 });

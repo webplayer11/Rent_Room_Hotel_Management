@@ -1,6 +1,14 @@
-import { SafeAreaView } from 'react-native-safe-area-context';
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, RefreshControl, Pressable, Platform } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  RefreshControl,
+  Pressable,
+  Platform,
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 
@@ -223,7 +231,7 @@ const styles = StyleSheet.create({
   },
   content: {
     padding: 20,
-    paddingTop: Platform.OS === 'android' ? 40 : 20,
+    paddingTop: 20,
   },
   skeleton: {
     backgroundColor: '#E2E8F0',

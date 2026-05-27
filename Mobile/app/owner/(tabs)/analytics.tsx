@@ -1,15 +1,19 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function AnalyticsTab() {
   return (
-    <View style={styles.container}>
-      <Text style={styles.text}>Analytics Tab</Text>
-    </View>
+    <SafeAreaView style={styles.container}>
+      <View style={styles.inner}>
+        <Text style={styles.text}>Analytics Tab</Text>
+      </View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+  container: { flex: 1, backgroundColor: '#F9FAFB' },
+  inner: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   text: { fontSize: 18, fontWeight: 'bold' }
 });
