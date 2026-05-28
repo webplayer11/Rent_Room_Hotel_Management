@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import {
   View,
   Text,
@@ -9,8 +9,10 @@ import {
   SafeAreaView,
   StatusBar,
   ActivityIndicator,
-  Platform
+  Platform,
+  Modal
 } from 'react-native';
+import Slider from '@react-native-community/slider';
 import { Ionicons, Feather, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { format, parseISO, differenceInDays } from 'date-fns';
@@ -39,6 +41,12 @@ export default function HotelListScreen() {
   // Set lưu các hotelId đã được yêu thích
   const [favoriteIds, setFavoriteIds] = useState<Set<string>>(new Set());
 
+  // Filter & Sort States
+  const [sortOrder, setSortOrder] = useState<null | 'price_asc' | 'price_desc'>(null);
+  const [maxPriceFilter, setMaxPriceFilter] = useState<number>(30000000);
+  const [sortModalVisible, setSortModalVisible] = useState(false);
+  const [filterModalVisible, setFilterModalVisible] = useState(false);
+
   let nights = 1;
   if (params.checkIn && params.checkOut) {
     try {
@@ -46,7 +54,7 @@ export default function HotelListScreen() {
       const end = parseISO(params.checkOut as string);
       const d = differenceInDays(end, start);
       if (d > 0) nights = d;
-    } catch (e) {}
+    } catch (e) { }
   }
   const multiplier = nights;
 
@@ -61,7 +69,7 @@ export default function HotelListScreen() {
       if (res.isSuccess && res.data) {
         setFavoriteIds(new Set(res.data.map((h: any) => h.id)));
       }
-    } catch (_) {}
+    } catch (_) { }
   };
 
   const toggleFavorite = async (hotelId: string) => {
@@ -75,7 +83,7 @@ export default function HotelListScreen() {
           return next;
         });
       }
-    } catch (_) {}
+    } catch (_) { }
   };
 
   const loadHotels = async () => {
@@ -94,21 +102,36 @@ export default function HotelListScreen() {
       });
 
       if (response.isSuccess && response.data) {
+        // DEBUG: xem raw data từ API
+        console.log('=== SEARCH RESPONSE RAW ===');
+        response.data.forEach((h: any) => {
+          console.log(`Hotel: ${h.name}`);
+          console.log(`  availableRooms count: ${(h.availableRooms || []).length}`);
+          (h.availableRooms || []).forEach((r: any) => {
+            console.log(`  Room: ${r.roomType || r.roomNumber}, status=${r.status}, price=${r.pricePerNight}, discount=${r.discountPrice}`);
+          });
+        });
+
         const mappedData: HotelSearchResult[] = response.data.map((h: any) => {
           const primaryImage = h.images?.find((img: any) => img.isPrimary)?.url || h.images?.[0]?.url;
-          const imageUrl = primaryImage 
+          const imageUrl = primaryImage
             ? (primaryImage.startsWith("http") ? primaryImage : `${IMAGE_URL}/${primaryImage}`)
             : 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800';
 
-          // Lấy giá thật từ danh sách phòng trống (giá rẻ nhất)
+          // Lấy giá thấp nhất từ danh sách phòng còn trống (loại SoldOut, Maintenance)
           let minPrice = 0;
-          if (h.availableRooms && h.availableRooms.length > 0) {
-            minPrice = Math.min(...h.availableRooms.map((r: any) => {
-              return r.discountPrice && r.discountPrice > 0 && r.discountPrice < r.pricePerNight 
-                ? r.discountPrice 
+          const vacantRooms = (h.availableRooms || []).filter(
+            (r: any) => r.status !== 'SoldOut' && r.status !== 'Maintenance'
+          );
+          if (vacantRooms.length > 0) {
+            minPrice = Math.min(...vacantRooms.map((r: any) => {
+              return r.discountPrice && r.discountPrice > 0 && r.discountPrice < r.pricePerNight
+                ? r.discountPrice
                 : r.pricePerNight;
             }));
           }
+
+          console.log(`  => minPrice for ${h.name}: ${minPrice}, vacantRooms: ${vacantRooms.length}`);
 
           return {
             id: h.id,
@@ -132,12 +155,22 @@ export default function HotelListScreen() {
     }
   };
 
+  const filteredAndSortedHotels = useMemo(() => {
+    let result = hotels.filter(h => h.basePrice <= maxPriceFilter);
+    if (sortOrder === 'price_asc') {
+      result.sort((a, b) => a.basePrice - b.basePrice);
+    } else if (sortOrder === 'price_desc') {
+      result.sort((a, b) => b.basePrice - a.basePrice);
+    }
+    return result;
+  }, [hotels, maxPriceFilter, sortOrder]);
+
   const renderHeader = () => {
     let dateStr = 'Th 3, 26 thg 5 - Th 4, 27 thg 5...';
     if (params.checkIn && params.checkOut) {
       try {
         dateStr = `${format(parseISO(params.checkIn as string), 'dd MMM')} - ${format(parseISO(params.checkOut as string), 'dd MMM')}`;
-      } catch (e) {}
+      } catch (e) { }
     }
 
     return (
@@ -146,21 +179,12 @@ export default function HotelListScreen() {
           <Feather name="chevron-left" size={28} color="#000" />
         </TouchableOpacity>
         <View style={styles.headerSearch}>
-          <Feather name="search" size={18} color="#000" style={styles.headerSearchIcon} />
           <View style={{ flex: 1 }}>
             <Text style={styles.headerSearchTitle} numberOfLines={1}>
               {params.location || 'Hồ Chí Minh (6.389)'}
             </Text>
             <Text style={styles.headerSearchSubtitle} numberOfLines={1}>{dateStr}</Text>
           </View>
-        </View>
-        <View style={styles.headerIcons}>
-          <TouchableOpacity style={styles.headerIconBtn}>
-            <MaterialCommunityIcons name="sync" size={24} color="#000" />
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.headerIconBtn}>
-            <Ionicons name="heart" size={24} color="#000" />
-          </TouchableOpacity>
         </View>
       </View>
     );
@@ -169,17 +193,12 @@ export default function HotelListScreen() {
   const renderFilterBar = () => {
     return (
       <View style={styles.filterBar}>
-        <TouchableOpacity style={styles.filterTab}>
-          <Text style={styles.filterTabText}>Bộ lọc</Text>
+        <TouchableOpacity style={styles.filterTab} onPress={() => setFilterModalVisible(true)}>
+          <Text style={styles.filterTabText}>Bộ lọc giá</Text>
           <Feather name="chevron-down" size={16} color="#475569" style={{ marginLeft: 4 }} />
         </TouchableOpacity>
         <View style={styles.filterDivider} />
-        <TouchableOpacity style={styles.filterTab}>
-          <Text style={styles.filterTabText}>Giá tiền</Text>
-          <Feather name="chevron-down" size={16} color="#475569" style={{ marginLeft: 4 }} />
-        </TouchableOpacity>
-        <View style={styles.filterDivider} />
-        <TouchableOpacity style={styles.filterTab}>
+        <TouchableOpacity style={styles.filterTab} onPress={() => setSortModalVisible(true)}>
           <Text style={styles.filterTabText}>Sắp xếp</Text>
           <Feather name="chevron-down" size={16} color="#475569" style={{ marginLeft: 4 }} />
         </TouchableOpacity>
@@ -187,22 +206,14 @@ export default function HotelListScreen() {
     );
   };
 
-  const renderPromoBanner = () => (
-    <View style={styles.promoBanner}>
-      <MaterialCommunityIcons name="tag" size={20} color="#059669" />
-      <Text style={styles.promoText}>Được GIẢM thêm 10% chỉ trong vòng 60 phút nữa!</Text>
-      <TouchableOpacity>
-        <Text style={styles.promoAction}>Kích hoạt</Text>
-      </TouchableOpacity>
-    </View>
-  );
+  const renderPromoBanner = () => null;
 
   const renderHotelItem = ({ item }: { item: HotelSearchResult }) => {
     const starCount = item.rating ? Math.round(Number(item.rating)) : 0;
     const isFav = favoriteIds.has(item.id);
 
     return (
-      <TouchableOpacity 
+      <TouchableOpacity
         style={styles.card}
         onPress={() => router.push({
           pathname: `/customer/hotel/[id]`,
@@ -219,22 +230,22 @@ export default function HotelListScreen() {
         <View style={styles.cardTop}>
           <View style={styles.imageContainer}>
             <Image source={{ uri: item.image }} style={styles.image} />
-            <TouchableOpacity 
+            <TouchableOpacity
               style={styles.heartBtn}
               onPress={() => toggleFavorite(item.id)}
               hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
             >
-              <Ionicons 
-                name={isFav ? 'heart' : 'heart-outline'} 
-                size={24} 
-                color={isFav ? '#FF567D' : '#111'} 
+              <Ionicons
+                name={isFav ? 'heart' : 'heart-outline'}
+                size={24}
+                color={isFav ? '#FF567D' : '#111'}
               />
             </TouchableOpacity>
           </View>
-          
+
           <View style={styles.cardContent}>
             <Text style={styles.hotelName} numberOfLines={2}>{item.name}</Text>
-            
+
             {/* Số sao thật */}
             {starCount > 0 && (
               <View style={styles.starsRow}>
@@ -261,12 +272,13 @@ export default function HotelListScreen() {
             <View style={styles.priceContainer}>
               {item.basePrice > 0 ? (
                 <>
+                  <Text style={{ fontSize: 10, color: '#6B7280', textAlign: 'right' }}>Từ</Text>
                   <View style={styles.currentPriceRow}>
                     <Text style={styles.currentPrice}>{item.basePrice.toLocaleString('vi-VN')}</Text>
                     <Text style={styles.currencySymbol}>₫</Text>
                   </View>
                   <Text style={{ fontSize: 11, color: '#6B7280', marginTop: 2 }}>
-                    Giá cho {nights} đêm, 1 phòng
+                    /{nights} đêm, 1 phòng
                   </Text>
                 </>
               ) : (
@@ -284,7 +296,7 @@ export default function HotelListScreen() {
       <StatusBar barStyle="dark-content" backgroundColor="#FFF" />
       {renderHeader()}
       {renderFilterBar()}
-      
+
       {loading ? (
         <View style={styles.center}>
           <ActivityIndicator size="large" color="#0F172A" />
@@ -295,7 +307,7 @@ export default function HotelListScreen() {
         </View>
       ) : (
         <FlatList
-          data={hotels}
+          data={filteredAndSortedHotels}
           renderItem={renderHotelItem}
           keyExtractor={(item) => item.id}
           ListHeaderComponent={renderPromoBanner}
@@ -304,6 +316,70 @@ export default function HotelListScreen() {
           style={{ backgroundColor: '#F3F4F6' }}
         />
       )}
+
+      {/* MODAL SẮP XẾP */}
+      <Modal visible={sortModalVisible} transparent animationType="fade">
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Sắp xếp theo</Text>
+              <TouchableOpacity onPress={() => setSortModalVisible(false)}><Ionicons name="close" size={24} color="#111" /></TouchableOpacity>
+            </View>
+            <TouchableOpacity style={styles.modalOption} onPress={() => { setSortOrder(null); setSortModalVisible(false); }}>
+              <Text style={[styles.modalOptionText, sortOrder === null && styles.modalOptionActive]}>Phù hợp nhất</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.modalOption} onPress={() => { setSortOrder('price_asc'); setSortModalVisible(false); }}>
+              <Text style={[styles.modalOptionText, sortOrder === 'price_asc' && styles.modalOptionActive]}>Giá thấp nhất</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.modalOption} onPress={() => { setSortOrder('price_desc'); setSortModalVisible(false); }}>
+              <Text style={[styles.modalOptionText, sortOrder === 'price_desc' && styles.modalOptionActive]}>Giá cao nhất</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
+      {/* MODAL BỘ LỌC GIÁ */}
+      <Modal visible={filterModalVisible} transparent animationType="fade">
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Bộ lọc giá</Text>
+              <TouchableOpacity onPress={() => setFilterModalVisible(false)}><Ionicons name="close" size={24} color="#111" /></TouchableOpacity>
+            </View>
+            <View style={{ padding: 20 }}>
+              <Text style={{ marginBottom: 15, fontSize: 16, fontWeight: '600', color: '#111827' }}>
+                Giá tối đa: {maxPriceFilter.toLocaleString('vi-VN')} ₫
+              </Text>
+              <Slider
+                style={{ width: '100%', height: 40 }}
+                minimumValue={0}
+                maximumValue={30000000}
+                step={100000}
+                value={maxPriceFilter}
+                onValueChange={setMaxPriceFilter}
+                minimumTrackTintColor="#2563EB"
+                maximumTrackTintColor="#E2E8F0"
+                thumbTintColor="#2563EB"
+              />
+              <TouchableOpacity
+                style={{
+                  backgroundColor: '#2563EB',
+                  paddingVertical: 14,
+                  borderRadius: 12,
+                  alignItems: 'center',
+                  marginTop: 20
+                }}
+                onPress={() => setFilterModalVisible(false)}
+              >
+                <Text style={{ color: '#FFF', fontSize: 16, fontWeight: '700' }}>
+                  Xem {filteredAndSortedHotels.length} kết quả
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
     </SafeAreaView>
   );
 }
@@ -505,5 +581,43 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: '#6B7280',
     fontStyle: 'italic',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'flex-end',
+  },
+  modalContent: {
+    backgroundColor: '#FFF',
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    paddingBottom: Platform.OS === 'ios' ? 40 : 20,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F3F4F6',
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#111827',
+  },
+  modalOption: {
+    paddingVertical: 16,
+    paddingHorizontal: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F3F4F6',
+  },
+  modalOptionText: {
+    fontSize: 16,
+    color: '#374151',
+  },
+  modalOptionActive: {
+    color: '#2563EB',
+    fontWeight: '600',
   },
 });

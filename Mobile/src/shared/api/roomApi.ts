@@ -7,6 +7,12 @@ export type RoomImageDto = {
   sortOrder: number;
 };
 
+export type RoomAmenityDto = {
+  id: string;
+  name?: string;
+  icon?: string;
+};
+
 export type RoomDto = {
   id: string;
   hotelId?: string;
@@ -23,6 +29,7 @@ export type RoomDto = {
   isSmokingAllowed: boolean;
   isActive: boolean;
   images: RoomImageDto[];
+  roomAmenities: RoomAmenityDto[];
 };
 
 export type ApiResponse<T> = {
@@ -84,8 +91,12 @@ export const roomApi = {
     }) as Promise<ApiResponse<RoomDto>>;
   },
 
-  getRoomsByHotelId: (hotelId: string) => {
-    return apiFetch(`/api/rooms/hotel/${hotelId}`, {
+  getRoomsByHotelId: (hotelId: string, checkIn?: string, checkOut?: string) => {
+    let url = `/api/rooms/hotel/${hotelId}`;
+    if (checkIn && checkOut) {
+      url += `?checkIn=${checkIn}&checkOut=${checkOut}`;
+    }
+    return apiFetch(url, {
       method: "GET",
     }) as Promise<ApiResponse<RoomDto[]>>;
   },

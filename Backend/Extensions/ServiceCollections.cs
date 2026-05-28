@@ -35,7 +35,7 @@ namespace RoomManagement.Extensions
             services.AddScoped<IHostRevenueService, HostRevenueService>();
             services.AddScoped<IVoucherService, VoucherService>();
             services.AddScoped<IFavoriteService, FavoriteService>();
-            // services.AddScoped<ICustomerService, CustomerService>();
+            services.AddScoped<IUserService, UserService>();
             // Add other services here...
 
             return services;

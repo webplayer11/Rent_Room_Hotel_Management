@@ -5,19 +5,22 @@ export type BookingDto = {
   id: string;
   userId: string;
   roomId: string;
+  bookingCode?: string;
   hotelId?: string;
   hotelName?: string;
   roomName?: string;
   checkInDate: string;
   checkOutDate: string;
+  numberOfNights?: number;
+  guestCount?: number;
+  unitPrice?: number;
   totalPrice: number;
+  discountAmount?: number;
+  finalPrice?: number;
   status: string; // 'Pending' | 'Confirmed' | 'CheckedIn' | 'CheckedOut' | 'Cancelled' | 'Rejected'
   voucherCode?: string;
-  discountAmount?: number;
+  specialRequest?: string;
   createdAt?: string;
-  guestCount?: number;
-  roomCount?: number;
-  note?: string;
 };
 
 export type CreateBookingDto = {
@@ -71,5 +74,19 @@ export const bookingApi = {
       method: 'PUT',
       body: JSON.stringify(dto),
     }) as Promise<ApiResponse<BookingDto>>;
+  },
+
+  /** Khách hàng xóa đơn đặt phòng chưa thanh toán (Pending) */
+  deleteBooking: (id: string) => {
+    return apiFetch(`/api/bookings/${id}`, {
+      method: 'DELETE',
+    }) as Promise<ApiResponse<string>>;
+  },
+
+  /** Khách hàng hủy đơn đặt phòng (Pending hoặc Confirmed) */
+  cancelBooking: (id: string) => {
+    return apiFetch(`/api/bookings/${id}/cancel`, {
+      method: 'POST',
+    }) as Promise<ApiResponse<string>>;
   },
 };

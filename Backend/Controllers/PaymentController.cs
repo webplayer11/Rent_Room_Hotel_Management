@@ -43,7 +43,7 @@ public class PaymentController : ControllerBase
 
 
     [HttpPost ("createpayment")]
-    public async Task<IActionResult> CreatePayment(PaymentRequestDto paymentRequestDto)
+    public async Task<IActionResult> CreatePayment([FromBody] PaymentRequestDto paymentRequestDto)
     {
             try
             {
@@ -59,7 +59,7 @@ public class PaymentController : ControllerBase
                     idBooking = paymentRequestDto.idBooking,
                     price = paymentRequestDto.price,
                     timestamp = timestamp,
-                    callBackUrl = "http://localhost:5226/api/pay/callback"
+                    callBackUrl = "http://localhost:5226/api/payments/callback"
                 };
                 request.Headers.Add("X-Signature", signature);
                 request.Content = JsonContent.Create(paymenRequest);
@@ -88,7 +88,7 @@ public class PaymentController : ControllerBase
             }
             catch (Exception ex)
             {
-                return StatusCode(500,ResponseApi<string>.Failure(500,"Tạo build thành toán thất bại!"));
+                return StatusCode(500,ResponseApi<string>.Failure(500,$"Tạo build thành toán thất bại! Lỗi: {ex.Message}"));
             }
     }
 
@@ -114,5 +114,45 @@ public class PaymentController : ControllerBase
         }
 
         return Ok(ResponseApi<string>.Success(result));
+    }
+
+    /// <summary>
+    /// Mobile gọi endpoint này khi user bấm "Tôi đã thanh toán".
+    /// Backend sẽ thông báo tới PaymentGate để kích hoạt chuỗi callback xác nhận thanh toán.
+    /// </summary>
+    [HttpPost("{bookingId}/notify-paid")]
+    public async Task<IActionResult> NotifyPaid(string bookingId)
+    {
+        // Nếu đã SUCCESS rồi thì không cần gọi lại
+        var currentStatus = await _service.GetStatusAsync(bookingId);
+        if (currentStatus?.ToUpper() == "SUCCESS")
+        {
+            return Ok(ResponseApi<string>.Success(currentStatus));
+        }
+
+        try
+        {
+            // Gọi PaymentGate để trigger callback chain:
+            // PayGate → POST /api/payments/callback → backend cập nhật SUCCESS
+            var request = new HttpRequestMessage(
+                HttpMethod.Post,
+                "http://localhost:5193/api/paymentgate/callback"
+            );
+            request.Content = JsonContent.Create(new { idBooking = bookingId });
+            var response = await _httpClient.SendAsync(request);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                return BadRequest(ResponseApi<string>.Failure(400, "PaymentGate không xác nhận được thanh toán."));
+            }
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, ResponseApi<string>.Failure(500, $"Lỗi kết nối PaymentGate: {ex.Message}"));
+        }
+
+        // Đọc lại trạng thái sau khi callback đã xử lý
+        var updatedStatus = await _service.GetStatusAsync(bookingId);
+        return Ok(ResponseApi<string>.Success(updatedStatus ?? "PENDING"));
     }
 }

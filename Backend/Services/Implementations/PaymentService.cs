@@ -61,6 +61,22 @@ public class PaymentService : IPaymentService
 
     public async Task<PaymentResponseDto> CreateQrUrlAsync(PaymentRequestDto paymentRequestDto, ResponseApi<PayGateResponseDto> paygateResponse)
     {
+            if (paygateResponse.Data == null)
+            {
+                throw new Exception("Dữ liệu từ PaymentGate trả về bị rỗng.");
+            }
+
+            // Tạo bản ghi Payment
+            var payment = new Payment
+            {
+                BookingId = paymentRequestDto.idBooking,
+                Amount = paymentRequestDto.price,
+                Method = "QR",
+                Status = "PENDING",
+                TransactionId = paygateResponse.Data.BuilId
+            };
+            await _paymentRepository.CreateAsync(payment);
+
             var payget = new PayGateResponseDto
             {
                 BuilId = paygateResponse.Data.BuilId,
@@ -113,12 +129,22 @@ public class PaymentService : IPaymentService
             {
                 return false;
             }
+
+            // Đồng bộ trạng thái thanh toán sang Booking
+            var booking = await _bookingRepository.GetByIdAsync(payGateRequestDto.Idbooking);
+            if (booking != null)
+            {
+                booking.Status = "Confirmed";
+                await _bookingRepository.UpdateAsync(booking);
+            }
+
             return true;
     }
 
     public async Task<string> GetStatusAsync(string idbooking)
     {
-        var payment = await _paymentRepository.GetByIdAsync(idbooking);
+        var payments = await _paymentRepository.GetByBookingIdAsync(idbooking);
+        var payment = payments.FirstOrDefault();
         if (payment == null)
         {
             return string.Empty;

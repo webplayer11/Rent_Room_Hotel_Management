@@ -61,9 +61,17 @@ const WishlistScreen = () => {
 
   const renderItem = ({ item }: { item: FavoriteHotelDto }) => {
     const starCount = item.starRating ? Math.round(item.starRating) : 0;
-    const minPrice = item.availableRooms && item.availableRooms.length > 0
-      ? Math.min(...item.availableRooms.map(r => r.pricePerNight))
-      : 0;
+    let minPrice = 0;
+    const vacantRooms = (item.availableRooms || []).filter(
+      (r: any) => r.status !== 'SoldOut' && r.status !== 'Maintenance'
+    );
+    if (vacantRooms.length > 0) {
+      minPrice = Math.min(...vacantRooms.map((r: any) => {
+        return r.discountPrice && r.discountPrice > 0 && r.discountPrice < r.pricePerNight
+          ? r.discountPrice
+          : r.pricePerNight;
+      }));
+    }
 
     return (
       <TouchableOpacity
@@ -134,9 +142,6 @@ const WishlistScreen = () => {
       {/* Header */}
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Đã lưu</Text>
-        <TouchableOpacity style={styles.headerSearchBtn}>
-          <Feather name="search" size={22} color="#111" />
-        </TouchableOpacity>
       </View>
 
       {loading ? (
@@ -192,14 +197,7 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: '#F1F5F9',
   },
-  headerTitle: {
-    fontSize: 22,
-    fontWeight: '800',
-    color: '#111827',
-  },
-  headerSearchBtn: {
-    padding: 4,
-  },
+  headerTitle: { flex: 1, textAlign: 'center', fontSize: 17, fontWeight: '700', color: '#222' },
   countBar: {
     paddingHorizontal: 16,
     paddingVertical: 10,

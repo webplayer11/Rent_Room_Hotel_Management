@@ -17,7 +17,7 @@ import * as Location from 'expo-location';
 // NOTE: react-native-maps (MapView) không hoạt động trong Expo Go vì thiếu native module RNMapsAirModule.
 // Đã tạm thay bằng placeholder để app chạy ổn định cho demo.
 // Khi build dev/production client, hãy uncomment import bên dưới và xóa placeholder.
-// import MapView, { Region } from 'react-native-maps';
+import MapView, { Marker, Region } from 'react-native-maps';
 
 interface AppMapProps {
     visible: boolean;
@@ -91,7 +91,7 @@ const AppMap = ({ visible, onClose, onSelectLocation }: AppMapProps) => {
                 longitude: region.longitude,
             });
 
-            let fullAddress = "Vị trí đã chọn";
+            let fullAddress = searchText || "Vị trí đã chọn";
             if (reverse && reverse.length > 0) {
                 const loc = reverse[0];
                 const parts = [loc.name, loc.street, loc.subregion, loc.city, loc.region, loc.country].filter(Boolean);
@@ -104,8 +104,51 @@ const AppMap = ({ visible, onClose, onSelectLocation }: AppMapProps) => {
             onClose();
         } catch (error) {
             console.log(error);
-            onSelectLocation("Vị trí đã chọn", { latitude: region.latitude, longitude: region.longitude });
+            onSelectLocation(searchText || "Vị trí đã chọn", { latitude: region.latitude, longitude: region.longitude });
             onClose();
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const getCurrentLocation = async () => {
+        try {
+            setLoading(true);
+            let { status } = await Location.requestForegroundPermissionsAsync();
+            if (status !== 'granted') {
+                alert('Quyền truy cập vị trí bị từ chối');
+                return;
+            }
+
+            let location = await Location.getCurrentPositionAsync({});
+            const coords = {
+                latitude: location.coords.latitude,
+                longitude: location.coords.longitude,
+                latitudeDelta: 0.01,
+                longitudeDelta: 0.01,
+            };
+            
+            setRegion(coords);
+
+            // Reverse geocode để lấy tên địa chỉ hiển thị
+            const reverse = await Location.reverseGeocodeAsync({
+                latitude: coords.latitude,
+                longitude: coords.longitude,
+            });
+
+            let fullAddress = "Vị trí hiện tại của bạn";
+            if (reverse && reverse.length > 0) {
+                const loc = reverse[0];
+                const parts = [loc.name, loc.street, loc.subregion, loc.city, loc.region, loc.country].filter(Boolean);
+                if (parts.length > 0) {
+                    fullAddress = parts.join(", ");
+                }
+            }
+            
+            setSearchText(fullAddress);
+        } catch (error) {
+            console.error("Lỗi lấy vị trí: ", error);
+            alert('Không thể lấy vị trí hiện tại');
         } finally {
             setLoading(false);
         }
@@ -138,10 +181,14 @@ const AppMap = ({ visible, onClose, onSelectLocation }: AppMapProps) => {
                             value={searchText}
                             onChangeText={searchPlaces}
                             clearButtonMode="while-editing"
-                            autoFocus
                         />
                         {isSearching && <ActivityIndicator size="small" color="#2563EB" style={{ marginRight: 15 }} />}
                     </View>
+
+                    <TouchableOpacity style={styles.currentLocBtn} onPress={getCurrentLocation}>
+                        <Ionicons name="navigate-circle-outline" size={22} color="#059669" />
+                        <Text style={styles.currentLocText}>Sử dụng vị trí hiện tại của tôi</Text>
+                    </TouchableOpacity>
 
                     {searchResults.length > 0 && (
                         <View style={styles.resultsList}>
@@ -179,24 +226,17 @@ const AppMap = ({ visible, onClose, onSelectLocation }: AppMapProps) => {
                     )}
                 </View>
 
-                {/* ── MAP PLACEHOLDER (thay cho MapView khi chạy Expo Go) ── */}
+                {/* ── MAP ── */}
                 <View style={{ flex: 1 }}>
-                    <View style={styles.mapPlaceholder}>
-                        <Ionicons name="map-outline" size={52} color="#93C5FD" />
-                        <Text style={styles.placeholderTitle}>Bản đồ không khả dụng</Text>
-                        <Text style={styles.placeholderSub}>
-                            Chức năng bản đồ yêu cầu bản build riêng.{"\n"}
-                            Hãy <Text style={{ fontWeight: '700', color: '#2563EB' }}>tìm kiếm địa điểm</Text> ở ô trên{"\n"}
-                            hoặc nhấn <Text style={{ fontWeight: '700', color: '#2563EB' }}>Dùng vị trí mặc định</Text>.
-                        </Text>
-
-                        <View style={styles.coordBox}>
-                            <Ionicons name="location" size={16} color="#EF4444" />
-                            <Text style={styles.coordText}>
-                                {region.latitude.toFixed(4)}, {region.longitude.toFixed(4)}
-                            </Text>
-                        </View>
-                    </View>
+                    <MapView
+                        style={{ flex: 1 }}
+                        region={region as Region}
+                        onRegionChangeComplete={(r) => setRegion(r)}
+                    >
+                        <Marker 
+                            coordinate={{ latitude: region.latitude, longitude: region.longitude }}
+                        />
+                    </MapView>
 
                     <TouchableOpacity 
                         style={styles.confirmButton} 
@@ -206,7 +246,7 @@ const AppMap = ({ visible, onClose, onSelectLocation }: AppMapProps) => {
                         {loading ? (
                             <ActivityIndicator color="#FFF" />
                         ) : (
-                            <Text style={styles.confirmText}>Dùng vị trí mặc định (Hà Nội)</Text>
+                            <Text style={styles.confirmText}>Xác nhận vị trí này</Text>
                         )}
                     </TouchableOpacity>
                 </View>
@@ -250,6 +290,19 @@ const styles = StyleSheet.create({
         paddingHorizontal: 10,
         fontSize: 14,
         color: '#1E293B',
+    },
+    currentLocBtn: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingHorizontal: 16,
+        paddingVertical: 8,
+        marginLeft: 4,
+    },
+    currentLocText: {
+        marginLeft: 8,
+        fontSize: 14,
+        color: '#059669',
+        fontWeight: '600'
     },
     resultsList: {
         maxHeight: 300,

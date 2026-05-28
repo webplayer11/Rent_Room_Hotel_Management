@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import {
   View, Text, StyleSheet, TouchableOpacity,
-  ActivityIndicator, ScrollView, Platform, StatusBar
+  ActivityIndicator, ScrollView, Platform, StatusBar,
+  Image, Modal, Alert
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -14,23 +15,11 @@ type PayMethod = 'Cash' | 'BankTransfer' | 'Card';
 
 const METHODS: { key: PayMethod; icon: any; label: string; desc: string }[] = [
   {
-    key: 'Cash',
-    icon: 'cash-outline',
-    label: 'Thanh toán tại khách sạn',
-    desc: 'Trả tiền mặt khi nhận phòng',
-  },
-  {
     key: 'BankTransfer',
-    icon: 'card-outline',
-    label: 'Chuyển khoản ngân hàng',
-    desc: 'Thanh toán qua QR / chuyển khoản',
-  },
-  {
-    key: 'Card',
-    icon: 'globe-outline',
-    label: 'Thanh toán trực tuyến',
-    desc: 'VNPay / Thẻ nội địa / Quốc tế',
-  },
+    icon: 'qr-code-outline',
+    label: 'Thanh toán qua mã QR',
+    desc: 'Quét mã QR để thanh toán đơn hàng',
+  }
 ];
 
 const PaymentScreen = () => {
@@ -42,7 +31,9 @@ const PaymentScreen = () => {
   }>();
 
   const [loading, setLoading] = useState(false);
-  const [method, setMethod] = useState<PayMethod>('Cash');
+  const [method, setMethod] = useState<PayMethod>('BankTransfer');
+  const [qrUrl, setQrUrl] = useState<string | null>(null);
+  const [bookingIdForQr, setBookingIdForQr] = useState<string | null>(null);
 
   const finalPrice = params.finalPrice ? Number(params.finalPrice) : 0;
 
@@ -70,42 +61,65 @@ const PaymentScreen = () => {
 
       const bookingId = bookingRes.data.id;
 
-      // 2. Xử lý thanh toán theo phương thức
-      if (method === 'Cash' || method === 'BankTransfer') {
-        const payRes = await paymentApi.processPayment({ bookingId, method });
-        if (payRes.isSuccess) {
-          Toast.show({
-            type: 'success',
-            text1: 'Đặt phòng thành công! 🎉',
-            text2: method === 'Cash'
-              ? 'Bạn sẽ thanh toán tại khách sạn.'
-              : 'Vui lòng chuyển khoản theo thông tin được gửi.',
-            visibilityTime: 2500,
-            onHide: () => router.replace('/customer/(tabs)/history' as any),
-          });
-        } else {
-          Toast.show({ type: 'error', text1: 'Lỗi thanh toán', text2: payRes.message });
-        }
+      // 2. Gọi API tạo mã QR thanh toán
+      const onlineRes = await paymentApi.createOnlinePayment({
+        idBooking: bookingId,
+        price: finalPrice,
+      });
+
+      if (onlineRes.isSuccess && onlineRes.data?.qrUrl) {
+        setQrUrl(onlineRes.data.qrUrl);
+        setBookingIdForQr(bookingId);
+      } else if (onlineRes.isSuccess && onlineRes.data?.payUrl) {
+         Toast.show({
+           type: 'success',
+           text1: 'Đang chuyển đến cổng thanh toán...',
+           text2: 'Vui lòng hoàn tất thanh toán trong trình duyệt.',
+           visibilityTime: 2000,
+           onHide: () => router.replace('/customer/(tabs)/history' as any),
+         });
       } else {
-        // Thanh toán Online (VNPay)
-        const onlineRes = await paymentApi.createOnlinePayment({
-          idBooking: bookingId,
-          price: finalPrice,
-        });
-        if (onlineRes.isSuccess && onlineRes.data?.payUrl) {
-          Toast.show({
-            type: 'success',
-            text1: 'Đang chuyển đến cổng thanh toán...',
-            text2: 'Vui lòng hoàn tất thanh toán trong trình duyệt.',
-            visibilityTime: 2000,
-            onHide: () => router.replace('/customer/(tabs)/history' as any),
-          });
-        } else {
-          Toast.show({ type: 'error', text1: 'Lỗi', text2: 'Không thể khởi tạo cổng thanh toán.' });
-        }
+        Toast.show({ type: 'error', text1: 'Lỗi', text2: 'Không thể khởi tạo thanh toán.' });
       }
     } catch {
       Toast.show({ type: 'error', text1: 'Lỗi kết nối', text2: 'Có lỗi xảy ra. Vui lòng thử lại.' });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleCheckPaymentStatus = async () => {
+    if (!bookingIdForQr) return;
+    setLoading(true);
+    try {
+      // Gọi backend để kích hoạt chuỗi xác nhận:
+      // Backend → PaymentGate → callback → cập nhật trạng thái SUCCESS
+      const notifyRes = await paymentApi.notifyPaid(bookingIdForQr);
+
+      if (notifyRes.isSuccess && notifyRes.data?.toUpperCase() === 'SUCCESS') {
+        setQrUrl(null);
+        Toast.show({
+          type: 'success',
+          text1: 'Thanh toán thành công! 🎉',
+          text2: 'Cảm ơn bạn đã đặt phòng.',
+          visibilityTime: 2500,
+          onHide: () => router.replace('/customer/(tabs)/history' as any),
+        });
+      } else {
+        Toast.show({
+          type: 'info',
+          text1: 'Chưa nhận được thanh toán',
+          text2: 'Hệ thống chưa ghi nhận tiền vào tài khoản. Vui lòng đợi thêm và kiểm tra lại.',
+          visibilityTime: 3000,
+        });
+      }
+    } catch {
+      Toast.show({
+        type: 'error',
+        text1: 'Lỗi kiểm tra thanh toán',
+        text2: 'Không thể kết nối hệ thống. Vui lòng thử lại sau giây lát.',
+        visibilityTime: 3000,
+      });
     } finally {
       setLoading(false);
     }
@@ -176,6 +190,53 @@ const PaymentScreen = () => {
             : <Text style={styles.payBtnText}>Hoàn tất đặt phòng</Text>}
         </TouchableOpacity>
       </View>
+
+      {/* QR CODE MODAL */}
+      <Modal visible={!!qrUrl} animationType="slide">
+        <View style={styles.modalOverlay}>
+          <View style={styles.qrContainer}>
+            <Text style={styles.qrTitle}>Quét mã để thanh toán</Text>
+            {qrUrl ? <Image source={{ uri: qrUrl }} style={styles.qrImage} resizeMode="contain" /> : null}
+            <Text style={styles.qrInstruction}>
+              Vui lòng sử dụng ứng dụng ngân hàng quét mã QR trên để hoàn tất thanh toán.
+            </Text>
+            
+            <TouchableOpacity 
+              style={[styles.qrDoneBtn, loading && { opacity: 0.7 }]}
+              onPress={handleCheckPaymentStatus}
+              disabled={loading}
+            >
+              {loading ? <ActivityIndicator color="#FFF" /> : <Text style={styles.qrDoneText}>Tôi đã thanh toán</Text>}
+            </TouchableOpacity>
+            
+            <TouchableOpacity 
+              style={styles.qrCancelBtn}
+              onPress={async () => {
+                if (bookingIdForQr) {
+                  setLoading(true);
+                  try {
+                    await bookingApi.deleteBooking(bookingIdForQr);
+                  } catch (e) {
+                    console.log("Không thể xóa booking", e);
+                  }
+                  setLoading(false);
+                }
+                setQrUrl(null);
+                Toast.show({
+                  type: 'info',
+                  text1: 'Đã hủy thanh toán',
+                  text2: 'Đơn đặt phòng đã bị xóa do chưa thanh toán.',
+                });
+                router.replace('/customer/(tabs)/home' as any);
+              }}
+              disabled={loading}
+            >
+              <Text style={styles.qrCancelText}>Hủy thanh toán</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+        <Toast />
+      </Modal>
     </SafeAreaView>
   );
 };
@@ -228,6 +289,40 @@ const styles = StyleSheet.create({
     justifyContent: 'center', alignItems: 'center',
   },
   payBtnText: { color: '#FFF', fontSize: 16, fontWeight: '700' },
+
+  modalOverlay: {
+    flex: 1, backgroundColor: '#FFF',
+    paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight! + 20 : 60,
+    paddingHorizontal: 20,
+  },
+  qrContainer: {
+    flex: 1, backgroundColor: '#FFF',
+    alignItems: 'center', width: '100%',
+  },
+  qrTitle: {
+    fontSize: 16, fontWeight: '700', color: '#111827', marginBottom: 12
+  },
+  qrImage: {
+    width: '100%', height: 320, marginBottom: 16, borderRadius: 8
+  },
+  qrInstruction: {
+    fontSize: 13, color: '#4B5563', textAlign: 'center', marginBottom: 24, lineHeight: 20
+  },
+  qrDoneBtn: {
+    backgroundColor: '#2563EB', width: '100%', height: 48, borderRadius: 24,
+    justifyContent: 'center', alignItems: 'center', marginBottom: 12
+  },
+  qrDoneText: {
+    color: '#FFF', fontSize: 15, fontWeight: '700'
+  },
+  qrCancelBtn: {
+    width: '100%', height: 48, borderRadius: 24,
+    justifyContent: 'center', alignItems: 'center',
+    backgroundColor: '#F3F4F6'
+  },
+  qrCancelText: {
+    color: '#374151', fontSize: 15, fontWeight: '600'
+  }
 });
 
 export default PaymentScreen;

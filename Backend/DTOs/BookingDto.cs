@@ -17,6 +17,11 @@ public class BookingDto
     public decimal FinalPrice { get; set; }
     public string? SpecialRequest { get; set; }
     public string Status { get; set; } = "Pending";
+    public string? HotelId { get; set; }
+    public string? HotelName { get; set; }
+    public string? RoomName { get; set; }
+    public string? VoucherCode { get; set; }
+    public DateTime CreatedAt { get; set; }
 }
 
 public class CreateBookingDto

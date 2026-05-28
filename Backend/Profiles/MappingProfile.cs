@@ -19,7 +19,11 @@ public class MappingProfile : Profile
         CreateMap<Hotel, SearchHotelResponseDto>()
             .ForMember(dest => dest.AvailableRooms, opt => opt.MapFrom(src => src.Rooms));
 
-        CreateMap<Booking, BookingDto>();
+        CreateMap<Booking, BookingDto>()
+            .ForMember(dest => dest.HotelId, opt => opt.MapFrom(src => src.Room != null ? src.Room.HotelId : null))
+            .ForMember(dest => dest.HotelName, opt => opt.MapFrom(src => src.Room != null && src.Room.Hotel != null ? src.Room.Hotel.Name : null))
+            .ForMember(dest => dest.RoomName, opt => opt.MapFrom(src => src.Room != null ? src.Room.RoomType : null))
+            .ForMember(dest => dest.VoucherCode, opt => opt.MapFrom(src => src.Voucher != null ? src.Voucher.Code : null));
         CreateMap<Payment, PaymentDto>();
         CreateMap<Voucher, VoucherDto>();
 
@@ -27,5 +31,7 @@ public class MappingProfile : Profile
             .ForMember(dest => dest.Email, opt => opt.MapFrom(src => src.User != null ? src.User.Email : null))
             .ForMember(dest => dest.FullName, opt => opt.MapFrom(src => src.User != null ? src.User.FullName : null))
             .ForMember(dest => dest.PhoneNumber, opt => opt.MapFrom(src => src.User != null ? src.User.PhoneNumber : null));
+
+        CreateMap<ApplicationUser, UserProfileDto>();
     }
 }

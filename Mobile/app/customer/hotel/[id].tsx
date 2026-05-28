@@ -12,8 +12,28 @@ import { favoriteApi } from '../../../src/shared/api/favoriteApi';
 import { format, parseISO, differenceInDays } from 'date-fns';
 import { IMAGE_URL } from '../../../src/config';
 import { tokenStorage } from '../../../src/shared/storage/tokenStorage';
+import AppDatePicker from '../../../src/shared/components/AppDatePicker';
+import RoomGuestPicker from '../../../src/shared/components/RoomGuestPicker';
 
 const { width } = Dimensions.get('window');
+
+const getAmenityIcon = (name: string, iconFromDb?: string) => {
+  const n = name.toLowerCase();
+  if (iconFromDb) {
+    return { name: iconFromDb, library: 'Ionicons' as const };
+  }
+  if (n.includes('wifi')) return { name: 'wifi', library: 'Ionicons' as const };
+  if (n.includes('bể bơi') || n.includes('hồ bơi') || n.includes('pool')) return { name: 'pool', library: 'MaterialCommunityIcons' as const };
+  if (n.includes('gym') || n.includes('thể hình') || n.includes('fitness')) return { name: 'dumbbell', library: 'MaterialCommunityIcons' as const };
+  if (n.includes('nhà hàng') || n.includes('ăn uống') || n.includes('restaurant')) return { name: 'restaurant', library: 'Ionicons' as const };
+  if (n.includes('đỗ xe') || n.includes('bãi xe') || n.includes('parking')) return { name: 'car', library: 'Ionicons' as const };
+  if (n.includes('điều hòa') || n.includes('máy lạnh') || n.includes('air')) return { name: 'air-conditioner', library: 'MaterialCommunityIcons' as const };
+  if (n.includes('bar') || n.includes('rượu')) return { name: 'glass-cocktail', library: 'MaterialCommunityIcons' as const };
+  if (n.includes('thang máy') || n.includes('elevator')) return { name: 'elevator', library: 'MaterialCommunityIcons' as const };
+  if (n.includes('spa') || n.includes('massage')) return { name: 'spa', library: 'MaterialCommunityIcons' as const };
+  
+  return { name: 'help-circle-outline', library: 'Ionicons' as const };
+};
 
 export default function HotelDetailScreen() {
   const router = useRouter();
@@ -29,19 +49,32 @@ export default function HotelDetailScreen() {
   const [descExpanded, setDescExpanded] = useState(false);
   const [policyExpanded, setPolicyExpanded] = useState(false);
 
+  const [localCheckIn, setLocalCheckIn] = useState<Date>(checkIn ? parseISO(checkIn) : new Date());
+  const [localCheckOut, setLocalCheckOut] = useState<Date>(checkOut ? parseISO(checkOut) : new Date(Date.now() + 86400000));
+  const [localRooms, setLocalRooms] = useState<number>(roomCount ? Number(roomCount) : 1);
+  const [localAdults, setLocalAdults] = useState<number>(adults ? Number(adults) : 2);
+  const [localChildren, setLocalChildren] = useState<number>(0);
+  const [localChildAges, setLocalChildAges] = useState<number[]>([]);
+
+  const [dateModalVisible, setDateModalVisible] = useState(false);
+  const [guestModalVisible, setGuestModalVisible] = useState(false);
+
   useEffect(() => {
-    if (id) loadAll();
+    if (id) {
+      loadHotelData();
+    }
   }, [id]);
 
-  const loadAll = async () => {
-    setLoading(true);
+  useEffect(() => {
+    if (id) {
+      loadRooms();
+    }
+  }, [id, localCheckIn, localCheckOut]);
+
+  const loadHotelData = async () => {
     try {
-      const [hotelRes, roomRes] = await Promise.all([
-        hotelApi.getHotelById(id!),
-        roomApi.getRoomsByHotelId(id!),
-      ]);
+      const hotelRes = await hotelApi.getHotelById(id!);
       if (hotelRes.isSuccess) setHotel(hotelRes.data);
-      if (roomRes.isSuccess) setRoomList(roomRes.data.filter(r => r.isActive));
 
       const token = await tokenStorage.getAccessToken();
       if (token) {
@@ -51,7 +84,19 @@ export default function HotelDetailScreen() {
         } catch (_) { }
       }
     } catch (e) {
-      console.warn('Lỗi load detail:', e);
+      console.warn('Lỗi load hotel:', e);
+    }
+  };
+
+  const loadRooms = async () => {
+    setLoading(true);
+    try {
+      const inStr = format(localCheckIn, 'yyyy-MM-dd');
+      const outStr = format(localCheckOut, 'yyyy-MM-dd');
+      const roomRes = await roomApi.getRoomsByHotelId(id!, inStr, outStr);
+      if (roomRes.isSuccess) setRoomList(roomRes.data.filter(r => r.isActive));
+    } catch (e) {
+      console.warn('Lỗi load rooms:', e);
     } finally {
       setLoading(false);
     }
@@ -75,28 +120,27 @@ export default function HotelDetailScreen() {
     : ['https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800'];
 
   let nights = 1;
-  if (checkIn && checkOut) {
-    try {
-      const start = parseISO(checkIn);
-      const end = parseISO(checkOut);
-      const d = differenceInDays(end, start);
-      if (d > 0) nights = d;
-    } catch (e) {}
-  }
+  try {
+    const d = differenceInDays(localCheckOut, localCheckIn);
+    if (d > 0) nights = d;
+  } catch (e) {}
 
-  const minPrice = roomList.length > 0
-    ? Math.min(...roomList.map(r => r.discountPrice && r.discountPrice > 0 ? r.discountPrice : r.pricePerNight)) * nights
+  // Giá khởi điểm = giá thấp nhất của phòng còn trống (loại SoldOut, Maintenance)
+  const availableRooms = roomList.filter(r => r.status !== 'SoldOut' && r.status !== 'Maintenance');
+  const minPrice = availableRooms.length > 0
+    ? Math.min(...availableRooms.map(r => r.discountPrice && r.discountPrice > 0 && r.discountPrice < r.pricePerNight ? r.discountPrice : r.pricePerNight)) * nights
     : 0;
 
   const headerDateStr = (() => {
     let dateRange = '';
-    if (checkIn && checkOut) {
-      try {
-        dateRange = `${format(parseISO(checkIn), 'dd MMM')} - ${format(parseISO(checkOut), 'dd MMM')}`;
-      } catch (e) {}
-    }
-    const guests = adults ? `${adults} khách` : '1 khách';
-    return dateRange ? `${dateRange}, ${guests}` : guests;
+    try {
+      dateRange = `${format(localCheckIn, 'dd MMM')} - ${format(localCheckOut, 'dd MMM')}`;
+    } catch (e) {}
+    const guests = localChildren > 0 
+      ? `${localAdults} người lớn, ${localChildren} trẻ em` 
+      : `${localAdults} người lớn`;
+    const roomStr = `${localRooms} phòng`;
+    return dateRange ? `${dateRange} • ${roomStr}, ${guests}` : guests;
   })();
 
   if (loading) {
@@ -116,13 +160,16 @@ export default function HotelDetailScreen() {
           <Feather name="chevron-left" size={26} color="#000" />
         </TouchableOpacity>
 
-        <View style={styles.searchPill}>
+        <TouchableOpacity 
+          style={styles.searchPill}
+          onPress={() => setDateModalVisible(true)}
+        >
           <Ionicons name="search" size={15} color="#6B7280" style={{ marginRight: 8 }} />
           <View style={{ flex: 1 }}>
             <Text style={styles.pillTitle} numberOfLines={1}>{hotel?.name || 'Chi tiết khách sạn'}</Text>
             <Text style={styles.pillSub} numberOfLines={1}>{headerDateStr}</Text>
           </View>
-        </View>
+        </TouchableOpacity>
 
         <TouchableOpacity style={styles.headerIconBtn} onPress={toggleFav}>
           <Ionicons name={isFav ? 'heart' : 'heart-outline'} size={24} color={isFav ? '#FF567D' : '#111'} />
@@ -158,7 +205,26 @@ export default function HotelDetailScreen() {
             </Text>
           </View>
         )}
-
+        {hotel?.amenities && hotel.amenities.length > 0 && (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Tiện ích cơ sở lưu trú</Text>
+            <View style={styles.amenitiesGrid}>
+              {hotel.amenities.map((item: any) => {
+                const iconInfo = getAmenityIcon(item.name || '', item.icon);
+                return (
+                  <View key={item.id} style={styles.amenityItem}>
+                    {iconInfo.library === 'Ionicons' ? (
+                      <Ionicons name={iconInfo.name as any} size={20} color="#2563EB" />
+                    ) : (
+                      <MaterialCommunityIcons name={iconInfo.name as any} size={22} color="#2563EB" />
+                    )}
+                    <Text style={styles.amenityText} numberOfLines={1}>{item.name}</Text>
+                  </View>
+                );
+              })}
+            </View>
+          </View>
+        )}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>Vài thông tin hữu ích</Text>
@@ -253,12 +319,49 @@ export default function HotelDetailScreen() {
           style={styles.chooseRoomBtn}
           onPress={() => router.push({
             pathname: '/customer/hotel/chose-room',
-            params: { hotelId: hotel?.id, hotelName: hotel?.name, checkIn, checkOut, adults, rooms: roomCount },
+            params: { 
+              hotelId: hotel?.id, 
+              hotelName: hotel?.name, 
+              checkIn: format(localCheckIn, 'yyyy-MM-dd'), 
+              checkOut: format(localCheckOut, 'yyyy-MM-dd'), 
+              adults: localAdults.toString(), 
+              rooms: localRooms.toString() 
+            },
           })}
         >
           <Text style={styles.chooseRoomText}>Chọn phòng</Text>
         </TouchableOpacity>
       </View>
+
+      <AppDatePicker
+        visible={dateModalVisible}
+        onClose={() => setDateModalVisible(false)}
+        onConfirm={(start, end) => {
+          setLocalCheckIn(start);
+          setLocalCheckOut(end);
+          setDateModalVisible(false);
+          // Optional: After picking dates, prompt for guests or just close
+          setTimeout(() => setGuestModalVisible(true), 300);
+        }}
+        initialCheckIn={localCheckIn}
+        initialCheckOut={localCheckOut}
+      />
+
+      <RoomGuestPicker
+        visible={guestModalVisible}
+        onClose={() => setGuestModalVisible(false)}
+        onConfirm={(r, a, c, ages) => {
+          setLocalRooms(r);
+          setLocalAdults(a);
+          setLocalChildren(c);
+          setLocalChildAges(ages);
+          setGuestModalVisible(false);
+        }}
+        initialRooms={localRooms}
+        initialAdults={localAdults}
+        initialChildren={localChildren}
+        initialChildAges={localChildAges}
+      />
     </View>
   );
 }
@@ -341,4 +444,20 @@ const styles = StyleSheet.create({
     borderRadius: 30,
   },
   chooseRoomText: { color: '#FFF', fontSize: 16, fontWeight: '800' },
+  amenitiesGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    marginTop: 8,
+  },
+  amenityItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    width: '50%',
+    marginBottom: 10,
+  },
+  amenityText: {
+    fontSize: 14,
+    color: '#4B5563',
+    marginLeft: 8,
+  },
 });
