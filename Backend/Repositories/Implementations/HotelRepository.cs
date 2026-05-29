@@ -20,6 +20,7 @@ public class HotelRepository : IHotelRepository
         return await _context.Hotels
             .Include(h => h.Images)
             .Include(h => h.Amenities)
+            .Where(h => h.IsApproved && h.IsActive)
             .ToListAsync();
     }
 
