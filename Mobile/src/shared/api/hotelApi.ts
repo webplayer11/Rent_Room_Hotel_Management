@@ -132,6 +132,12 @@ export const hotelApi = {
     }) as Promise<ApiResponse<null>>;
   },
 
+  deleteHotel: (id: string) => {
+  return apiFetch(`/api/hotels/${id}`, {
+    method: "DELETE",
+  }) as Promise<ApiResponse<null>>;
+},
+
   getHotelById: (id: string) => {
     return apiFetch(`/api/hotels/${id}`, {
       method: "GET",

@@ -145,6 +145,48 @@ export default function HotelDetailScreen() {
         );
     };
 
+    const handleDeleteHotel = () => {
+        Alert.alert(
+            "Bạn có chắc muốn xóa khách sạn này không?",
+            "Toàn bộ dữ liệu phòng và ảnh sẽ bị xóa và không thể khôi phục.",
+            [
+                { text: "Hủy", style: "cancel" },
+                {
+                    text: "Xóa",
+                    style: "destructive",
+                    onPress: async () => {
+                        try {
+                            setLoading(true);
+                            const res = await hotelApi.deleteHotel(id);
+                            if (res.isSuccess) {
+                                Toast.show({
+                                    type: 'success',
+                                    text1: "Thành công",
+                                    text2: "Đã xóa khách sạn"
+                                });
+                                router.back();
+                            } else {
+                                Toast.show({
+                                    type: 'error',
+                                    text1: "Lỗi",
+                                    text2: res.message || "Xóa khách sạn thất bại"
+                                });
+                                setLoading(false);
+                            }
+                        } catch (error: any) {
+                            Toast.show({
+                                type: 'error',
+                                text1: "Lỗi",
+                                text2: error.message || "Không thể xóa khách sạn"
+                            });
+                            setLoading(false);
+                        }
+                    },
+                },
+            ]
+        );
+    };
+
     if (loading) {
         return (
             <SafeAreaView style={styles.center}>
@@ -408,6 +450,20 @@ export default function HotelDetailScreen() {
                         );
                     })
                 )}
+
+                {/* Delete Hotel Zone */}
+                <View style={styles.dangerZone}>
+                    <Text style={styles.dangerTitle}>Khu vực nguy hiểm</Text>
+                    <Text style={styles.dangerText}>Hành động này không thể hoàn tác, toàn bộ dữ liệu phòng và ảnh sẽ bị xóa.</Text>
+                    <TouchableOpacity 
+                        style={styles.deleteHotelBtn}
+                        onPress={handleDeleteHotel}
+                        disabled={loading}
+                    >
+                        <Ionicons name="trash-outline" size={18} color="#FFFFFF" style={{ marginRight: 6 }} />
+                        <Text style={styles.deleteHotelBtnText}>Xóa khách sạn</Text>
+                    </TouchableOpacity>
+                </View>
             </ScrollView>
         </SafeAreaView>
     );
@@ -798,5 +854,38 @@ const styles = StyleSheet.create({
         justifyContent: "center",
         alignItems: "center",
         backgroundColor: "#FFFFFF",
+    },
+    dangerZone: {
+        marginTop: 24,
+        marginBottom: 16,
+        padding: 16,
+        backgroundColor: "#FEF2F2",
+        borderRadius: 12,
+        borderWidth: 1,
+        borderColor: "#FECACA",
+    },
+    dangerTitle: {
+        fontSize: 15,
+        fontWeight: "700",
+        color: "#DC2626",
+        marginBottom: 4,
+    },
+    dangerText: {
+        fontSize: 12,
+        color: "#991B1B",
+        marginBottom: 16,
+    },
+    deleteHotelBtn: {
+        backgroundColor: "#DC2626",
+        flexDirection: "row",
+        alignItems: "center",
+        justifyContent: "center",
+        paddingVertical: 12,
+        borderRadius: 8,
+    },
+    deleteHotelBtnText: {
+        color: "#FFFFFF",
+        fontSize: 14,
+        fontWeight: "700",
     },
 });
