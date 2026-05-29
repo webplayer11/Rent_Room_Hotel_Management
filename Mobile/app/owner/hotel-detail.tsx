@@ -180,6 +180,17 @@ export default function HotelDetailScreen() {
 
                 <View style={styles.headerRight}>
                     <TouchableOpacity
+                        style={[styles.addBtn, { marginRight: 4 }]}
+                        onPress={() =>
+                            router.push({
+                                pathname: "/owner/hotel-form",
+                                params: { id, mode: "edit" },
+                            })
+                        }
+                    >
+                        <Ionicons name="create-outline" size={20} color="#1E293B" />
+                    </TouchableOpacity>
+                    <TouchableOpacity
                         style={styles.addBtn}
                         onPress={() =>
                             router.push({

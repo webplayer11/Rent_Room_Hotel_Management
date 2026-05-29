@@ -52,6 +52,19 @@ export type CreateHotelPayload = {
   amenities?: string[];
 };
 
+export type UpdateHotelPayload = {
+  name?: string;
+  description?: string;
+  address?: string;
+  latitude?: number;
+  longitude?: number;
+  starRating?: number | null;
+  checkInTime?: string;
+  checkOutTime?: string;
+  isActive?: boolean;
+  amenities?: string[];
+};
+
 export const hotelApi = {
   createHotel: (data: CreateHotelPayload) => {
     const formData = new FormData();
@@ -79,6 +92,16 @@ export const hotelApi = {
       method: "POST",
       body: formData,
       isFormData: true,
+    }) as Promise<ApiResponse<HotelDto>>;
+  },
+
+  updateHotel: (id: string, data: UpdateHotelPayload) => {
+    return apiFetch(`/api/hotels/${id}`, {
+      method: "PUT",
+      body: JSON.stringify(data),
+      headers: {
+        "Content-Type": "application/json",
+      },
     }) as Promise<ApiResponse<HotelDto>>;
   },
 
