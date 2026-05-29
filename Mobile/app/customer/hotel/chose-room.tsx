@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, Image, TouchableOpacity,
   ActivityIndicator, StatusBar, Platform, Dimensions
@@ -13,7 +13,7 @@ const { width } = Dimensions.get('window');
 
 const getImg = (url?: string) =>
   !url ? 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800'
-       : url.startsWith('http') ? url : `${IMAGE_URL}/${url}`;
+    : url.startsWith('http') ? url : `${IMAGE_URL}/${url}`;
 
 // ─── RoomCardItem tách ra ngoài để tránh re-define mỗi lần render ───
 type RoomCardProps = {
@@ -134,11 +134,12 @@ function RoomCardItem({ room, nights, roomCount, onBook }: RoomCardProps) {
             <Text style={styles.roomCountVal}>{roomCount || 1}</Text>
           </View>
           <TouchableOpacity
-            style={styles.bookRoomBtn}
+            style={[styles.bookRoomBtn, room.status === 'SoldOut' && { backgroundColor: '#9CA3AF' }]}
             activeOpacity={0.8}
+            disabled={room.status === 'SoldOut'}
             onPress={() => onBook(room.id, room.roomType || 'Phòng tiêu chuẩn', price)}
           >
-            <Text style={styles.bookRoomBtnText}>Đặt</Text>
+            <Text style={styles.bookRoomBtnText}>{room.status === 'SoldOut' ? 'Hết phòng' : 'Đặt'}</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -163,7 +164,7 @@ export default function ChoseRoomScreen() {
   const loadRooms = async () => {
     setLoading(true);
     try {
-      const res = await roomApi.getRoomsByHotelId(hotelId!);
+      const res = await roomApi.getRoomsByHotelId(hotelId!, checkIn, checkOut);
       if (res.isSuccess) {
         const activeRooms = res.data.filter(r => r.isActive);
         activeRooms.sort((a, b) => {
@@ -190,8 +191,46 @@ export default function ChoseRoomScreen() {
       dateRange = `${format(start, 'dd MMM')} - ${format(end, 'dd MMM')}`;
       const d = differenceInDays(end, start);
       if (d > 0) nights = d;
-    } catch (e) {}
+    } catch (e) { }
   }
+
+  // Group rooms of the same type and price
+  const groupedRooms = useMemo(() => {
+    const groups: { [key: string]: { representative: RoomDto; rooms: RoomDto[]; vacantCount: number } } = {};
+
+    roomList.forEach(room => {
+      const key = `${room.roomType || 'Standard'}-${room.pricePerNight}-${room.discountPrice || 0}-${room.capacity}-${room.bedCount}-${room.bedType || ''}-${room.isSmokingAllowed}`;
+      if (!groups[key]) {
+        groups[key] = {
+          representative: room,
+          rooms: [],
+          vacantCount: 0
+        };
+      }
+      groups[key].rooms.push(room);
+      if (room.status !== 'SoldOut') {
+        groups[key].vacantCount++;
+      }
+    });
+
+    const mappedGroups = Object.values(groups).map(g => {
+      const firstAvailable = g.rooms.find(r => r.status !== 'SoldOut') || g.rooms[0];
+      return {
+        room: {
+          ...firstAvailable,
+          status: g.vacantCount === 0 ? 'SoldOut' : firstAvailable.status
+        },
+        vacantCount: g.vacantCount
+      };
+    });
+
+    // Sắp xếp: phòng hết (vacantCount === 0) đẩy xuống cuối
+    return mappedGroups.sort((a, b) => {
+      if (a.vacantCount === 0 && b.vacantCount > 0) return 1;
+      if (b.vacantCount === 0 && a.vacantCount > 0) return -1;
+      return 0;
+    });
+  }, [roomList]);
 
   const headerDateStr = (() => {
     const guests = adults ? `${adults} khách` : '1 khách';
@@ -234,25 +273,20 @@ export default function ChoseRoomScreen() {
         </TouchableOpacity>
 
         <View style={styles.searchPill}>
-          <Ionicons name="search" size={15} color="#6B7280" style={{ marginRight: 8 }} />
           <View style={{ flex: 1 }}>
             <Text style={styles.pillTitle} numberOfLines={1}>{hotelName || 'Chọn phòng'}</Text>
             <Text style={styles.pillSub} numberOfLines={1}>{headerDateStr}</Text>
           </View>
         </View>
-
-        <TouchableOpacity style={styles.headerIconBtn}>
-          <Feather name="share" size={20} color="#111" />
-        </TouchableOpacity>
       </View>
 
       <ScrollView showsVerticalScrollIndicator={false}>
-        {roomList.map(room => (
+        {groupedRooms.map(group => (
           <RoomCardItem
-            key={room.id}
-            room={room}
+            key={group.room.id}
+            room={group.room}
             nights={nights}
-            roomCount={roomCount}
+            roomCount={group.vacantCount.toString()}
             hotelId={hotelId || ''}
             hotelName={hotelName}
             checkIn={checkIn}
@@ -261,7 +295,7 @@ export default function ChoseRoomScreen() {
             onBook={handleBook}
           />
         ))}
-        {roomList.length === 0 && (
+        {groupedRooms.length === 0 && (
           <Text style={{ textAlign: 'center', marginTop: 40, color: '#6B7280' }}>Không có phòng trống.</Text>
         )}
         <View style={{ height: 40 }} />

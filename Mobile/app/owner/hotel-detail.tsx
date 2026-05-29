@@ -20,6 +20,25 @@ import { hotelApi } from "../../src/shared/api/hotelApi";
 import { roomApi } from "../../src/shared/api/roomApi";
 import { IMAGE_URL } from "../../src/config";
 
+const getAmenityIcon = (name: string, iconFromDb?: string | null): string => {
+  // Backend lưu icon là Ionicons name (vd: "wifi-outline", "snow-outline", ...)
+  if (iconFromDb) return iconFromDb;
+  // Fallback theo tên nếu backend chưa có icon
+  const n = (name || '').toLowerCase();
+  if (n.includes('wifi')) return 'wifi-outline';
+  if (n.includes('hồ bơi') || n.includes('bể bơi') || n.includes('pool')) return 'water-outline';
+  if (n.includes('gym') || n.includes('thể hình') || n.includes('fitness')) return 'barbell-outline';
+  if (n.includes('nhà hàng') || n.includes('restaurant')) return 'restaurant-outline';
+  if (n.includes('đỗ xe') || n.includes('bãi xe') || n.includes('parking')) return 'car-outline';
+  if (n.includes('điều hòa') || n.includes('máy lạnh') || n.includes('air')) return 'snow-outline';
+  if (n.includes('bar') || n.includes('rượu')) return 'wine-outline';
+  if (n.includes('thang máy') || n.includes('elevator')) return 'git-commit-outline';
+  if (n.includes('spa') || n.includes('massage')) return 'flower-outline';
+  if (n.includes('giặt') || n.includes('laundry')) return 'shirt-outline';
+  if (n.includes('sân bay') || n.includes('airport')) return 'airplane-outline';
+  if (n.includes('phòng') || n.includes('room service')) return 'bed-outline';
+  return 'help-circle-outline';
+};
 
 
 export default function HotelDetailScreen() {
@@ -213,24 +232,19 @@ export default function HotelDetailScreen() {
                     <Text style={styles.cardTitle}>Giới thiệu khách sạn</Text>
                     <Text style={styles.descriptionText}>{hotelDescription}</Text>
 
-                <View style={styles.amenitiesGrid}>
-                        <View style={styles.amenityItem}>
-                            <Ionicons name="wifi" size={20} color="#2563EB" />
-                            <Text style={styles.amenityText}>Wifi Miễn Phí</Text>
+                    {hotel?.amenities && hotel.amenities.length > 0 && (
+                        <View style={styles.amenitiesGrid}>
+                            {hotel.amenities.map((item: any) => {
+                                const iconName = getAmenityIcon(item.name || '', item.icon);
+                                return (
+                                    <View key={item.id} style={styles.amenityItem}>
+                                        <Ionicons name={iconName as any} size={20} color="#2563EB" />
+                                        <Text style={styles.amenityText} numberOfLines={1}>{item.name}</Text>
+                                    </View>
+                                );
+                            })}
                         </View>
-                        <View style={styles.amenityItem}>
-                            <MaterialCommunityIcons name="pool" size={22} color="#2563EB" />
-                            <Text style={styles.amenityText}>Hồ Bơi</Text>
-                        </View>
-                        <View style={styles.amenityItem}>
-                            <MaterialCommunityIcons name="dumbbell" size={20} color="#2563EB" />
-                            <Text style={styles.amenityText}>Phòng Gym</Text>
-                        </View>
-                        <View style={styles.amenityItem}>
-                            <Ionicons name="restaurant" size={20} color="#2563EB" />
-                            <Text style={styles.amenityText}>Nhà Hàng</Text>
-                        </View>
-                    </View>
+                    )}
                 </View>
 
                 {/* Quản lý nhanh Card */}

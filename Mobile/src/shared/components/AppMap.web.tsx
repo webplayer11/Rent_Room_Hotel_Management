@@ -11,6 +11,7 @@ import {
     FlatList,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import * as Location from 'expo-location';
 
 interface AppMapProps {
     visible: boolean;
@@ -63,6 +64,43 @@ const AppMap = ({ visible, onClose, onSelectLocation }: AppMapProps) => {
         onClose();
     };
 
+    const getCurrentLocation = async () => {
+        try {
+            let { status } = await Location.requestForegroundPermissionsAsync();
+            if (status !== 'granted') {
+                alert('Quyền truy cập vị trí bị từ chối');
+                return;
+            }
+
+            let location = await Location.getCurrentPositionAsync({});
+            const coords = {
+                latitude: location.coords.latitude,
+                longitude: location.coords.longitude,
+            };
+
+            // Reverse geocode để lấy tên địa chỉ hiển thị
+            const reverse = await Location.reverseGeocodeAsync({
+                latitude: coords.latitude,
+                longitude: coords.longitude,
+            });
+
+            let fullAddress = "Vị trí hiện tại của bạn";
+            if (reverse && reverse.length > 0) {
+                const loc = reverse[0];
+                const parts = [loc.name, loc.street, loc.subregion, loc.city, loc.region, loc.country].filter(Boolean);
+                if (parts.length > 0) {
+                    fullAddress = parts.join(", ");
+                }
+            }
+            
+            onSelectLocation(fullAddress, coords);
+            onClose();
+        } catch (error) {
+            console.error("Lỗi lấy vị trí: ", error);
+            alert('Không thể lấy vị trí hiện tại');
+        }
+    };
+
     return (
         <Modal visible={visible} animationType="fade">
             <SafeAreaView style={styles.container}>
@@ -86,6 +124,11 @@ const AppMap = ({ visible, onClose, onSelectLocation }: AppMapProps) => {
                             />
                             {isSearching && <ActivityIndicator size="small" color="#2563EB" style={{ marginRight: 15 }} />}
                         </View>
+
+                        <TouchableOpacity style={styles.currentLocBtn} onPress={getCurrentLocation}>
+                            <Ionicons name="navigate-circle-outline" size={22} color="#059669" />
+                            <Text style={styles.currentLocText}>Sử dụng vị trí hiện tại của tôi</Text>
+                        </TouchableOpacity>
 
                         {searchResults.length > 0 && (
                             <View style={styles.resultsContainer}>
@@ -182,6 +225,19 @@ const styles = StyleSheet.create({
         paddingHorizontal: 15,
         fontSize: 16,
         color: '#1E293B',
+    },
+    currentLocBtn: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingHorizontal: 12,
+        paddingVertical: 12,
+        marginTop: 4,
+    },
+    currentLocText: {
+        marginLeft: 8,
+        fontSize: 14,
+        color: '#059669',
+        fontWeight: '600'
     },
     resultsContainer: {
         marginTop: 10,

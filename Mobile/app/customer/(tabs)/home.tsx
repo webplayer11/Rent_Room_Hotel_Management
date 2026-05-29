@@ -26,7 +26,7 @@ const HomeScreen = () => {
   const router = useRouter();
 
   const [location, setLocation] = useState('Gần chỗ tôi');
-  const [coordinates, setCoordinates] = useState<{latitude: number; longitude: number} | null>(null);
+  const [coordinates, setCoordinates] = useState<{ latitude: number; longitude: number } | null>(null);
   const [checkIn, setCheckIn] = useState<Date>(new Date());
   const [checkOut, setCheckOut] = useState<Date>(
     new Date(Date.now() + 86400000)
@@ -41,43 +41,39 @@ const HomeScreen = () => {
   const [children, setChildren] = useState(0);
   const [childAges, setChildAges] = useState<number[]>([]);
 
- const logout = async () => {
-  // WEB
-  if (Platform.OS === "web") {
-    const ok = window.confirm(
-      "Bạn có chắc chắn muốn đăng xuất không?"
-    );
+  const logout = async () => {
+    // WEB
+    if (Platform.OS === "web") {
+      const ok = window.confirm(
+        "Bạn có chắc chắn muốn đăng xuất không?"
+      );
 
-    if (!ok) return;
+      if (!ok) return;
 
-    await tokenStorage.clearTokens();
+      await tokenStorage.clearTokens();
 
-    router.replace("/auth/login");
+      router.replace("/auth/login");
 
-    return;
-  }
+      return;
+    }
 
-  // MOBILE
-  Alert.alert(
-    "Đăng xuất",
-    "Bạn có chắc chắn muốn đăng xuất không?",
-    [
-      {
-        text: "Hủy",
-        style: "cancel",
-      },
-      {
-        text: "Đăng xuất",
-        style: "destructive",
-        onPress: async () => {
-          await tokenStorage.clearTokens();
-
-          router.replace("/auth/login");
+    // NATIVE
+    Alert.alert(
+      "Đăng xuất",
+      "Bạn có chắc chắn muốn đăng xuất không?",
+      [
+        { text: "Hủy", style: "cancel" },
+        {
+          text: "Đồng ý",
+          style: "destructive",
+          onPress: async () => {
+            await tokenStorage.clearTokens();
+            router.replace("/auth/login");
+          },
         },
-      },
-    ]
-  );
-};
+      ]
+    );
+  };
 
   const guestText = useMemo(() => {
     let text = `${rooms} phòng, ${adults} người lớn`;
@@ -122,30 +118,16 @@ const HomeScreen = () => {
         <View style={styles.header}>
           <Text style={styles.brandText}>HanWangHo</Text>
           <View style={styles.headerIcons}>
-  <TouchableOpacity
-    style={styles.logoutButton}
-    onPress={logout}
-  >
-    <Ionicons
-      name="log-out-outline"
-      size={22}
-      color="#fff"
-    />
 
-    <Text style={styles.logoutText}>
-      Đăng xuất
-    </Text>
-  </TouchableOpacity>
-
-  <TouchableOpacity style={styles.headerIcon}>
-    <Ionicons
-      name="notifications-outline"
-      size={24}
-      color="#333"
-    />
-   </TouchableOpacity>
-   </View>
-   </View>
+            <TouchableOpacity style={styles.headerIcon}>
+              <Ionicons
+                name="notifications-outline"
+                size={24}
+                color="#333"
+              />
+            </TouchableOpacity>
+          </View>
+        </View>
 
         <View style={styles.searchCardContainer}>
           <View style={styles.searchCard}>
@@ -277,32 +259,7 @@ const HomeScreen = () => {
           </View>
         </View>
 
-        <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>Ưu đãi đặc biệt</Text>
-
-          <TouchableOpacity>
-            <Text style={styles.seeAll}>Xem tất cả</Text>
-          </TouchableOpacity>
-        </View>
-
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.promoScroll}
-        >
-          <PromoCard
-            image="https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?w=500"
-            title="Giảm đến 30% tại Đà Nẵng"
-            tag="Ưu đãi hè"
-          />
-
-          <PromoCard
-            image="https://images.unsplash.com/photo-1571003123894-1f0594d2b5d9?w=500"
-            title="Combo Bay + Ở tiết kiệm"
-            tag="Hot deal"
-          />
-        </ScrollView>
-
+        {/* Đã xóa dữ liệu fake ưu đãi đặc biệt theo yêu cầu */}
         <View style={{ height: 100 }} />
       </ScrollView>
 
@@ -332,28 +289,6 @@ const HomeScreen = () => {
     </SafeAreaView>
   );
 };
-
-const PromoCard = ({
-  image,
-  title,
-  tag,
-}: {
-  image: string;
-  title: string;
-  tag: string;
-}) => (
-  <TouchableOpacity style={styles.promoCard}>
-    <Image source={{ uri: image }} style={styles.promoImage} />
-
-    <View style={styles.promoOverlay}>
-      <View style={styles.promoTag}>
-        <Text style={styles.promoTagText}>{tag}</Text>
-      </View>
-
-      <Text style={styles.promoTitle}>{title}</Text>
-    </View>
-  </TouchableOpacity>
-);
 
 const styles = StyleSheet.create({
   container: {

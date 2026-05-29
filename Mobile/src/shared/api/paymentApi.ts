@@ -59,4 +59,15 @@ export const paymentApi = {
       method: 'GET',
     }) as Promise<ApiResponse<string>>;
   },
+
+  /**
+   * Gọi sau khi user bấm "Tôi đã thanh toán".
+   * Backend sẽ thông báo đến PaymentGate để kích hoạt chuỗi callback xác nhận.
+   * Trả về trạng thái thanh toán mới nhất ("SUCCESS" nếu thành công).
+   */
+  notifyPaid: (bookingId: string) => {
+    return apiFetch(`/api/payments/${bookingId}/notify-paid`, {
+      method: 'POST',
+    }) as Promise<ApiResponse<string>>;
+  },
 };

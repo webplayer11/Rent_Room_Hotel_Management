@@ -31,9 +31,9 @@ public class RoomController : ControllerBase
     }
 
     [HttpGet("hotel/{hotelId}")]
-    public async Task<IActionResult> GetByHotelId(string hotelId)
+    public async Task<IActionResult> GetByHotelId(string hotelId, [FromQuery] DateOnly? checkIn, [FromQuery] DateOnly? checkOut)
     {
-        var result = await _service.GetByHotelIdAsync(hotelId);
+        var result = await _service.GetByHotelIdAsync(hotelId, checkIn, checkOut);
         return Ok(ResponseApi<IEnumerable<RoomDto>>.Success(result));
     }
 

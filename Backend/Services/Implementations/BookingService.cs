@@ -42,7 +42,13 @@ public class BookingService : IBookingService
     public async Task<BookingDto?> CreateBookingAsync(string userId, CreateBookingDto dto)
     {
         var room = await _roomRepository.GetByIdAsync(dto.RoomId);
-        if (room == null || room.Status != "Available") return null;
+        // Phòng không tồn tại hoặc đang bảo trì
+        if (room == null || room.Status == "Maintenance") return null;
+
+        // Kiểm tra xem khoảng ngày yêu cầu có trùng với booking nào đang hoạt động không
+        bool hasConflict = await _bookingRepository.HasConflictingBookingAsync(
+            dto.RoomId, dto.CheckInDate, dto.CheckOutDate);
+        if (hasConflict) return null;
 
         int nights = (dto.CheckOutDate.DayNumber - dto.CheckInDate.DayNumber);
         if (nights <= 0) return null;
@@ -111,7 +117,8 @@ public class BookingService : IBookingService
         };
 
         var created = await _bookingRepository.CreateAsync(booking);
-        return _mapper.Map<BookingDto>(created);
+        var resultBooking = await _bookingRepository.GetByIdAsync(created.Id);
+        return _mapper.Map<BookingDto>(resultBooking ?? created);
     }
 
     public async Task<BookingDto?> UpdateBookingStatusAsync(string hostId, string bookingId, UpdateBookingStatusDto dto)
@@ -131,7 +138,35 @@ public class BookingService : IBookingService
         booking.UpdatedAt = DateTime.UtcNow;
 
         var updated = await _bookingRepository.UpdateAsync(booking);
-        return _mapper.Map<BookingDto>(updated);
+        var resultBooking = await _bookingRepository.GetByIdAsync(updated.Id);
+        return _mapper.Map<BookingDto>(resultBooking ?? updated);
+    }
+
+    public async Task<bool> DeleteBookingAsync(string userId, string bookingId)
+    {
+        var booking = await _bookingRepository.GetByIdAsync(bookingId);
+        // Only allow deleting pending bookings that belong to the user
+        if (booking == null || booking.UserId != userId || booking.Status != "Pending") 
+            return false;
+
+        return await _bookingRepository.DeleteAsync(bookingId);
+    }
+
+    public async Task<bool> CancelBookingAsync(string userId, string bookingId)
+    {
+        var booking = await _bookingRepository.GetByIdAsync(bookingId);
+        if (booking == null || booking.UserId != userId) return false;
+
+        // Cho phép khách hàng hủy nếu đang Pending hoặc Confirmed
+        if (booking.Status != "Pending" && booking.Status != "Confirmed")
+            return false;
+
+        booking.Status = "Cancelled";
+        booking.CancellationReason = "Khách hàng yêu cầu hủy";
+        booking.UpdatedAt = DateTime.UtcNow;
+
+        await _bookingRepository.UpdateAsync(booking);
+        return true;
     }
 
     private string GenerateBookingCode()

@@ -15,6 +15,13 @@ export type HotelImageDto = {
   sortOrder: number;
 };
 
+export type AmenityDto = {
+  id: string;
+  name?: string;
+  icon?: string;
+  category?: string;
+};
+
 export type HotelDto = {
   id: string;
   name?: string;
@@ -29,6 +36,7 @@ export type HotelDto = {
   isApproved: boolean;
   hostId: string;
   images: HotelImageDto[];
+  amenities: AmenityDto[];
 };
 
 export type CreateHotelPayload = {

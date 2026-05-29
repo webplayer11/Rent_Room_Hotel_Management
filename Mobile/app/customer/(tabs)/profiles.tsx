@@ -21,7 +21,7 @@ export default function ProfileScreen() {
               <Text style={styles.userEmail}>Đăng nhập để nhận ưu đãi thành viên</Text>
             </View>
           </View>
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.loginButton}
             onPress={() => router.push('/login')}
           >
@@ -61,11 +61,19 @@ export default function ProfileScreen() {
           <MenuItem icon="settings-outline" title="Cài đặt ứng dụng" />
           <MenuItem icon="globe-outline" title="Ngôn ngữ & Tiền tệ" />
         </View>
+
+        <TouchableOpacity style={styles.menuItem}
+          onPress={() => router.push("/customer/setting/account-info")}
+        >
+          <Ionicons name="person-outline" size={22} color="#2563eb" />
+          <Text style={styles.sectionTitle}>Thông tin tài khoản</Text>
+        </TouchableOpacity>
+
         <TouchableOpacity style={styles.menuItem}
           onPress={() => router.push("/customer/setting/comehost")}
-> 
-           <Ionicons name="business-outline" size={22} color="#2563eb" />
-           <Text style={styles.sectionTitle}>Đăng ký trở thành Host</Text>
+        >
+          <Ionicons name="business-outline" size={22} color="#2563eb" />
+          <Text style={styles.sectionTitle}>Đăng ký trở thành Host</Text>
         </TouchableOpacity>
 
         <TouchableOpacity style={styles.logoutButton} onPress={() => router.push('/login')}>

@@ -20,7 +20,17 @@ import { roomApi, RoomDto } from "../../src/shared/api/roomApi";
 import { hotelApi, HotelDto } from "../../src/shared/api/hotelApi";
 import { IMAGE_URL } from "../../src/config";
 
-const { width } = Dimensions.get("window");
+const getRoomAmenityIcon = (name: string) => {
+  const n = name.toLowerCase();
+  if (n.includes('wifi') || n.includes('internet')) return 'wifi';
+  if (n.includes('điều hòa') || n.includes('máy lạnh') || n.includes('air') || n.includes('snow')) return 'snow';
+  if (n.includes('bar') || n.includes('tủ lạnh') || n.includes('fridge') || n.includes('wine')) return 'wine-outline';
+  if (n.includes('tắm') || n.includes('bathtub') || n.includes('water')) return 'water-outline';
+  if (n.includes('két') || n.includes('safe') || n.includes('lock')) return 'lock-closed-outline';
+  if (n.includes('tv') || n.includes('television')) return 'tv-outline';
+  
+  return 'help-circle-outline';
+};
 
 export default function RoomDetailScreen() {
     const router = useRouter();
@@ -313,36 +323,23 @@ export default function RoomDetailScreen() {
                 </View>
 
                 {/* Card 3: Tiện ích */}
-                <View style={styles.card}>
-                    <Text style={styles.cardTitle}>Tiện ích</Text>
+                {room.roomAmenities && room.roomAmenities.length > 0 && (
+                    <View style={styles.card}>
+                        <Text style={styles.cardTitle}>Tiện ích</Text>
 
-                    <View style={styles.amenitiesGrid}>
-                        <View style={styles.amenityItem}>
-                            <Ionicons name="wifi" size={20} color="#3B82F6" />
-                            <Text style={styles.amenityText}>Wifi</Text>
-                        </View>
-                        <View style={styles.amenityItem}>
-                            <Ionicons name="snow" size={20} color="#3B82F6" />
-                            <Text style={styles.amenityText}>Điều hòa</Text>
-                        </View>
-                        <View style={styles.amenityItem}>
-                            <Ionicons name="wine-outline" size={20} color="#3B82F6" />
-                            <Text style={styles.amenityText}>Mini bar</Text>
-                        </View>
-                        <View style={styles.amenityItem}>
-                            <Ionicons name="water-outline" size={20} color="#3B82F6" />
-                            <Text style={styles.amenityText}>Bồn tắm</Text>
-                        </View>
-                        <View style={styles.amenityItem}>
-                            <Ionicons name="lock-closed-outline" size={20} color="#3B82F6" />
-                            <Text style={styles.amenityText}>Két sắt</Text>
-                        </View>
-                        <View style={styles.amenityItem}>
-                            <Ionicons name="tv-outline" size={20} color="#3B82F6" />
-                            <Text style={styles.amenityText}>TV</Text>
+                        <View style={styles.amenitiesGrid}>
+                            {room.roomAmenities.map((item: any) => {
+                                const iconName = getRoomAmenityIcon(item.name || '');
+                                return (
+                                    <View key={item.id} style={styles.amenityItem}>
+                                        <Ionicons name={iconName as any} size={20} color="#3B82F6" />
+                                        <Text style={styles.amenityText} numberOfLines={1}>{item.name}</Text>
+                                    </View>
+                                );
+                            })}
                         </View>
                     </View>
-                </View>
+                )}
 
                 {/* Card 4: Bảo trì & Dọn dẹp */}
                 <View style={styles.card}>

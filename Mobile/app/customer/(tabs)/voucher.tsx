@@ -8,6 +8,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { format, parseISO, isAfter, isBefore } from 'date-fns';
+import Toast from 'react-native-toast-message';
 import { voucherApi, VoucherDto } from '../../../src/shared/api/voucherApi';
 
 type VoucherTab = 'all' | 'system' | 'soon_expired';
@@ -65,22 +66,47 @@ const VoucherScreen = () => {
   };
 
   const handleValidate = async () => {
-    if (!searchCode.trim()) return;
-    setValidating(true);
-    setValidateResult(null);
-    try {
-      const res = await voucherApi.validateVoucher(searchCode.trim().toUpperCase());
-      if (res.isSuccess) {
-        setValidateResult(res.data);
-      } else {
-        setValidateResult({ isValid: false, message: res.message || 'Mã không hợp lệ' });
-      }
-    } catch (e: any) {
-      setValidateResult({ isValid: false, message: e.message || 'Lỗi kiểm tra mã' });
-    } finally {
-      setValidating(false);
+  if (!searchCode.trim()) return;
+
+  setValidating(true);
+
+  try {
+    const res = await voucherApi.validateVoucher(
+      searchCode.trim().toUpperCase()
+    );
+
+    if (res.isSuccess && res.data?.isValid) {
+      const voucher = res.data.voucher;
+
+      Toast.show({
+        type: 'success',
+        text1: 'Voucher hợp lệ',
+        text2:
+          voucher?.type === 'Percent'
+            ? `Giảm ${voucher.discountValue}%`
+            : `Giảm ${voucher?.discountValue?.toLocaleString('vi-VN')}₫`,
+        position: 'top',
+        visibilityTime: 2500,
+      });
+    } else {
+      Toast.show({
+        type: 'error',
+        text1: 'Voucher không hợp lệ',
+        text2: res.message || 'Mã không hợp lệ',
+        position: 'top',
+      });
     }
-  };
+  } catch (e: any) {
+    Toast.show({
+      type: 'error',
+      text1: 'Lỗi kiểm tra voucher',
+      text2: e.message || 'Có lỗi xảy ra',
+      position: 'top',
+    });
+  } finally {
+    setValidating(false);
+  }
+};
 
   const handleCopy = (code: string) => {
     Clipboard.setString(code);
@@ -112,6 +138,7 @@ const VoucherScreen = () => {
     const remaining = item.usageLimit - item.usedCount;
     const status = getVoucherStatus(item);
     const isDisabled = status !== 'active';
+  
 
     return (
       <View style={[styles.card, isDisabled && styles.cardDisabled]}>
@@ -205,9 +232,6 @@ const VoucherScreen = () => {
 
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
-          <Ionicons name="chevron-back" size={24} color="#333" />
-        </TouchableOpacity>
         <Text style={styles.headerTitle}>Voucher của tôi</Text>
         <View style={{ width: 36 }} />
       </View>
@@ -221,14 +245,14 @@ const VoucherScreen = () => {
             placeholder="Nhập mã voucher..."
             placeholderTextColor="#AAA"
             value={searchCode}
-            onChangeText={t => { setSearchCode(t); setValidateResult(null); }}
+            onChangeText={t => setSearchCode(t)}
             autoCapitalize="characters"
             returnKeyType="search"
             onSubmitEditing={handleValidate}
           />
           {searchCode.length > 0 && (
-            <TouchableOpacity onPress={() => { setSearchCode(''); setValidateResult(null); }}>
-              <Ionicons name="close-circle" size={18} color="#CCC" />
+            <TouchableOpacity onPress={() => setSearchCode('')}>
+               <Ionicons name="close-circle" size={18} color="#CCC" />
             </TouchableOpacity>
           )}
         </View>
@@ -239,24 +263,6 @@ const VoucherScreen = () => {
           }
         </TouchableOpacity>
       </View>
-
-      {/* Validate Result */}
-      {validateResult && (
-        <View style={[styles.validateResult, validateResult.isValid ? styles.resultSuccess : styles.resultFail]}>
-          <Ionicons
-            name={validateResult.isValid ? 'checkmark-circle' : 'close-circle'}
-            size={18}
-            color={validateResult.isValid ? '#00A651' : '#FF3B30'}
-          />
-          <Text style={[styles.resultText, { color: validateResult.isValid ? '#00A651' : '#FF3B30' }]}>
-            {validateResult.isValid
-              ? `Hợp lệ! Giảm ${validateResult.voucher?.type === 'Percent'
-                  ? `${validateResult.voucher.discountValue}%`
-                  : `${validateResult.voucher?.discountValue?.toLocaleString('vi-VN')}₫`}`
-              : validateResult.message || 'Mã không hợp lệ'}
-          </Text>
-        </View>
-      )}
 
       {/* Tabs */}
       <View style={styles.tabs}>
@@ -297,6 +303,7 @@ const VoucherScreen = () => {
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#5392F9']} />}
         />
       )}
+      <Toast />
     </SafeAreaView>
   );
 };

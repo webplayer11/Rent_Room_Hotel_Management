@@ -59,6 +59,30 @@ public class BookingController : ControllerBase
         return Ok(ResponseApi<BookingDto>.Success(result));
     }
 
+    [HttpDelete("{id}")]
+    public async Task<IActionResult> DeleteBooking(string id)
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (userId == null) return Unauthorized();
+
+        var result = await _service.DeleteBookingAsync(userId, id);
+        if (!result) return BadRequest(ResponseApi<string>.Failure(400, "Không thể xóa đơn đặt phòng này (có thể do đơn không tồn tại hoặc đã được xử lý)"));
+
+        return Ok(ResponseApi<string>.Success("Đã hủy và xóa đơn đặt phòng do chưa thanh toán"));
+    }
+
+    [HttpPost("{id}/cancel")]
+    public async Task<IActionResult> CancelBooking(string id)
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (userId == null) return Unauthorized();
+
+        var result = await _service.CancelBookingAsync(userId, id);
+        if (!result) return BadRequest(ResponseApi<string>.Failure(400, "Không thể hủy đơn đặt phòng này (chỉ có thể hủy đơn đang chờ hoặc đã xác nhận)"));
+
+        return Ok(ResponseApi<string>.Success("Hủy đơn đặt phòng thành công"));
+    }
+
     [HttpPut("{id}/status")]
     [Authorize(Roles = "Host")]
     public async Task<IActionResult> UpdateStatus(string id, [FromBody] UpdateBookingStatusDto dto)

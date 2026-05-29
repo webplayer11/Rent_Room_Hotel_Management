@@ -23,10 +23,30 @@ public class RoomService : IRoomService
         _context = context;
     }
 
-    public async Task<IEnumerable<RoomDto>> GetByHotelIdAsync(string hotelId)
+    public async Task<IEnumerable<RoomDto>> GetByHotelIdAsync(string hotelId, DateOnly? checkIn = null, DateOnly? checkOut = null)
     {
         var rooms = await _roomRepository.GetByHotelIdAsync(hotelId);
-        return _mapper.Map<IEnumerable<RoomDto>>(rooms);
+        var dtos = _mapper.Map<List<RoomDto>>(rooms);
+
+        var checkInDate = checkIn ?? DateOnly.FromDateTime(DateTime.Today);
+        var checkOutDate = checkOut ?? checkInDate.AddDays(1);
+
+        foreach (var dto in dtos)
+        {
+            bool hasConflict = await _context.Bookings.AnyAsync(b =>
+                b.RoomId == dto.Id &&
+                b.Status != "Cancelled" &&
+                b.Status != "Completed" &&
+                b.CheckInDate < checkOutDate &&
+                b.CheckOutDate > checkInDate);
+            
+            if (hasConflict)
+            {
+                dto.Status = "SoldOut";
+            }
+        }
+
+        return dtos;
     }
 
     public async Task<RoomDto?> GetByIdAsync(string id)
