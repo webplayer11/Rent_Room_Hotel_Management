@@ -111,6 +111,27 @@ export const hotelApi = {
     }) as Promise<ApiResponse<HotelDto[]>>;
   },
 
+  uploadImage: (hotelId: string, asset: any) => {
+    const formData = new FormData();
+    formData.append("file", {
+      uri: asset.uri,
+      name: asset.fileName || "hotel_image.jpg",
+      type: asset.mimeType || "image/jpeg",
+    } as any);
+
+    return apiFetch(`/api/hotels/${hotelId}/images`, {
+      method: "POST",
+      body: formData,
+      isFormData: true,
+    }) as Promise<ApiResponse<{ id: string; url: string; isPrimary: boolean }>>;
+  },
+
+  deleteImage: (hotelId: string, imageId: string) => {
+    return apiFetch(`/api/hotels/${hotelId}/images/${imageId}`, {
+      method: "DELETE",
+    }) as Promise<ApiResponse<null>>;
+  },
+
   getHotelById: (id: string) => {
     return apiFetch(`/api/hotels/${id}`, {
       method: "GET",

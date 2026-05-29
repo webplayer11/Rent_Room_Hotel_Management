@@ -19,6 +19,7 @@ import { ChevronLeft, Plus } from "lucide-react-native";
 import { hotelApi } from "../../src/shared/api/hotelApi";
 import { roomApi } from "../../src/shared/api/roomApi";
 import { IMAGE_URL } from "../../src/config";
+import HotelImageManager from "../../src/shared/components/HotelImageManager";
 
 const getAmenityIcon = (name: string, iconFromDb?: string | null): string => {
   // Backend lưu icon là Ionicons name (vd: "wifi-outline", "snow-outline", ...)
@@ -290,6 +291,13 @@ export default function HotelDetailScreen() {
                         <Text style={styles.reportButtonText}>Xem báo cáo chi tiết</Text>
                     </TouchableOpacity>
                 </View>
+
+                {/* Quản lý ảnh Card */}
+                <HotelImageManager 
+                    hotelId={id} 
+                    images={hotel?.images || []} 
+                    onRefresh={loadData} 
+                />
 
                 {/* Available Rooms Header */}
                 <View style={styles.roomsHeaderRow}>
