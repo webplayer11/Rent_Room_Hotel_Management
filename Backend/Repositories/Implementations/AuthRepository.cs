@@ -277,4 +277,45 @@ if (existingProfile != null)
 
         return principal;
     }
+
+    public async Task<UserProfileDto?> GetProfileAsync(string userId)
+{
+    var user = await _userManager.FindByIdAsync(userId);
+
+    if (user == null)
+        return null;
+
+    return new UserProfileDto
+    {
+        Email = user.Email!,
+        FullName = user.FullName,
+        PhoneNumber = user.PhoneNumber,
+        DateOfBirth = user.DateOfBirth,
+        Address = user.Address
+    };
+}
+
+    public async Task<bool> UpdateProfileAsync(string userId, UpdateProfileDto dto)
+{
+    var user = await _userManager.FindByIdAsync(userId);
+
+    if (user == null)
+        return false;
+
+    if (dto.FullName != null)
+        user.FullName = dto.FullName;
+
+    if (dto.PhoneNumber != null)
+        user.PhoneNumber = dto.PhoneNumber;
+
+    if (dto.DateOfBirth.HasValue)
+        user.DateOfBirth = dto.DateOfBirth.Value;
+
+    if (dto.Address != null)
+        user.Address = dto.Address;
+
+    var result = await _userManager.UpdateAsync(user);
+
+    return result.Succeeded;
+}
 }
