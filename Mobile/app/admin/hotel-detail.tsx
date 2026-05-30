@@ -144,7 +144,7 @@ export default function HotelDetailScreen() {
   if (loading) {
     return (
       <SafeAreaView style={styles.center}>
-        <ActivityIndicator size="large" color="#007AFF" />
+        <ActivityIndicator size="large" color="#5392F9" />
         <Text style={styles.loadingText}>Đang tải chi tiết...</Text>
       </SafeAreaView>
     );
@@ -457,7 +457,7 @@ const styles = StyleSheet.create({
     elevation: 4,
   },
   acceptButton: {
-    backgroundColor: '#007AFF',
+    backgroundColor: '#5392F9',
   },
   rejectButton: {
     backgroundColor: '#FF3B30',

@@ -97,7 +97,7 @@ export default function AdminHomeScreen() {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.content}
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#2563EB']} />
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#5392F9']} />
         }
       >
         {/* HEADER */}
@@ -123,7 +123,7 @@ export default function AdminHomeScreen() {
           <View style={styles.row}>
             <View style={[styles.statsCard, styles.cardWhite]}>
               <View style={[styles.iconBox, { backgroundColor: '#EFF6FF' }]}>
-                <Ionicons name="business" size={24} color="#3B82F6" />
+                <Ionicons name="business" size={24} color="#5392F9" />
               </View>
               <Text style={styles.statsValue}>{MOCK_STATS.totalHotels}</Text>
               <Text style={styles.statsLabel}>Tổng khách sạn</Text>
@@ -253,19 +253,19 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 24,
-    backgroundColor: '#DBEAFE',
+    backgroundColor: '#EEF3FF',
     justifyContent: 'center',
     alignItems: 'center',
   },
   avatarText: {
     fontSize: 20,
     fontWeight: '800',
-    color: '#2563EB',
+    color: '#5392F9',
   },
   greeting: {
     fontSize: 17,
     fontWeight: '800',
-    color: '#1E3A8A',
+    color: '#1E293B',
   },
   subtitle: {
     fontSize: 13,
@@ -321,7 +321,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   cardBlue: {
-    backgroundColor: '#1E3A8A',
+    backgroundColor: '#3A7BF7',
   },
   statsCardFull: {
     width: '100%',
@@ -363,7 +363,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 18,
     fontWeight: '800',
-    color: '#1E3A8A',
+    color: '#5392F9',
     marginBottom: 16,
   },
   actionsContainer: {

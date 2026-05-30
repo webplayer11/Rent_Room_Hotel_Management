@@ -130,7 +130,7 @@ export default function PendingHotelsScreen() {
   if (loading) {
     return (
       <View style={styles.center}>
-        <ActivityIndicator size="large" color="#2563EB" />
+        <ActivityIndicator size="large" color="#5392F9" />
         <Text style={styles.loadingText}>Đang tải danh sách...</Text>
       </View>
     );
@@ -194,8 +194,8 @@ const styles = StyleSheet.create({
   },
 
   filterButtonActive: {
-    backgroundColor: "#2563EB",
-    borderColor: "#2563EB",
+    backgroundColor: "#5392F9",
+    borderColor: "#5392F9",
   },
 
   filterText: {
@@ -227,14 +227,14 @@ const styles = StyleSheet.create({
     width: 46,
     height: 46,
     borderRadius: 23,
-    backgroundColor: "#DBEAFE",
+    backgroundColor: "#EEF3FF",
     justifyContent: "center",
     alignItems: "center",
     marginRight: 12,
   },
 
   avatarText: {
-    color: "#2563EB",
+    color: "#5392F9",
     fontSize: 18,
     fontWeight: "700",
   },

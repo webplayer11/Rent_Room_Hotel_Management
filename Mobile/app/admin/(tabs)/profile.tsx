@@ -32,7 +32,7 @@ export default function AdminProfileScreen() {
 
       <View style={styles.card}>
         <View style={styles.avatar}>
-          <User size={42} color="#2563EB" />
+          <User size={42} color="#5392F9" />
         </View>
 
         <Text style={styles.name}>Quản trị viên</Text>
@@ -63,7 +63,7 @@ export default function AdminProfileScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#F5F7FB",
+    backgroundColor: "#F8F9FA",
     padding: 20,
   },
 
@@ -98,7 +98,7 @@ const styles = StyleSheet.create({
     width: 90,
     height: 90,
     borderRadius: 45,
-    backgroundColor: "#DBEAFE",
+    backgroundColor: "#EEF3FF",
     justifyContent: "center",
     alignItems: "center",
     marginBottom: 16,

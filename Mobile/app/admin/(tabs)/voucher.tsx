@@ -383,7 +383,7 @@ const styles = StyleSheet.create({
   createButton: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#2563EB",
+    backgroundColor: "#5392F9",
     paddingHorizontal: 16,
     paddingVertical: 10,
     borderRadius: 12,
@@ -417,15 +417,15 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   codeBadge: {
-    backgroundColor: "#EFF6FF",
+    backgroundColor: "#F0F7FF",
     borderWidth: 1,
-    borderColor: "#BFDBFE",
+    borderColor: "rgba(83,146,249,0.4)",
     paddingHorizontal: 12,
     paddingVertical: 4,
     borderRadius: 8,
   },
   codeText: {
-    color: "#2563EB",
+    color: "#5392F9",
     fontWeight: "800",
     fontSize: 14,
   },
@@ -558,8 +558,8 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   typeButtonActive: {
-    backgroundColor: "#EFF6FF",
-    borderColor: "#2563EB",
+    backgroundColor: "#F0F7FF",
+    borderColor: "#5392F9",
   },
   typeButtonText: {
     color: "#64748B",
@@ -567,7 +567,7 @@ const styles = StyleSheet.create({
     fontSize: 13,
   },
   typeButtonTextActive: {
-    color: "#2563EB",
+    color: "#5392F9",
   },
   row: {
     flexDirection: "row",
@@ -577,12 +577,12 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   submitButton: {
-    backgroundColor: "#2563EB",
+    backgroundColor: "#5392F9",
     borderRadius: 12,
     paddingVertical: 14,
     alignItems: "center",
     marginTop: 24,
-    shadowColor: "#2563EB",
+    shadowColor: "#5392F9",
     shadowOpacity: 0.2,
     shadowRadius: 10,
     elevation: 3,
