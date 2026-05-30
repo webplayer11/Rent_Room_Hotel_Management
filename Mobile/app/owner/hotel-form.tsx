@@ -6,7 +6,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import * as ImagePicker from "expo-image-picker";
-import { useRouter } from "expo-router";
+import { useRouter, useLocalSearchParams } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { hotelApi } from "../../src/shared/api/hotelApi";
 import AppMap from "../../src/shared/components/AppMap";
@@ -20,6 +20,8 @@ const STEPS = ["Thông tin", "Tiện ích", "Vị trí", "Hình ảnh"];
 
 export default function CreateHotelScreen() {
   const router = useRouter();
+  const { id, mode } = useLocalSearchParams<{ id?: string; mode?: 'create' | 'edit' }>();
+  const isEdit = mode === "edit";
   const [step, setStep] = useState(0);
   const [loading, setLoading] = useState(false);
   const [step1, setStep1] = useState<Step1Data>({ name: "", description: "", starRating: "", checkInTime: "", checkOutTime: "" });
@@ -27,6 +29,40 @@ export default function CreateHotelScreen() {
   const [step2, setStep2] = useState<Step2Data>({ street: "", district: "", city: "", latitude: undefined, longitude: undefined, selectedLocation: "" });
   const [mapVisible, setMapVisible] = useState(false);
   const [images, setImages] = useState<HotelImage[]>([]);
+
+  React.useEffect(() => {
+    if (isEdit && id) {
+      setLoading(true);
+      hotelApi.getHotelById(id)
+        .then((res) => {
+          if (res.isSuccess && res.data) {
+            const d = res.data;
+            setStep1({
+              name: d.name || "",
+              description: d.description || "",
+              starRating: d.starRating ? String(d.starRating) : "",
+              checkInTime: d.checkInTime || "",
+              checkOutTime: d.checkOutTime || "",
+            });
+            if (d.address) {
+              const parts = d.address.split(", ");
+              setStep2({
+                street: parts[0] || "",
+                district: parts[1] || "",
+                city: parts.length > 2 ? parts.slice(2).join(", ") : "",
+                latitude: d.latitude,
+                longitude: d.longitude,
+                selectedLocation: d.address,
+              });
+            }
+            if (d.amenities) {
+              setAmenities(d.amenities.map(a => a.name || "").filter(Boolean));
+            }
+          }
+        })
+        .finally(() => setLoading(false));
+    }
+  }, [isEdit, id]);
 
   const validate = (): string | null => {
     if (step === 0) {
@@ -39,7 +75,7 @@ export default function CreateHotelScreen() {
       if (!step2.district.trim()) return "Vui lòng nhập quận / huyện";
       if (!step2.city.trim()) return "Vui lòng nhập tỉnh / thành phố";
     }
-    if (step === 3 && images.length === 0) return "Vui lòng chọn ít nhất 1 ảnh";
+    if (step === 3 && images.length === 0 && !isEdit) return "Vui lòng chọn ít nhất 1 ảnh";
     return null;
   };
 
@@ -60,24 +96,44 @@ export default function CreateHotelScreen() {
 
   const handleSubmit = async () => {
     const err = validate();
-    if (err) { Toast.show({ type: "error", text1: "Thiếu ảnh", text2: err }); return; }
+    if (err) { Toast.show({ type: "error", text1: "Thiếu thông tin", text2: err }); return; }
     try {
       setLoading(true);
-      const result = await hotelApi.createHotel({
-        name: step1.name.trim(), description: step1.description.trim(),
-        address: [step2.street, step2.district, step2.city].join(", "),
-        latitude: step2.latitude, longitude: step2.longitude,
-        starRating: step1.starRating ? Number(step1.starRating) : undefined,
-        checkInTime: step1.checkInTime, checkOutTime: step1.checkOutTime,
-        amenities, images,
-      });
-      if (result.isSuccess) {
-        Alert.alert("Thành công 🎉", "Khách sạn đã được gửi chờ admin duyệt", [{ text: "OK", onPress: () => router.back() }]);
+      if (isEdit && id) {
+        const result = await hotelApi.updateHotel(id, {
+          name: step1.name.trim(),
+          description: step1.description.trim(),
+          address: [step2.street.trim(), step2.district.trim(), step2.city.trim()].filter(Boolean).join(", "),
+          latitude: step2.latitude,
+          longitude: step2.longitude,
+          starRating: step1.starRating ? Number(step1.starRating) : null,
+          checkInTime: step1.checkInTime,
+          checkOutTime: step1.checkOutTime,
+          amenities,
+        });
+        if (result.isSuccess) {
+          Toast.show({ type: "success", text1: "Thành công", text2: "Đã lưu thông tin khách sạn" });
+          router.back();
+        } else {
+          Toast.show({ type: "error", text1: "Lỗi", text2: result.message || "Cập nhật khách sạn thất bại" });
+        }
       } else {
-        Toast.show({ type: "error", text1: "Lỗi", text2: result.message || "Tạo khách sạn thất bại" });
+        const result = await hotelApi.createHotel({
+          name: step1.name.trim(), description: step1.description.trim(),
+          address: [step2.street.trim(), step2.district.trim(), step2.city.trim()].filter(Boolean).join(", "),
+          latitude: step2.latitude, longitude: step2.longitude,
+          starRating: step1.starRating ? Number(step1.starRating) : undefined,
+          checkInTime: step1.checkInTime, checkOutTime: step1.checkOutTime,
+          amenities, images,
+        });
+        if (result.isSuccess) {
+          Alert.alert("Thành công 🎉", "Khách sạn đã được gửi chờ admin duyệt", [{ text: "OK", onPress: () => router.back() }]);
+        } else {
+          Toast.show({ type: "error", text1: "Lỗi", text2: result.message || "Tạo khách sạn thất bại" });
+        }
       }
     } catch (e: any) {
-      Toast.show({ type: "error", text1: "Lỗi", text2: e.message || "Không thể tạo khách sạn" });
+      Toast.show({ type: "error", text1: "Lỗi", text2: e.message || "Không thể thực hiện yêu cầu" });
     } finally { setLoading(false); }
   };
 
@@ -88,7 +144,7 @@ export default function CreateHotelScreen() {
         <View style={s.header}>
           <Pressable style={s.backBtn} onPress={handleBack}><Ionicons name="arrow-back" size={22} color="#111827" /></Pressable>
           <View style={{ flex: 1 }}>
-            <Text style={s.title}>Thêm khách sạn</Text>
+            <Text style={s.title}>{isEdit ? "Sửa khách sạn" : "Thêm khách sạn"}</Text>
             <Text style={s.subtitle}>Bước {step + 1}/{STEPS.length} — {STEPS[step]}</Text>
           </View>
         </View>
@@ -131,7 +187,7 @@ export default function CreateHotelScreen() {
           {step === 3 && (
             <StepPhotos
               images={images} onPick={pickImages} onRemove={(id) => setImages((p) => p.filter((i) => i.id !== id))}
-              step1={step1} step2={step2} amenityCount={amenities.length}
+              step1={step1} step2={step2} amenityCount={amenities.length} isEdit={isEdit}
             />
           )}
         </ScrollView>
@@ -141,7 +197,7 @@ export default function CreateHotelScreen() {
           {step < 3
             ? <Pressable style={s.primBtn} onPress={handleNext}><Text style={s.primBtnTxt}>Tiếp tục</Text><Ionicons name="arrow-forward" size={18} color="#FFF" /></Pressable>
             : <Pressable style={[s.primBtn, loading && { opacity: 0.6 }]} onPress={handleSubmit} disabled={loading}>
-                {loading ? <ActivityIndicator color="#FFF" /> : <><Ionicons name="cloud-upload-outline" size={18} color="#FFF" /><Text style={s.primBtnTxt}>Tạo khách sạn</Text></>}
+                {loading ? <ActivityIndicator color="#FFF" /> : <><Ionicons name={isEdit ? "save-outline" : "cloud-upload-outline"} size={18} color="#FFF" /><Text style={s.primBtnTxt}>{isEdit ? "Lưu thay đổi" : "Tạo khách sạn"}</Text></>}
               </Pressable>
           }
         </View>
@@ -186,7 +242,7 @@ function StepLocation({ data, onChange, mapVisible, setMapVisible }: { data: Ste
 }
 
 // ── Step 4: Photos & Review ────────────────────────────────────────────────────
-function StepPhotos({ images, onPick, onRemove, step1, step2, amenityCount }: { images: HotelImage[]; onPick: () => void; onRemove: (id: string) => void; step1: Step1Data; step2: Step2Data; amenityCount: number }) {
+function StepPhotos({ images, onPick, onRemove, step1, step2, amenityCount, isEdit }: { images: HotelImage[]; onPick: () => void; onRemove: (id: string) => void; step1: Step1Data; step2: Step2Data; amenityCount: number; isEdit: boolean }) {
   return (
     <View>
       <View style={[s.card, { marginBottom: 12 }]}>
@@ -199,21 +255,25 @@ function StepPhotos({ images, onPick, onRemove, step1, step2, amenityCount }: { 
         <ReviewRow icon="location-outline" label="Địa chỉ" value={[step2.street, step2.district, step2.city].filter(Boolean).join(", ") || "Chưa nhập"} />
       </View>
       <View style={s.card}>
-        <Text style={s.sectionTitle}>🖼️ Hình ảnh *</Text>
-        <Pressable style={s.uploadBtn} onPress={onPick}>
-          <Ionicons name="cloud-upload-outline" size={22} color="#2563EB" />
-          <Text style={s.uploadTxt}>Chọn ảnh ({images.length} đã chọn)</Text>
-        </Pressable>
-        {images.length === 0 && <Text style={[s.hint, { textAlign: "center", marginTop: 8 }]}>Chọn ít nhất 1 ảnh</Text>}
-        <View style={s.imgGrid}>
-          {images.map((img, i) => (
-            <View key={img.id} style={s.imgCell}>
-              <Image source={{ uri: img.uri }} style={s.gridImg} />
-              {i === 0 && <View style={s.badge}><Text style={s.badgeTxt}>Đại diện</Text></View>}
-              <Pressable style={s.removeBtn} onPress={() => onRemove(img.id)}><Ionicons name="close-circle" size={22} color="#EF4444" /></Pressable>
+        <Text style={s.sectionTitle}>🖼️ Hình ảnh{isEdit ? " (Quản lý ở chi tiết khách sạn)" : " *"}</Text>
+        {!isEdit && (
+          <>
+            <Pressable style={s.uploadBtn} onPress={onPick}>
+              <Ionicons name="cloud-upload-outline" size={22} color="#2563EB" />
+              <Text style={s.uploadTxt}>Chọn ảnh ({images.length} đã chọn)</Text>
+            </Pressable>
+            {images.length === 0 && <Text style={[s.hint, { textAlign: "center", marginTop: 8 }]}>Chọn ít nhất 1 ảnh</Text>}
+            <View style={s.imgGrid}>
+              {images.map((img, i) => (
+                <View key={img.id} style={s.imgCell}>
+                  <Image source={{ uri: img.uri }} style={s.gridImg} />
+                  {i === 0 && <View style={s.badge}><Text style={s.badgeTxt}>Đại diện</Text></View>}
+                  <Pressable style={s.removeBtn} onPress={() => onRemove(img.id)}><Ionicons name="close-circle" size={22} color="#EF4444" /></Pressable>
+                </View>
+              ))}
             </View>
-          ))}
-        </View>
+          </>
+        )}
       </View>
     </View>
   );

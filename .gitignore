@@ -7,3 +7,7 @@ Backend/obj/
 bin
 Backend/minio/
 Backend/minio.exe
+obj/
+node_modules/
+.env
+.expo/

@@ -52,6 +52,19 @@ export type CreateHotelPayload = {
   amenities?: string[];
 };
 
+export type UpdateHotelPayload = {
+  name?: string;
+  description?: string;
+  address?: string;
+  latitude?: number;
+  longitude?: number;
+  starRating?: number | null;
+  checkInTime?: string;
+  checkOutTime?: string;
+  isActive?: boolean;
+  amenities?: string[];
+};
+
 export const hotelApi = {
   createHotel: (data: CreateHotelPayload) => {
     const formData = new FormData();
@@ -82,11 +95,48 @@ export const hotelApi = {
     }) as Promise<ApiResponse<HotelDto>>;
   },
 
+  updateHotel: (id: string, data: UpdateHotelPayload) => {
+    return apiFetch(`/api/hotels/${id}`, {
+      method: "PUT",
+      body: JSON.stringify(data),
+      headers: {
+        "Content-Type": "application/json",
+      },
+    }) as Promise<ApiResponse<HotelDto>>;
+  },
+
   getMyHotels: () => {
     return apiFetch("/api/hotels/my-hotels", {
       method: "GET",
     }) as Promise<ApiResponse<HotelDto[]>>;
   },
+
+  uploadImage: (hotelId: string, asset: any) => {
+    const formData = new FormData();
+    formData.append("file", {
+      uri: asset.uri,
+      name: asset.fileName || "hotel_image.jpg",
+      type: asset.mimeType || "image/jpeg",
+    } as any);
+
+    return apiFetch(`/api/hotels/${hotelId}/images`, {
+      method: "POST",
+      body: formData,
+      isFormData: true,
+    }) as Promise<ApiResponse<{ id: string; url: string; isPrimary: boolean }>>;
+  },
+
+  deleteImage: (hotelId: string, imageId: string) => {
+    return apiFetch(`/api/hotels/${hotelId}/images/${imageId}`, {
+      method: "DELETE",
+    }) as Promise<ApiResponse<null>>;
+  },
+
+  deleteHotel: (id: string) => {
+  return apiFetch(`/api/hotels/${id}`, {
+    method: "DELETE",
+  }) as Promise<ApiResponse<null>>;
+},
 
   getHotelById: (id: string) => {
     return apiFetch(`/api/hotels/${id}`, {
