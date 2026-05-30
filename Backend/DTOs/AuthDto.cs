@@ -88,3 +88,4 @@ public class ResetPasswordDto
     [Compare("NewPassword", ErrorMessage = "Mật khẩu xác nhận không khớp")]
     public string ConfirmPassword { get; set; } = string.Empty;
 }
+
