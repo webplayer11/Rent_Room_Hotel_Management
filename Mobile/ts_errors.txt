@@ -1,0 +1,10 @@
+App.tsx(2,40): error TS2307: Cannot find module './src/features/owner/booking/OwnerBookingListScreen' or its corresponding type declarations.
+App.tsx(3,38): error TS2307: Cannot find module './src/features/owner/dashboard/OwnerDashboardScreen' or its corresponding type declarations.
+App.tsx(4,38): error TS2307: Cannot find module './src/features/owner/hotel/OwnerHotelFormScreen' or its corresponding type declarations.
+App.tsx(5,38): error TS2307: Cannot find module './src/features/owner/hotel/OwnerHotelListScreen' or its corresponding type declarations.
+app/admin/accounts.tsx(1,40): error TS2307: Cannot find module '../../src/features/admin/AdminAccountListScreen' or its corresponding type declarations.
+app/admin/reports.tsx(1,35): error TS2307: Cannot find module '../../src/features/admin/AdminReportScreen' or its corresponding type declarations.
+app/owner/bookings.tsx(1,40): error TS2307: Cannot find module '../../src/features/owner/booking/OwnerBookingListScreen' or its corresponding type declarations.
+src/shared/hooks/use-theme-color.ts(6,24): error TS2307: Cannot find module '@/constants/theme' or its corresponding type declarations.
+src/shared/hooks/use-theme-color.ts(7,32): error TS2307: Cannot find module '@/hooks/use-color-scheme' or its corresponding type declarations.
+src/shared/hooks/use-theme-color.ts(14,26): error TS7053: Element implicitly has an 'any' type because expression of type 'any' can't be used to index type '{ light?: string | undefined; dark?: string | undefined; }'.

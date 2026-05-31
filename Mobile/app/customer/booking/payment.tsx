@@ -10,6 +10,9 @@ import { useRouter, useLocalSearchParams } from 'expo-router';
 import { bookingApi } from '../../../src/shared/api/bookingApi';
 import { paymentApi } from '../../../src/shared/api/paymentApi';
 import Toast from 'react-native-toast-message';
+//import thư viện download ảnh
+import { File, Paths } from 'expo-file-system';
+import * as MediaLibrary from 'expo-media-library';
 
 type PayMethod = 'Cash' | 'BankTransfer' | 'Card';
 
@@ -34,6 +37,7 @@ const PaymentScreen = () => {
   const [method, setMethod] = useState<PayMethod>('BankTransfer');
   const [qrUrl, setQrUrl] = useState<string | null>(null);
   const [bookingIdForQr, setBookingIdForQr] = useState<string | null>(null);
+  const [downloading, setDownloading] = useState(false);
 
   const finalPrice = params.finalPrice ? Number(params.finalPrice) : 0;
 
@@ -71,13 +75,13 @@ const PaymentScreen = () => {
         setQrUrl(onlineRes.data.qrUrl);
         setBookingIdForQr(bookingId);
       } else if (onlineRes.isSuccess && onlineRes.data?.payUrl) {
-         Toast.show({
-           type: 'success',
-           text1: 'Đang chuyển đến cổng thanh toán...',
-           text2: 'Vui lòng hoàn tất thanh toán trong trình duyệt.',
-           visibilityTime: 2000,
-           onHide: () => router.replace('/customer/(tabs)/history' as any),
-         });
+        Toast.show({
+          type: 'success',
+          text1: 'Đang chuyển đến cổng thanh toán...',
+          text2: 'Vui lòng hoàn tất thanh toán trong trình duyệt.',
+          visibilityTime: 2000,
+          onHide: () => router.replace('/customer/(tabs)/history' as any),
+        });
       } else {
         Toast.show({ type: 'error', text1: 'Lỗi', text2: 'Không thể khởi tạo thanh toán.' });
       }
@@ -85,6 +89,42 @@ const PaymentScreen = () => {
       Toast.show({ type: 'error', text1: 'Lỗi kết nối', text2: 'Có lỗi xảy ra. Vui lòng thử lại.' });
     } finally {
       setLoading(false);
+    }
+  };
+  // khai báo hàm download ảnh QR
+  const handleDownloadQr = async () => {
+    if (!qrUrl) return;
+    setDownloading(true);
+    try {
+      const { status } = await MediaLibrary.requestPermissionsAsync(true);
+      if (status !== 'granted') {
+        Alert.alert('Cần quyền truy cập', 'Vui lòng cho phép ứng dụng lưu ảnh vào thư viện ảnh.');
+        setDownloading(false);
+        return;
+      }
+
+      const fileName = `QR_Payment_${Date.now()}.png`;
+      const destFile = new File(Paths.cache, fileName);
+
+      const downloadedFile = await File.downloadFileAsync(qrUrl, destFile);
+
+      await MediaLibrary.saveToLibraryAsync(downloadedFile.uri);
+
+      Toast.show({
+        type: 'success',
+        text1: 'Đã lưu ảnh QR!',
+        text2: 'Ảnh QR đã được lưu vào thư viện ảnh của bạn.',
+        visibilityTime: 2500,
+      });
+    } catch (error: any) {
+      console.log('Lỗi tải/ảnh QR:', error);
+      Toast.show({
+        type: 'error',
+        text1: 'Lưu thất bại',
+        text2: error?.message || 'Không thể lưu ảnh QR. Vui lòng thử lại.',
+      });
+    } finally {
+      setDownloading(false);
     }
   };
 
@@ -200,16 +240,32 @@ const PaymentScreen = () => {
             <Text style={styles.qrInstruction}>
               Vui lòng sử dụng ứng dụng ngân hàng quét mã QR trên để hoàn tất thanh toán.
             </Text>
-            
-            <TouchableOpacity 
+            {/* nút tải ảnh QR */}
+            <TouchableOpacity
+              style={[styles.qrDownloadBtn, downloading && { opacity: 0.7 }]}
+              onPress={handleDownloadQr}
+              disabled={downloading}
+            >
+              {downloading
+                ? <ActivityIndicator color="#2563EB" />
+                : (
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                    <Ionicons name="download-outline" size={18} color="#2563EB" />
+                    <Text style={styles.qrDownloadText}>Tải ảnh QR về máy</Text>
+                  </View>
+                )
+              }
+            </TouchableOpacity>
+
+            <TouchableOpacity
               style={[styles.qrDoneBtn, loading && { opacity: 0.7 }]}
               onPress={handleCheckPaymentStatus}
               disabled={loading}
             >
               {loading ? <ActivityIndicator color="#FFF" /> : <Text style={styles.qrDoneText}>Tôi đã thanh toán</Text>}
             </TouchableOpacity>
-            
-            <TouchableOpacity 
+
+            <TouchableOpacity
               style={styles.qrCancelBtn}
               onPress={async () => {
                 if (bookingIdForQr) {
@@ -314,6 +370,16 @@ const styles = StyleSheet.create({
   },
   qrDoneText: {
     color: '#FFF', fontSize: 15, fontWeight: '700'
+  },
+  qrDownloadBtn: {
+    width: '100%', height: 48, borderRadius: 24,
+    justifyContent: 'center', alignItems: 'center',
+    backgroundColor: '#EFF6FF',
+    borderWidth: 1.5, borderColor: '#2563EB',
+    marginBottom: 12,
+  },
+  qrDownloadText: {
+    color: '#2563EB', fontSize: 15, fontWeight: '700',
   },
   qrCancelBtn: {
     width: '100%', height: 48, borderRadius: 24,
