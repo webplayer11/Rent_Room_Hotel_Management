@@ -121,13 +121,16 @@ export default function AdminHomeScreen() {
         <View style={styles.statsContainer}>
           {/* Row 1 */}
           <View style={styles.row}>
-            <View style={[styles.statsCard, styles.cardWhite]}>
+            <Pressable
+              style={({ pressed }) => [styles.statsCard, styles.cardWhite, pressed && { opacity: 0.75 }]}
+              onPress={() => router.push('/admin/hotels')}
+            >
               <View style={[styles.iconBox, { backgroundColor: '#EFF6FF' }]}>
                 <Ionicons name="business" size={24} color="#5392F9" />
               </View>
               <Text style={styles.statsValue}>{MOCK_STATS.totalHotels}</Text>
               <Text style={styles.statsLabel}>Tổng khách sạn</Text>
-            </View>
+            </Pressable>
             <View style={[styles.statsCard, styles.cardWhite]}>
               <View style={[styles.iconBox, { backgroundColor: '#F3E8FF' }]}>
                 <Ionicons name="people" size={24} color="#9333EA" />

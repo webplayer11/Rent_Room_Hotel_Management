@@ -29,6 +29,9 @@ export type PendingHotelDto = {
   checkOutTime: string;
   createdAt: string;
   images: any[];
+  // trạng thái từ backend (Hotel.cs)
+  isApproved: boolean;
+  isActive: boolean;
 };
 
 
@@ -59,8 +62,20 @@ export const adminApi = {
     }) as Promise<ApiResponse<PendingHostDto>>;
   },
 
+  getAllHotels: () => {
+    return apiFetch('/api/admin/hotels', {
+      method: "GET",
+    }) as Promise<ApiResponse<PendingHotelDto[]>>;
+  },
+
   getPendingHotel: () => {
     return apiFetch('/api/admin/hotels/pending', {
+      method: "GET",
+    }) as Promise<ApiResponse<PendingHotelDto[]>>;
+  },
+
+  getApprovedHotels: () => {
+    return apiFetch('/api/admin/hotels/approved', {
       method: "GET",
     }) as Promise<ApiResponse<PendingHotelDto[]>>;
   },
