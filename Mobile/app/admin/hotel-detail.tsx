@@ -4,7 +4,7 @@ import React, { useEffect, useState } from 'react';
 import {
   View, Text, StyleSheet, TouchableOpacity, TextInput, Modal,
   Image, ScrollView, KeyboardAvoidingView, Platform, Dimensions,
-  ActivityIndicator, Alert,
+  ActivityIndicator, Alert, Pressable,
 } from 'react-native';
 import {
   X, CheckCircle, AlertCircle, Maximize2, ChevronLeft,
@@ -12,6 +12,7 @@ import {
 } from 'lucide-react-native';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { adminApi, PendingHotelDto } from '../../src/shared/api/adminApi';
+import { roomApi, RoomDto } from '../../src/shared/api/roomApi';
 import { IMAGE_URL } from '../../src/config';
 
 // ── Trạng thái KS (2 boolean từ backend) ─────────────────────────
@@ -37,19 +38,39 @@ export default function HotelDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
 
   const [hotel,         setHotel]         = useState<PendingHotelDto | null>(null);
+  const [rooms,         setRooms]         = useState<RoomDto[]>([]);
   const [loading,       setLoading]       = useState(false);
+  const [roomsLoading,  setRoomsLoading]  = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
   const [suspendModal,  setSuspendModal]  = useState(false);
   const [suspendReason, setSuspendReason] = useState('');
   const [fullScreenImg, setFullScreenImg] = useState<string | null>(null);
 
   // ── Load ────────────────────────────────────────────────────────
+  const loadRooms = async () => {
+    if (!id) return;
+    try {
+      setRoomsLoading(true);
+      const res = await roomApi.getRoomsByHotelId(id);
+      if (res.isSuccess) {
+        setRooms(res.data || []);
+      }
+    } catch (e: any) {
+      console.log("Error loading rooms:", e);
+    } finally {
+      setRoomsLoading(false);
+    }
+  };
+
   const loadDetail = async () => {
     if (!id) return;
     try {
       setLoading(true);
       const res = await adminApi.getPendingHotelDetail(id);
-      if (res.isSuccess) setHotel(res.data);
+      if (res.isSuccess) {
+        setHotel(res.data);
+        await loadRooms();
+      }
       else Toast.show({ type: 'error', text1: 'Lỗi', text2: res.message });
     } catch (e: any) {
       Toast.show({ type: 'error', text1: 'Lỗi', text2: e.message || 'Không tải được chi tiết' });
@@ -354,6 +375,72 @@ export default function HotelDetailScreen() {
             </View>
           )}
 
+          {/* Danh sách phòng */}
+          <View style={[styles.infoSection, { marginTop: 12 }]}>
+            <Text style={styles.infoLabel}>Danh sách phòng</Text>
+            {roomsLoading ? (
+              <ActivityIndicator size="small" color="#5392F9" style={{ marginVertical: 10 }} />
+            ) : rooms.length === 0 ? (
+              <Text style={{ color: '#94A3B8', fontStyle: 'italic' }}>Khách sạn chưa có phòng nào</Text>
+            ) : (
+              rooms.map((room) => {
+                const firstImg = room.images?.[0]?.url || room.images?.[0];
+                const roomImgUri = firstImg
+                  ? (firstImg.startsWith('http') ? firstImg : `${IMAGE_URL}/${firstImg}`)
+                  : null;
+
+                return (
+                  <Pressable
+                    key={room.id}
+                    style={styles.roomCard}
+                    onPress={() => router.push(`/admin/room-detail?id=${room.id}`)}
+                  >
+                    {roomImgUri ? (
+                      <Image source={{ uri: roomImgUri }} style={styles.roomThumb} resizeMode="cover" />
+                    ) : (
+                      <View style={styles.roomThumbPlaceholder}>
+                        <Text style={{ fontSize: 18 }}>🛏</Text>
+                      </View>
+                    )}
+                    <View style={styles.roomInfo}>
+                      <Text style={styles.roomName} numberOfLines={1}>
+                        {room.roomType || 'Phòng'} {room.roomNumber ? `- ${room.roomNumber}` : ''}
+                      </Text>
+                      <Text style={styles.roomDetails}>
+                        👥 {room.capacity} người | 🛏 {room.bedCount} {room.bedType || 'Giường'}
+                      </Text>
+                      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 4 }}>
+                        <Text style={styles.roomPrice}>
+                          {room.discountPrice ? (
+                            <>
+                              <Text style={{ textDecorationLine: 'line-through', color: '#94A3B8', fontSize: 11 }}>
+                                {Number(room.pricePerNight).toLocaleString('vi-VN')}đ
+                              </Text>{' '}
+                              <Text style={{ color: '#E11D48', fontWeight: '700' }}>
+                                {Number(room.discountPrice).toLocaleString('vi-VN')}đ
+                              </Text>
+                            </>
+                          ) : (
+                            <Text style={{ color: '#1E293B', fontWeight: '700' }}>
+                              {Number(room.pricePerNight).toLocaleString('vi-VN')}đ
+                            </Text>
+                          )}
+                          <Text style={{ fontSize: 11, fontWeight: '400', color: '#64748B' }}>/đêm</Text>
+                        </Text>
+                        
+                        <View style={[styles.roomStatusBadge, { backgroundColor: room.isActive ? '#DCFCE7' : '#FEE2E2' }]}>
+                          <Text style={[styles.roomStatusText, { color: room.isActive ? '#166534' : '#991B1B' }]}>
+                            {room.isActive ? 'Đang hoạt động' : 'Tạm dừng'}
+                          </Text>
+                        </View>
+                      </View>
+                    </View>
+                  </Pressable>
+                );
+              })
+            )}
+          </View>
+
         </View>
       </ScrollView>
 
@@ -458,4 +545,57 @@ const styles = StyleSheet.create({
   closeBtn:   { position: 'absolute', top: 50, right: 20, zIndex: 10 },
   center:     { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#fff' },
   loadingText:{ fontSize: 16, color: '#333', fontWeight: '500' },
+
+  // ── Room Card Styles ──
+  roomCard: {
+    flexDirection: 'row',
+    backgroundColor: '#F8FAFC',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    padding: 12,
+    marginBottom: 12,
+    overflow: 'hidden',
+  },
+  roomThumb: {
+    width: 80,
+    height: 80,
+    borderRadius: 8,
+  },
+  roomThumbPlaceholder: {
+    width: 80,
+    height: 80,
+    borderRadius: 8,
+    backgroundColor: '#E2E8F0',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  roomInfo: {
+    flex: 1,
+    marginLeft: 12,
+    justifyContent: 'center',
+  },
+  roomName: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#0F172A',
+  },
+  roomDetails: {
+    fontSize: 12,
+    color: '#64748B',
+    marginTop: 2,
+  },
+  roomPrice: {
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  roomStatusBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 8,
+  },
+  roomStatusText: {
+    fontSize: 10,
+    fontWeight: '600',
+  },
 });
