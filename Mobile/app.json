@@ -14,22 +14,26 @@
       "backgroundColor": "#ffffff"
     },
     "ios": {
-    "supportsTablet": true,
-    "infoPlist": {
-    "NSLocationWhenInUseUsageDescription": "Ứng dụng cần vị trí để chọn địa điểm gần bạn"
-    }
-    }, 
+      "supportsTablet": true,
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "Ứng dụng cần vị trí để chọn địa điểm gần bạn",
+        "NSPhotoLibraryAddUsageDescription": "Ứng dụng cần quyền để lưu ảnh QR vào thư viện ảnh"
+      }
+    },
     "android": {
-    "adaptiveIcon": {
-    "foregroundImage": "./assets/adaptive-icon.png",
-    "backgroundColor": "#ffffff"
-     },
-    "edgeToEdgeEnabled": true,
-    "predictiveBackGestureEnabled": false,
-    "permissions": [
-    "ACCESS_FINE_LOCATION",
-    "ACCESS_COARSE_LOCATION"]
-    }, 
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#ffffff"
+      },
+      "edgeToEdgeEnabled": true,
+      "predictiveBackGestureEnabled": false,
+      "permissions": [
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_COARSE_LOCATION",
+        "WRITE_EXTERNAL_STORAGE",
+        "READ_MEDIA_IMAGES"
+      ]
+    },
     "web": {
       "favicon": "./assets/favicon.png"
     },
@@ -42,6 +46,14 @@
         {
           "locationAlwaysAndWhenInUsePermission": "Allow $(PRODUCT_NAME) to use your location.",
           "locationWhenInUsePermission": "Allow $(PRODUCT_NAME) to use your location."
+        }
+      ],
+      [
+        "expo-media-library",
+        {
+          "photosPermission": "Cho phép ứng dụng lưu ảnh QR vào thư viện ảnh.",
+          "savePhotosPermission": "Cho phép ứng dụng lưu ảnh QR vào thư viện ảnh.",
+          "isAccessMediaLocationEnabled": true
         }
       ]
     ]

@@ -32,3 +32,37 @@ C:\Users\THANH VAN\Downloads\Rent_Room_Hotel_Management\PaymentGate\PayGate\PayG
 C:\Users\THANH VAN\Downloads\Rent_Room_Hotel_Management\PaymentGate\PayGate\PayGate\obj\Debug\net10.0\PayGate.pdb
 C:\Users\THANH VAN\Downloads\Rent_Room_Hotel_Management\PaymentGate\PayGate\PayGate\obj\Debug\net10.0\PayGate.genruntimeconfig.cache
 C:\Users\THANH VAN\Downloads\Rent_Room_Hotel_Management\PaymentGate\PayGate\PayGate\obj\Debug\net10.0\ref\PayGate.dll
+C:\Study\DA_DaNenTang\Project-main\PaymentGate\PayGate\PayGate\bin\Debug\net10.0\appsettings.Development.json
+C:\Study\DA_DaNenTang\Project-main\PaymentGate\PayGate\PayGate\bin\Debug\net10.0\appsettings.json
+C:\Study\DA_DaNenTang\Project-main\PaymentGate\PayGate\PayGate\bin\Debug\net10.0\PayGate.staticwebassets.endpoints.json
+C:\Study\DA_DaNenTang\Project-main\PaymentGate\PayGate\PayGate\bin\Debug\net10.0\PayGate.exe
+C:\Study\DA_DaNenTang\Project-main\PaymentGate\PayGate\PayGate\bin\Debug\net10.0\PayGate.deps.json
+C:\Study\DA_DaNenTang\Project-main\PaymentGate\PayGate\PayGate\bin\Debug\net10.0\PayGate.runtimeconfig.json
+C:\Study\DA_DaNenTang\Project-main\PaymentGate\PayGate\PayGate\bin\Debug\net10.0\PayGate.dll
+C:\Study\DA_DaNenTang\Project-main\PaymentGate\PayGate\PayGate\bin\Debug\net10.0\PayGate.pdb
+C:\Study\DA_DaNenTang\Project-main\PaymentGate\PayGate\PayGate\bin\Debug\net10.0\Microsoft.AspNetCore.OpenApi.dll
+C:\Study\DA_DaNenTang\Project-main\PaymentGate\PayGate\PayGate\bin\Debug\net10.0\Microsoft.OpenApi.dll
+C:\Study\DA_DaNenTang\Project-main\PaymentGate\PayGate\PayGate\obj\Debug\net10.0\PayGate.csproj.AssemblyReference.cache
+C:\Study\DA_DaNenTang\Project-main\PaymentGate\PayGate\PayGate\obj\Debug\net10.0\rpswa.dswa.cache.json
+C:\Study\DA_DaNenTang\Project-main\PaymentGate\PayGate\PayGate\obj\Debug\net10.0\PayGate.GeneratedMSBuildEditorConfig.editorconfig
+C:\Study\DA_DaNenTang\Project-main\PaymentGate\PayGate\PayGate\obj\Debug\net10.0\PayGate.AssemblyInfoInputs.cache
+C:\Study\DA_DaNenTang\Project-main\PaymentGate\PayGate\PayGate\obj\Debug\net10.0\PayGate.AssemblyInfo.cs
+C:\Study\DA_DaNenTang\Project-main\PaymentGate\PayGate\PayGate\obj\Debug\net10.0\PayGate.csproj.CoreCompileInputs.cache
+C:\Study\DA_DaNenTang\Project-main\PaymentGate\PayGate\PayGate\obj\Debug\net10.0\PayGate.MvcApplicationPartsAssemblyInfo.cs
+C:\Study\DA_DaNenTang\Project-main\PaymentGate\PayGate\PayGate\obj\Debug\net10.0\PayGate.MvcApplicationPartsAssemblyInfo.cache
+C:\Study\DA_DaNenTang\Project-main\PaymentGate\PayGate\PayGate\obj\Debug\net10.0\PayGate.sourcelink.json
+C:\Study\DA_DaNenTang\Project-main\PaymentGate\PayGate\PayGate\obj\Debug\net10.0\rjimswa.dswa.cache.json
+C:\Study\DA_DaNenTang\Project-main\PaymentGate\PayGate\PayGate\obj\Debug\net10.0\rjsmrazor.dswa.cache.json
+C:\Study\DA_DaNenTang\Project-main\PaymentGate\PayGate\PayGate\obj\Debug\net10.0\rjsmcshtml.dswa.cache.json
+C:\Study\DA_DaNenTang\Project-main\PaymentGate\PayGate\PayGate\obj\Debug\net10.0\scopedcss\bundle\PayGate.styles.css
+C:\Study\DA_DaNenTang\Project-main\PaymentGate\PayGate\PayGate\obj\Debug\net10.0\staticwebassets.build.json
+C:\Study\DA_DaNenTang\Project-main\PaymentGate\PayGate\PayGate\obj\Debug\net10.0\staticwebassets.build.json.cache
+C:\Study\DA_DaNenTang\Project-main\PaymentGate\PayGate\PayGate\obj\Debug\net10.0\staticwebassets.development.json
+C:\Study\DA_DaNenTang\Project-main\PaymentGate\PayGate\PayGate\obj\Debug\net10.0\staticwebassets.build.endpoints.json
+C:\Study\DA_DaNenTang\Project-main\PaymentGate\PayGate\PayGate\obj\Debug\net10.0\swae.build.ex.cache
+C:\Study\DA_DaNenTang\Project-main\PaymentGate\PayGate\PayGate\obj\Debug\net10.0\PayGate.csproj.Up2Date
+C:\Study\DA_DaNenTang\Project-main\PaymentGate\PayGate\PayGate\obj\Debug\net10.0\PayGate.dll
+C:\Study\DA_DaNenTang\Project-main\PaymentGate\PayGate\PayGate\obj\Debug\net10.0\refint\PayGate.dll
+C:\Study\DA_DaNenTang\Project-main\PaymentGate\PayGate\PayGate\obj\Debug\net10.0\PayGate.pdb
+C:\Study\DA_DaNenTang\Project-main\PaymentGate\PayGate\PayGate\obj\Debug\net10.0\PayGate.genruntimeconfig.cache
+C:\Study\DA_DaNenTang\Project-main\PaymentGate\PayGate\PayGate\obj\Debug\net10.0\ref\PayGate.dll
