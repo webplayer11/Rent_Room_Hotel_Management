@@ -187,12 +187,12 @@ export default function AdminHomeScreen() {
 
           <Pressable
             style={({ pressed }) => [styles.actionBtn, pressed && { opacity: 0.7 }]}
-            onPress={() => router.push('/admin/pending-room')}
+            onPress={() => router.push('/admin/hotels')}
           >
-            <View style={[styles.actionIcon, { backgroundColor: '#FEF3C7' }]}>
-              <Ionicons name="bed-outline" size={24} color="#D97706" />
+            <View style={[styles.actionIcon, { backgroundColor: '#DCFCE7' }]}>
+              <Ionicons name="business-outline" size={24} color="#16A34A" />
             </View>
-            <Text style={styles.actionText}>Duyệt phòng</Text>
+            <Text style={styles.actionText}>Quản lý KS</Text>
           </Pressable>
 
           <Pressable style={({ pressed }) => [styles.actionBtn, pressed && { opacity: 0.7 }]}>
