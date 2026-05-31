@@ -30,6 +30,8 @@ public class HotelDto
     public string? CheckOutTime { get; set; }
     public bool IsActive { get; set; }
     public bool IsApproved { get; set; }
+    public DateTime? SuspendedAt { get; set; }
+    public string? SuspendReason { get; set; }
     public string HostId { get; set; } = default!;
     public List<HotelImageDto> Images { get; set; } = new();
     public List<AmenityDto> Amenities { get; set; } = new();

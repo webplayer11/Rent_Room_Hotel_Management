@@ -32,6 +32,8 @@ export type PendingHotelDto = {
   // trạng thái từ backend (Hotel.cs)
   isApproved: boolean;
   isActive: boolean;
+  suspendedAt?: string;
+  suspendReason?: string;
 };
 
 
@@ -97,6 +99,18 @@ export const adminApi = {
     return apiFetch(`/api/admin/hotels/${id}/suspend`, {
       method: "POST",
       body: JSON.stringify({ reason }),
+    }) as Promise<ApiResponse<string>>;
+  },
+
+  UnsuspendHotel: (id: string) => {
+    return apiFetch(`/api/admin/hotels/${id}/unsuspend`, {
+      method: "POST",
+    }) as Promise<ApiResponse<string>>;
+  },
+
+  DeleteHotel: (id: string) => {
+    return apiFetch(`/api/admin/hotels/${id}`, {
+      method: "DELETE",
     }) as Promise<ApiResponse<string>>;
   },
 
