@@ -29,23 +29,11 @@ export type PendingHotelDto = {
   checkOutTime: string;
   createdAt: string;
   images: any[];
-};
-
-export type PendingRoomDto = {
-  id: string;
-  hotelId: string;
-  roomNumber?: string;
-  roomType?: string;
-  description?: string;
-  capacity: number;
-  bedCount: number;
-  bedType?: string;
-  pricePerNight: number;
-  discountPrice?: number;
-  roomSize?: number;
-  isSmokingAllowed: boolean;
-  images: any[];
-  createdAt?: string;
+  // trạng thái từ backend (Hotel.cs)
+  isApproved: boolean;
+  isActive: boolean;
+  suspendedAt?: string;
+  suspendReason?: string;
 };
 
 
@@ -76,8 +64,20 @@ export const adminApi = {
     }) as Promise<ApiResponse<PendingHostDto>>;
   },
 
+  getAllHotels: () => {
+    return apiFetch('/api/admin/hotels', {
+      method: "GET",
+    }) as Promise<ApiResponse<PendingHotelDto[]>>;
+  },
+
   getPendingHotel: () => {
     return apiFetch('/api/admin/hotels/pending', {
+      method: "GET",
+    }) as Promise<ApiResponse<PendingHotelDto[]>>;
+  },
+
+  getApprovedHotels: () => {
+    return apiFetch('/api/admin/hotels/approved', {
       method: "GET",
     }) as Promise<ApiResponse<PendingHotelDto[]>>;
   },
@@ -102,13 +102,19 @@ export const adminApi = {
     }) as Promise<ApiResponse<string>>;
   },
 
-  // xem phòng cần duyệt 
-  getPendingRooms: () => {
-    return apiFetch('/api/admin/rooms/pending', {
-      method: "GET",
-    }) as Promise<ApiResponse<PendingRoomDto[]>>;
+  UnsuspendHotel: (id: string) => {
+    return apiFetch(`/api/admin/hotels/${id}/unsuspend`, {
+      method: "POST",
+    }) as Promise<ApiResponse<string>>;
+  },
+
+  DeleteHotel: (id: string) => {
+    return apiFetch(`/api/admin/hotels/${id}`, {
+      method: "DELETE",
+    }) as Promise<ApiResponse<string>>;
   },
 
 };
+
 
 
