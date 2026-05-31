@@ -21,7 +21,10 @@ public interface IAdminService
     Task<bool> UnsuspendHotelAsync(string hotelId);
     Task<bool> DeleteHotelAsync(string hotelId);
 
-    // ── Statistics ────────────────────────────────
+    // ── User Management ──────────────────────────
+    Task<IEnumerable<AdminUserDto>> GetAllUsersAsync();
+
+    // ── Statistics ───────────────────────────────
     Task<RevenueStatsDto> GetRevenueStatsAsync();
     Task<GrowthStatsDto> GetGrowthStatsAsync();
 }

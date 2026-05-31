@@ -137,6 +137,33 @@ public class AdminService : IAdminService
         return true;
     }
 
+    public async Task<IEnumerable<AdminUserDto>> GetAllUsersAsync()
+{
+    var users = await _userManager.Users
+        .OrderByDescending(u => u.CreatedAt)
+        .ToListAsync();
+
+    var result = new List<AdminUserDto>();
+
+    foreach (var user in users)
+    {
+        var roles = await _userManager.GetRolesAsync(user);
+
+        result.Add(new AdminUserDto
+        {
+            Id = user.Id,
+            FullName = user.FullName,
+            Email = user.Email,
+            PhoneNumber = user.PhoneNumber,
+            Role = roles.FirstOrDefault() ?? "Customer",
+            IsActive = user.IsActive,
+            CreatedAt = user.CreatedAt
+        });
+    }
+
+    return result;
+}
+
     // ══════════════════════════════════════════════════════════════
     //  HOTEL MANAGEMENT
     // ══════════════════════════════════════════════════════════════

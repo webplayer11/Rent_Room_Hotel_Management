@@ -58,6 +58,20 @@ public class AdminController : ControllerBase
         return Ok(ResponseApi<string>.Success(null!, "Từ chối Host thành công"));
     }
 
+    // ── User Management ──────────────────────────
+
+[HttpGet("users")]
+public async Task<IActionResult> GetAllUsers()
+{
+    var result = await _service.GetAllUsersAsync();
+
+    return Ok(
+        ResponseApi<IEnumerable<AdminUserDto>>
+        .Success(result)
+    );
+}
+    
+
     // ── Hotel Management ─────────────────────────────────────────
 
     [HttpGet("hotels")]
@@ -121,6 +135,8 @@ public class AdminController : ControllerBase
         if (!result) return NotFound(ResponseApi<string>.Failure(404, "Không tìm thấy khách sạn"));
         return Ok(ResponseApi<string>.Success(null!, "Xóa khách sạn thành công"));
     }
+
+
 
     // ── Statistics ────────────────────────────────────────────────
 

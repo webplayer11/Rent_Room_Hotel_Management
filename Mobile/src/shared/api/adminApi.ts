@@ -36,6 +36,15 @@ export type PendingHotelDto = {
   suspendReason?: string;
 };
 
+export type AdminUserDto = {
+  id: string;
+  fullName?: string | null;
+  email?: string | null;
+  phoneNumber?: string | null;
+  role: string;
+  isActive: boolean;
+  createdAt: string;
+};
 
 export const adminApi = {
   getPendingHosts: () => {
@@ -114,6 +123,12 @@ export const adminApi = {
     }) as Promise<ApiResponse<string>>;
   },
 
+  // ── User Management ──────────────────────────────────────────
+  getAllUsers: () => {
+    return apiFetch('/api/admin/users', {
+      method: "GET",
+    }) as Promise<ApiResponse<AdminUserDto[]>>;
+  },
 };
 
 

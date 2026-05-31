@@ -198,7 +198,9 @@ export default function AdminHomeScreen() {
             <Text style={styles.actionText}>Quản lý KS</Text>
           </Pressable>
 
-          <Pressable style={({ pressed }) => [styles.actionBtn, pressed && { opacity: 0.7 }]}>
+          <Pressable style={({ pressed }) => [styles.actionBtn, pressed && { opacity: 0.7 }]}
+            onPress={() => router.push('/admin/users')}
+          >
             <View style={[styles.actionIcon, { backgroundColor: '#E0E7FF' }]}>
               <Ionicons name="people" size={24} color="#4F46E5" />
             </View>
