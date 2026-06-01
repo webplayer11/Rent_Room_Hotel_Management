@@ -39,4 +39,14 @@ public class HostRevenueController : ControllerBase
 
         return Ok(ResponseApi<HotelRevenueItemDto>.Success(result));
     }
+
+    [HttpGet("dashboard")]
+    public async Task<IActionResult> GetDashboardStats([FromQuery] string? hotelId)
+    {
+        var hostId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (hostId == null) return Unauthorized();
+
+        var result = await _service.GetDashboardStatsAsync(hostId, hotelId);
+        return Ok(ResponseApi<DashboardStatsDto>.Success(result));
+    }
 }

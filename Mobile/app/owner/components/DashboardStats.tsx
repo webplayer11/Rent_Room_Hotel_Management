@@ -2,7 +2,19 @@ import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
-export function DashboardStats() {
+interface DashboardStatsProps {
+  bookingsToday: number;
+  revenueThisMonth: number;
+  emptyRooms: number;
+  occupiedRooms: number;
+}
+
+export function DashboardStats({
+  bookingsToday,
+  revenueThisMonth,
+  emptyRooms,
+  occupiedRooms,
+}: DashboardStatsProps) {
   return (
     <View style={styles.grid}>
       <View style={[styles.card, { backgroundColor: '#2563EB' }]}>
@@ -11,7 +23,7 @@ export function DashboardStats() {
             <Ionicons name="calendar" size={20} color="#FFF" />
           </View>
         </View>
-        <Text style={styles.valueMain}>12</Text>
+        <Text style={styles.valueMain}>{bookingsToday}</Text>
         <Text style={styles.labelMain}>Booking hôm nay</Text>
       </View>
 
@@ -21,7 +33,7 @@ export function DashboardStats() {
             <Ionicons name="wallet" size={20} color="#2563EB" />
           </View>
         </View>
-        <Text style={styles.value}>45.2M</Text>
+        <Text style={styles.value}>{new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(revenueThisMonth)}</Text>
         <Text style={styles.label}>Doanh thu tháng</Text>
       </View>
 
@@ -31,7 +43,7 @@ export function DashboardStats() {
             <Ionicons name="key" size={20} color="#16A34A" />
           </View>
         </View>
-        <Text style={styles.value}>8</Text>
+        <Text style={styles.value}>{emptyRooms}</Text>
         <Text style={styles.label}>Phòng trống</Text>
       </View>
 
@@ -41,24 +53,11 @@ export function DashboardStats() {
             <Ionicons name="bed" size={20} color="#CA8A04" />
           </View>
         </View>
-        <Text style={styles.value}>24</Text>
+        <Text style={styles.value}>{occupiedRooms}</Text>
         <Text style={styles.label}>Đang có khách</Text>
       </View>
 
-      <View style={[styles.card, { width: '100%' }]}>
-        <View style={styles.occupancyHeader}>
-          <View style={styles.occupancyLeft}>
-            <View style={[styles.iconBox, { backgroundColor: '#F3E8FF' }]}>
-              <Ionicons name="pie-chart" size={20} color="#9333EA" />
-            </View>
-            <Text style={styles.occupancyLabel}>Tỉ lệ lấp đầy</Text>
-          </View>
-          <Text style={styles.occupancyValue}>75%</Text>
-        </View>
-        <View style={styles.progressBarBg}>
-          <View style={[styles.progressBarFill, { width: '75%' }]} />
-        </View>
-      </View>
+
     </View>
   );
 }
