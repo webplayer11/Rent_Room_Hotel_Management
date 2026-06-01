@@ -133,10 +133,10 @@ export const hotelApi = {
   },
 
   deleteHotel: (id: string) => {
-  return apiFetch(`/api/hotels/${id}`, {
-    method: "DELETE",
-  }) as Promise<ApiResponse<null>>;
-},
+    return apiFetch(`/api/hotels/${id}`, {
+      method: "DELETE",
+    }) as Promise<ApiResponse<null>>;
+  },
 
   getHotelById: (id: string) => {
     return apiFetch(`/api/hotels/${id}`, {
@@ -167,5 +167,12 @@ export const hotelApi = {
     return apiFetch(`/api/hotels/search?${query.toString()}`, {
       method: "GET",
     }) as Promise<ApiResponse<any[]>>;
+  },
+
+  getDashboardStats: (hotelId?: string) => {
+    const url = hotelId ? `/api/hosts/revenue/dashboard?hotelId=${hotelId}` : `/api/hosts/revenue/dashboard`;
+    return apiFetch(url, {
+      method: "GET",
+    }) as Promise<ApiResponse<any>>;
   },
 };

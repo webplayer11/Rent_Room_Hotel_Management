@@ -98,4 +98,46 @@ public class HostRevenueService : IHostRevenueService
             BookingCount = completedBookings.Count
         };
     }
+    
+    //Lấy dữ liệu cho dashboard
+    public async Task<DashboardStatsDto> GetDashboardStatsAsync(string hostId, string? hotelId = null)
+    {
+        var hotels = await _context.Hotels
+            .Where(h => h.HostId == hostId && (string.IsNullOrEmpty(hotelId) || h.Id == hotelId))
+            .Select(h => h.Id)
+            .ToListAsync();
+
+        var today = DateTime.UtcNow.Date;
+        var thisMonth = today.Month;
+        var thisYear = today.Year;
+
+        var bookingsToday = await _context.Bookings
+            .Include(b => b.Room)
+            .Where(b => b.Room != null && b.Room.HotelId != null && hotels.Contains(b.Room.HotelId)
+                        && b.CreatedAt.Date == today)
+            .CountAsync();
+
+        var revenueThisMonth = await _context.Bookings
+            .Include(b => b.Room)
+            .Where(b => b.Room != null && b.Room.HotelId != null && hotels.Contains(b.Room.HotelId)
+                        && b.Status == "Completed"
+                        && b.UpdatedAt != null && b.UpdatedAt.Value.Month == thisMonth && b.UpdatedAt.Value.Year == thisYear)
+            .SumAsync(b => b.FinalPrice);
+
+        var rooms = await _context.Rooms
+            .Where(r => r.HotelId != null && hotels.Contains(r.HotelId) && r.IsActive)
+            .ToListAsync();
+
+        var totalRooms = rooms.Count;
+        var occupiedRooms = rooms.Count(r => r.Status == "Occupied");
+        var emptyRooms = rooms.Count(r => r.Status == "Available" || r.Status == null);
+
+        return new DashboardStatsDto
+        {
+            BookingsToday = bookingsToday,
+            RevenueThisMonth = revenueThisMonth,
+            EmptyRooms = emptyRooms,
+            OccupiedRooms = occupiedRooms,
+        };
+    }
 }
