@@ -85,6 +85,36 @@ public async Task<IActionResult> GetUserById(string id)
         ResponseApi<AdminUserDto>.Success(result)
     );
 }
+
+[HttpPost("users/{id}/lock")]
+public async Task<IActionResult> LockUser(string id)
+{
+    var success = await _service.LockUserAsync(id);
+
+    if (!success)
+        return NotFound(
+            ResponseApi<string>.Failure(404, "Không tìm thấy user")
+        );
+
+    return Ok(
+        ResponseApi<string>.Success("Khóa tài khoản thành công")
+    );
+}
+
+[HttpPost("users/{id}/unlock")]
+public async Task<IActionResult> UnlockUser(string id)
+{
+    var success = await _service.UnlockUserAsync(id);
+
+    if (!success)
+        return NotFound(
+            ResponseApi<string>.Failure(404, "Không tìm thấy user")
+        );
+
+    return Ok(
+        ResponseApi<string>.Success("Mở khóa tài khoản thành công")
+    );
+}
     
 
     // ── Hotel Management ─────────────────────────────────────────

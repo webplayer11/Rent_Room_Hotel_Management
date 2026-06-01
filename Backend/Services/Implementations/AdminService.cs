@@ -182,6 +182,36 @@ public class AdminService : IAdminService
     };
 }
 
+public async Task<bool> LockUserAsync(string userId)
+{
+    var user = await _userManager.FindByIdAsync(userId);
+
+    if (user == null)
+        return false;
+
+    user.IsActive = false;
+    user.UpdatedAt = DateTime.UtcNow;
+
+    var result = await _userManager.UpdateAsync(user);
+
+    return result.Succeeded;
+}
+
+public async Task<bool> UnlockUserAsync(string userId)
+{
+    var user = await _userManager.FindByIdAsync(userId);
+
+    if (user == null)
+        return false;
+
+    user.IsActive = true;
+    user.UpdatedAt = DateTime.UtcNow;
+
+    var result = await _userManager.UpdateAsync(user);
+
+    return result.Succeeded;
+}
+
     // ══════════════════════════════════════════════════════════════
     //  HOTEL MANAGEMENT
     // ══════════════════════════════════════════════════════════════

@@ -135,6 +135,18 @@ export const adminApi = {
       method: "GET",
     }) as Promise<ApiResponse<AdminUserDto>>;
   },
+
+  lockUser: (id: string) => {
+    return apiFetch(`/api/admin/users/${id}/lock`, {
+      method: "POST",
+    }) as Promise<ApiResponse<string>>;
+  },
+
+  unlockUser: (id: string) => {
+    return apiFetch(`/api/admin/users/${id}/unlock`, {
+      method: "POST",
+    }) as Promise<ApiResponse<string>>;
+  },
 };
 
 

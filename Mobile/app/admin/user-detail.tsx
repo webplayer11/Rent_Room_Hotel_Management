@@ -1,5 +1,6 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
+  Alert,
   View,
   Text,
   StyleSheet,
@@ -49,30 +50,90 @@ export default function UserDetailScreen() {
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
 
-  const [user,    setUser]    = useState<AdminUserDto | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [error,   setError]   = useState<string | null>(null);
+  const [user,          setUser]          = useState<AdminUserDto | null>(null);
+  const [loading,       setLoading]       = useState(false);
+  const [error,         setError]         = useState<string | null>(null);
+  const [actionLoading, setActionLoading] = useState(false);
 
-  useEffect(() => {
+  // ── Load / reload ───────────────────────────────────────────────
+  const loadUser = useCallback(async () => {
     if (!id) return;
-    const load = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-        const res = await adminApi.getUserById(id);
-        if (res.isSuccess) {
-          setUser(res.data);
-        } else {
-          setError(res.message || 'Không tải được thông tin người dùng');
-        }
-      } catch (e: any) {
-        setError(e.message || 'Lỗi kết nối máy chủ');
-      } finally {
-        setLoading(false);
+    try {
+      setLoading(true);
+      setError(null);
+      const res = await adminApi.getUserById(id);
+      if (res.isSuccess) {
+        setUser(res.data);
+      } else {
+        setError(res.message || 'Không tải được thông tin người dùng');
       }
-    };
-    load();
+    } catch (e: any) {
+      setError(e.message || 'Lỗi kết nối máy chủ');
+    } finally {
+      setLoading(false);
+    }
   }, [id]);
+
+  useEffect(() => { loadUser(); }, [loadUser]);
+
+  // ── Lock handler ────────────────────────────────────────────────
+  const handleLock = () => {
+    Alert.alert(
+      'Khóa tài khoản',
+      'Bạn có chắc muốn khóa tài khoản này không?',
+      [
+        { text: 'Hủy', style: 'cancel' },
+        {
+          text: 'Khóa',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              setActionLoading(true);
+              const res = await adminApi.lockUser(id!);
+              if (res.isSuccess) {
+                await loadUser();
+              } else {
+                Alert.alert('Lỗi', res.message || 'Khóa tài khoản thất bại');
+              }
+            } catch (e: any) {
+              Alert.alert('Lỗi', e.message || 'Lỗi kết nối máy chủ');
+            } finally {
+              setActionLoading(false);
+            }
+          },
+        },
+      ]
+    );
+  };
+
+  // ── Unlock handler ──────────────────────────────────────────────
+  const handleUnlock = () => {
+    Alert.alert(
+      'Mở khóa tài khoản',
+      'Bạn có chắc muốn mở khóa tài khoản này không?',
+      [
+        { text: 'Hủy', style: 'cancel' },
+        {
+          text: 'Mở khóa',
+          onPress: async () => {
+            try {
+              setActionLoading(true);
+              const res = await adminApi.unlockUser(id!);
+              if (res.isSuccess) {
+                await loadUser();
+              } else {
+                Alert.alert('Lỗi', res.message || 'Mở khóa thất bại');
+              }
+            } catch (e: any) {
+              Alert.alert('Lỗi', e.message || 'Lỗi kết nối máy chủ');
+            } finally {
+              setActionLoading(false);
+            }
+          },
+        },
+      ]
+    );
+  };
 
   // ── Header options ──────────────────────────────────────────────
   const headerOptions = (
@@ -106,21 +167,7 @@ export default function UserDetailScreen() {
       <SafeAreaView style={styles.center}>
         {headerOptions}
         <Text style={styles.errorText}>{error}</Text>
-        <TouchableOpacity
-          style={styles.retryBtn}
-          onPress={() => {
-            if (id) {
-              setLoading(true);
-              adminApi.getUserById(id)
-                .then(res => {
-                  if (res.isSuccess) setUser(res.data);
-                  else setError(res.message || 'Lỗi tải dữ liệu');
-                })
-                .catch(e => setError(e.message || 'Lỗi kết nối'))
-                .finally(() => setLoading(false));
-            }
-          }}
-        >
+        <TouchableOpacity style={styles.retryBtn} onPress={loadUser}>
           <Text style={styles.retryText}>Thử lại</Text>
         </TouchableOpacity>
       </SafeAreaView>
@@ -233,7 +280,38 @@ export default function UserDetailScreen() {
         {/* ── User ID ──────────────────────────────────────────── */}
         <Text style={styles.userId} selectable>ID: {user.id}</Text>
 
+        {/* Spacer để nội dung không bị footer che */}
+        <View style={{ height: 90 }} />
+
       </ScrollView>
+
+      {/* ── Footer action button ─────────────────────────────── */}
+      <View style={styles.footer}>
+        {user.isActive ? (
+          <TouchableOpacity
+            style={[styles.actionBtn, styles.btnLock]}
+            onPress={handleLock}
+            disabled={actionLoading}
+            activeOpacity={0.8}
+          >
+            <Text style={styles.actionBtnText}>
+              {actionLoading ? 'Đang xử lý...' : '🔒  Khóa tài khoản'}
+            </Text>
+          </TouchableOpacity>
+        ) : (
+          <TouchableOpacity
+            style={[styles.actionBtn, styles.btnUnlock]}
+            onPress={handleUnlock}
+            disabled={actionLoading}
+            activeOpacity={0.8}
+          >
+            <Text style={styles.actionBtnText}>
+              {actionLoading ? 'Đang xử lý...' : '🔓  Mở khóa tài khoản'}
+            </Text>
+          </TouchableOpacity>
+        )}
+      </View>
+
     </SafeAreaView>
   );
 }
@@ -356,6 +434,41 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     fontWeight: '400',
     marginTop: 4,
+  },
+
+  // ── Footer ──
+  footer: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    padding: 16,
+    paddingBottom: 24,
+    backgroundColor: '#F8FAFC',
+    borderTopWidth: 1,
+    borderTopColor: '#E5E7EB',
+  },
+  actionBtn: {
+    height: 52,
+    borderRadius: 14,
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.12,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  btnLock: {
+    backgroundColor: '#EF4444',
+  },
+  btnUnlock: {
+    backgroundColor: '#10B981',
+  },
+  actionBtnText: {
+    color: '#FFF',
+    fontWeight: '700',
+    fontSize: 15,
   },
 
   // ── States ──

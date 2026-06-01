@@ -24,6 +24,8 @@ public interface IAdminService
     // ── User Management ──────────────────────────
     Task<IEnumerable<AdminUserDto>> GetAllUsersAsync();
     Task<AdminUserDto?> GetUserByIdAsync(string userId);
+    Task<bool> LockUserAsync(string userId);
+Task<bool> UnlockUserAsync(string userId);
 
     // ── Statistics ───────────────────────────────
     Task<RevenueStatsDto> GetRevenueStatsAsync();
