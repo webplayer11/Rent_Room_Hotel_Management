@@ -43,7 +43,7 @@ const AppMap = ({ visible, onClose, onSelectLocation }: AppMapProps) => {
             setSearchResults([]);
             return;
         }
-        
+
         setIsSearching(true);
         try {
             // Using Photon API (Free Geocoding based on OpenStreetMap)
@@ -65,7 +65,7 @@ const AppMap = ({ visible, onClose, onSelectLocation }: AppMapProps) => {
         const city = properties.city || properties.state || "";
         const country = properties.country || "";
         const fullAddress = [name, city, country].filter(Boolean).join(", ");
-        
+
         const coords = {
             latitude: geometry.coordinates[1],
             longitude: geometry.coordinates[0],
@@ -103,8 +103,27 @@ const AppMap = ({ visible, onClose, onSelectLocation }: AppMapProps) => {
             onSelectLocation(fullAddress, { latitude: region.latitude, longitude: region.longitude });
             onClose();
         } catch (error) {
-            console.log(error);
-            onSelectLocation(searchText || "Vị trí đã chọn", { latitude: region.latitude, longitude: region.longitude });
+            console.log("handleConfirm reverse geocode warn:", error);
+            try {
+                // Fallback to Photon API
+                const res = await fetch(`https://photon.komoot.io/reverse?lon=${region.longitude}&lat=${region.latitude}`);
+                const data = await res.json();
+                let fbAddress = searchText || "Vị trí đã chọn";
+                if (data.features && data.features.length > 0) {
+                    const props = data.features[0].properties;
+                    const name = props.name || "";
+                    const city = props.city || props.state || "";
+                    const country = props.country || "";
+                    const parts = [name, city, country].filter(Boolean);
+                    if (parts.length > 0) {
+                        fbAddress = parts.join(", ");
+                    }
+                }
+                onSelectLocation(fbAddress, { latitude: region.latitude, longitude: region.longitude });
+            } catch (fallbackErr) {
+                console.log("Photon fallback error:", fallbackErr);
+                onSelectLocation(searchText || "Vị trí đã chọn", { latitude: region.latitude, longitude: region.longitude });
+            }
             onClose();
         } finally {
             setLoading(false);
@@ -127,24 +146,45 @@ const AppMap = ({ visible, onClose, onSelectLocation }: AppMapProps) => {
                 latitudeDelta: 0.01,
                 longitudeDelta: 0.01,
             };
-            
+
             setRegion(coords);
 
-            // Reverse geocode để lấy tên địa chỉ hiển thị
-            const reverse = await Location.reverseGeocodeAsync({
-                latitude: coords.latitude,
-                longitude: coords.longitude,
-            });
-
             let fullAddress = "Vị trí hiện tại của bạn";
-            if (reverse && reverse.length > 0) {
-                const loc = reverse[0];
-                const parts = [loc.name, loc.street, loc.subregion, loc.city, loc.region, loc.country].filter(Boolean);
-                if (parts.length > 0) {
-                    fullAddress = parts.join(", ");
+            try {
+                // Reverse geocode để lấy tên địa chỉ hiển thị
+                const reverse = await Location.reverseGeocodeAsync({
+                    latitude: coords.latitude,
+                    longitude: coords.longitude,
+                });
+
+                if (reverse && reverse.length > 0) {
+                    const loc = reverse[0];
+                    const parts = [loc.name, loc.street, loc.subregion, loc.city, loc.region, loc.country].filter(Boolean);
+                    if (parts.length > 0) {
+                        fullAddress = parts.join(", ");
+                    }
+                }
+            } catch (geocodeError) {
+                console.warn("Reverse geocode warning:", geocodeError);
+                try {
+                    // Fallback to Photon API
+                    const res = await fetch(`https://photon.komoot.io/reverse?lon=${coords.longitude}&lat=${coords.latitude}`);
+                    const data = await res.json();
+                    if (data.features && data.features.length > 0) {
+                        const props = data.features[0].properties;
+                        const name = props.name || "";
+                        const city = props.city || props.state || "";
+                        const country = props.country || "";
+                        const parts = [name, city, country].filter(Boolean);
+                        if (parts.length > 0) {
+                            fullAddress = parts.join(", ");
+                        }
+                    }
+                } catch (photonError) {
+                    console.log("Photon reverse fail", photonError);
                 }
             }
-            
+
             setSearchText(fullAddress);
         } catch (error) {
             console.error("Lỗi lấy vị trí: ", error);
@@ -155,8 +195,8 @@ const AppMap = ({ visible, onClose, onSelectLocation }: AppMapProps) => {
     };
 
     return (
-        <Modal 
-            visible={visible} 
+        <Modal
+            visible={visible}
             animationType="slide"
             transparent={false}
             statusBarTranslucent={true}
@@ -164,92 +204,92 @@ const AppMap = ({ visible, onClose, onSelectLocation }: AppMapProps) => {
         >
             <View style={styles.fullScreenContainer}>
                 <SafeAreaView style={styles.container}>
-                <View style={styles.header}>
-                    <TouchableOpacity onPress={onClose} style={styles.backButton}>
-                        <Ionicons name="chevron-back" size={28} color="rgba(83, 146, 249, 0.7)" />
-                    </TouchableOpacity>
-                    <Text style={styles.title}>Chọn địa điểm</Text>
-                    <View style={{ width: 40 }} />
-                </View>
-
-                <View style={styles.searchSection}>
-                    <View style={styles.searchBar}>
-                        <Ionicons name="search" size={20} color="rgba(83, 146, 249, 0.7)" style={{ marginLeft: 15 }} />
-                        <TextInput
-                            style={styles.searchInput}
-                            placeholder="Tìm biển, địa danh, khách sạn..."
-                            value={searchText}
-                            onChangeText={searchPlaces}
-                            clearButtonMode="while-editing"
-                        />
-                        {isSearching && <ActivityIndicator size="small" color="#2563EB" style={{ marginRight: 15 }} />}
+                    <View style={styles.header}>
+                        <TouchableOpacity onPress={onClose} style={styles.backButton}>
+                            <Ionicons name="chevron-back" size={28} color="rgba(83, 146, 249, 0.7)" />
+                        </TouchableOpacity>
+                        <Text style={styles.title}>Chọn địa điểm</Text>
+                        <View style={{ width: 40 }} />
                     </View>
 
-                    <TouchableOpacity style={styles.currentLocBtn} onPress={getCurrentLocation}>
-                        <Ionicons name="navigate-circle-outline" size={22} color="#059669" />
-                        <Text style={styles.currentLocText}>Sử dụng vị trí hiện tại của tôi</Text>
-                    </TouchableOpacity>
-
-                    {searchResults.length > 0 && (
-                        <View style={styles.resultsList}>
-                            <FlatList
-                                data={searchResults}
-                                keyExtractor={(item, index) => index.toString()}
-                                renderItem={({ item }) => {
-                                    const type = item.properties.type;
-                                    const isHotel = type === 'house' || type === 'building' || item.properties.osm_key === 'tourism';
-                                    const typeLabel = isHotel ? 'Nơi lưu trú' : 'Địa danh / Vị trí';
-                                    const iconName = isHotel ? 'bed-outline' : 'location-outline';
-
-                                    return (
-                                        <TouchableOpacity 
-                                            style={styles.resultItem}
-                                            onPress={() => handleSelectResult(item)}
-                                        >
-                                            <View style={styles.resultIconContainer}>
-                                                <Ionicons name={iconName} size={22} color="#1E293B" />
-                                            </View>
-                                            <View style={styles.resultTextContainer}>
-                                                <Text style={styles.resultName} numberOfLines={1}>
-                                                    {item.properties.name}
-                                                </Text>
-                                                <Text style={styles.resultSub} numberOfLines={1}>
-                                                    {typeLabel} • {item.properties.city || item.properties.state || item.properties.country}
-                                                </Text>
-                                            </View>
-                                        </TouchableOpacity>
-                                    );
-                                }}
-                                keyboardShouldPersistTaps="handled"
+                    <View style={styles.searchSection}>
+                        <View style={styles.searchBar}>
+                            <Ionicons name="search" size={20} color="rgba(83, 146, 249, 0.7)" style={{ marginLeft: 15 }} />
+                            <TextInput
+                                style={styles.searchInput}
+                                placeholder="Tìm biển, địa danh, khách sạn..."
+                                value={searchText}
+                                onChangeText={searchPlaces}
+                                clearButtonMode="while-editing"
                             />
+                            {isSearching && <ActivityIndicator size="small" color="#2563EB" style={{ marginRight: 15 }} />}
                         </View>
-                    )}
-                </View>
 
-                {/* ── MAP ── */}
-                <View style={{ flex: 1 }}>
-                    <MapView
-                        style={{ flex: 1 }}
-                        region={region as Region}
-                        onRegionChangeComplete={(r) => setRegion(r)}
-                    >
-                        <Marker 
-                            coordinate={{ latitude: region.latitude, longitude: region.longitude }}
-                        />
-                    </MapView>
+                        <TouchableOpacity style={styles.currentLocBtn} onPress={getCurrentLocation}>
+                            <Ionicons name="navigate-circle-outline" size={22} color="#059669" />
+                            <Text style={styles.currentLocText}>Sử dụng vị trí hiện tại của tôi</Text>
+                        </TouchableOpacity>
 
-                    <TouchableOpacity 
-                        style={styles.confirmButton} 
-                        onPress={handleConfirm}
-                        disabled={loading}
-                    >
-                        {loading ? (
-                            <ActivityIndicator color="#FFF" />
-                        ) : (
-                            <Text style={styles.confirmText}>Xác nhận vị trí này</Text>
+                        {searchResults.length > 0 && (
+                            <View style={styles.resultsList}>
+                                <FlatList
+                                    data={searchResults}
+                                    keyExtractor={(item, index) => index.toString()}
+                                    renderItem={({ item }) => {
+                                        const type = item.properties.type;
+                                        const isHotel = type === 'house' || type === 'building' || item.properties.osm_key === 'tourism';
+                                        const typeLabel = isHotel ? 'Nơi lưu trú' : 'Địa danh / Vị trí';
+                                        const iconName = isHotel ? 'bed-outline' : 'location-outline';
+
+                                        return (
+                                            <TouchableOpacity
+                                                style={styles.resultItem}
+                                                onPress={() => handleSelectResult(item)}
+                                            >
+                                                <View style={styles.resultIconContainer}>
+                                                    <Ionicons name={iconName} size={22} color="#1E293B" />
+                                                </View>
+                                                <View style={styles.resultTextContainer}>
+                                                    <Text style={styles.resultName} numberOfLines={1}>
+                                                        {item.properties.name}
+                                                    </Text>
+                                                    <Text style={styles.resultSub} numberOfLines={1}>
+                                                        {typeLabel} • {item.properties.city || item.properties.state || item.properties.country}
+                                                    </Text>
+                                                </View>
+                                            </TouchableOpacity>
+                                        );
+                                    }}
+                                    keyboardShouldPersistTaps="handled"
+                                />
+                            </View>
                         )}
-                    </TouchableOpacity>
-                </View>
+                    </View>
+
+                    {/* ── MAP ── */}
+                    <View style={{ flex: 1 }}>
+                        <MapView
+                            style={{ flex: 1 }}
+                            region={region as Region}
+                            onRegionChangeComplete={(r) => setRegion(r)}
+                        >
+                            <Marker
+                                coordinate={{ latitude: region.latitude, longitude: region.longitude }}
+                            />
+                        </MapView>
+
+                        <TouchableOpacity
+                            style={styles.confirmButton}
+                            onPress={handleConfirm}
+                            disabled={loading}
+                        >
+                            {loading ? (
+                                <ActivityIndicator color="#FFF" />
+                            ) : (
+                                <Text style={styles.confirmText}>Xác nhận vị trí này</Text>
+                            )}
+                        </TouchableOpacity>
+                    </View>
                 </SafeAreaView>
             </View>
         </Modal>

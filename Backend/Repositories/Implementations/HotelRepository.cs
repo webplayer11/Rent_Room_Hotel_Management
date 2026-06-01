@@ -60,7 +60,76 @@ public class HotelRepository : IHotelRepository
     {
         var hotel = await GetByIdAsync(id);
         if (hotel == null) return false;
-        
+
+        // Lấy tất cả roomId thuộc khách sạn này
+        var roomIds = await _context.Rooms.Where(r => r.HotelId == id).Select(r => r.Id).ToListAsync();
+
+        if (roomIds.Any())
+        {
+            // Lấy tất cả booking của các phòng này
+            var bookings = await _context.Bookings
+                .Where(b => roomIds.Contains(b.RoomId))
+                .ToListAsync();
+
+            var bookingIds = bookings.Select(b => b.Id).ToList();
+
+            if (bookingIds.Any())
+            {
+                // Set null BookingId trên Reviews (Review→Booking là SetNull) để tránh FK khi xóa Booking
+                // Không xóa Reviews ở đây — cascade từ Hotel sẽ xử lý sau
+                var reviews = await _context.Reviews
+                    .Where(r => r.BookingId != null && bookingIds.Contains(r.BookingId!))
+                    .ToListAsync();
+                foreach (var rv in reviews)
+                    rv.BookingId = null;
+
+                // Xóa Invoices (1-1 Booking, Cascade nhưng Booking chưa bị xóa nên phải xóa tường minh)
+                var invoices = await _context.Invoices
+                    .Where(i => bookingIds.Contains(i.BookingId))
+                    .ToListAsync();
+                _context.Invoices.RemoveRange(invoices);
+
+                // Xóa Payments liên quan
+                var payments = await _context.Payments
+                    .Where(p => bookingIds.Contains(p.BookingId))
+                    .ToListAsync();
+                _context.Payments.RemoveRange(payments);
+
+                // Xóa tất cả Bookings
+                _context.Bookings.RemoveRange(bookings);
+            }
+
+            await _context.SaveChangesAsync();
+        }
+
+        // Xóa tất cả các Related Entities của Hotel để tránh DbUpdateException do Restrict FK
+        var hotelImages = await _context.HotelImages.Where(hi => hi.HotelId == id).ToListAsync();
+        _context.HotelImages.RemoveRange(hotelImages);
+
+        var favorites = await _context.Favorites.Where(f => f.HotelId == id).ToListAsync();
+        _context.Favorites.RemoveRange(favorites);
+
+        var revenueReports = await _context.RevenueReports.Where(r => r.HotelId == id).ToListAsync();
+        _context.RevenueReports.RemoveRange(revenueReports);
+
+        var hotelRequests = await _context.HotelRequests.Where(hr => hr.HotelId == id).ToListAsync();
+        _context.HotelRequests.RemoveRange(hotelRequests);
+
+        var vouchers = await _context.Vouchers.Where(v => v.HotelId == id).ToListAsync();
+        _context.Vouchers.RemoveRange(vouchers);
+
+        var allHotelReviews = await _context.Reviews.Where(r => r.HotelId == id).ToListAsync();
+        _context.Reviews.RemoveRange(allHotelReviews);
+
+        var rooms = await _context.Rooms.Where(r => r.HotelId == id).ToListAsync();
+        foreach (var r in rooms)
+        {
+            var roomImages = await _context.RoomImages.Where(ri => ri.RoomId == r.Id).ToListAsync();
+            _context.RoomImages.RemoveRange(roomImages);
+        }
+        _context.Rooms.RemoveRange(rooms);
+
+        // Xóa Hotel
         _context.Hotels.Remove(hotel);
         await _context.SaveChangesAsync();
         return true;
