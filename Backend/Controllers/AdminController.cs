@@ -70,6 +70,21 @@ public async Task<IActionResult> GetAllUsers()
         .Success(result)
     );
 }
+
+[HttpGet("users/{id}")]
+public async Task<IActionResult> GetUserById(string id)
+{
+    var result = await _service.GetUserByIdAsync(id);
+
+    if (result == null)
+        return NotFound(
+            ResponseApi<string>.Failure(404, "Không tìm thấy user")
+        );
+
+    return Ok(
+        ResponseApi<AdminUserDto>.Success(result)
+    );
+}
     
 
     // ── Hotel Management ─────────────────────────────────────────

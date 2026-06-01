@@ -129,6 +129,12 @@ export const adminApi = {
       method: "GET",
     }) as Promise<ApiResponse<AdminUserDto[]>>;
   },
+
+  getUserById: (id: string) => {
+    return apiFetch(`/api/admin/users/${id}`, {
+      method: "GET",
+    }) as Promise<ApiResponse<AdminUserDto>>;
+  },
 };
 
 

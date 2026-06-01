@@ -8,6 +8,7 @@ import {
   TouchableOpacity,
   TextInput,
   ScrollView,
+  Pressable,
 } from 'react-native';
 import { ChevronLeft, Search, Users } from 'lucide-react-native';
 import { adminApi, AdminUserDto } from '../../src/shared/api/adminApi';
@@ -123,7 +124,10 @@ export default function UsersScreen() {
     const initial   = getInitial(item);
 
     return (
-      <View style={styles.card}>
+      <Pressable
+        style={({ pressed }) => [styles.card, pressed && { opacity: 0.75 }]}
+        onPress={() => router.push(`/admin/user-detail?id=${item.id}`)}
+      >
         {/* Avatar */}
         <View style={[styles.avatar, !item.isActive && styles.avatarLocked]}>
           <Text style={[styles.avatarText, !item.isActive && styles.avatarTextLocked]}>
@@ -172,7 +176,7 @@ export default function UsersScreen() {
             </Text>
           </View>
         </View>
-      </View>
+      </Pressable>
     );
   };
 

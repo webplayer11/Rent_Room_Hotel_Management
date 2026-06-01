@@ -163,6 +163,24 @@ public class AdminService : IAdminService
 
     return result;
 }
+    public async Task<AdminUserDto?> GetUserByIdAsync(string userId)
+{
+    var user = await _userManager.FindByIdAsync(userId);
+    if (user == null) return null;
+
+    var roles = await _userManager.GetRolesAsync(user);
+
+    return new AdminUserDto
+    {
+        Id = user.Id,
+        FullName = user.FullName,
+        Email = user.Email,
+        PhoneNumber = user.PhoneNumber,
+        Role = roles.FirstOrDefault() ?? "Customer",
+        IsActive = user.IsActive,
+        CreatedAt = user.CreatedAt
+    };
+}
 
     // ══════════════════════════════════════════════════════════════
     //  HOTEL MANAGEMENT
