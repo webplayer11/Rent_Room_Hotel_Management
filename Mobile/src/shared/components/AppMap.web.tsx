@@ -30,7 +30,7 @@ const AppMap = ({ visible, onClose, onSelectLocation }: AppMapProps) => {
             setSearchResults([]);
             return;
         }
-        
+
         setIsSearching(true);
         try {
             // Using Photon API (Free Geocoding based on OpenStreetMap)
@@ -52,7 +52,7 @@ const AppMap = ({ visible, onClose, onSelectLocation }: AppMapProps) => {
         const city = properties.city || properties.state || "";
         const country = properties.country || "";
         const fullAddress = [name, city, country].filter(Boolean).join(", ");
-        
+
         const coords = {
             latitude: geometry.coordinates[1],
             longitude: geometry.coordinates[0],
@@ -78,21 +78,42 @@ const AppMap = ({ visible, onClose, onSelectLocation }: AppMapProps) => {
                 longitude: location.coords.longitude,
             };
 
-            // Reverse geocode để lấy tên địa chỉ hiển thị
-            const reverse = await Location.reverseGeocodeAsync({
-                latitude: coords.latitude,
-                longitude: coords.longitude,
-            });
-
             let fullAddress = "Vị trí hiện tại của bạn";
-            if (reverse && reverse.length > 0) {
-                const loc = reverse[0];
-                const parts = [loc.name, loc.street, loc.subregion, loc.city, loc.region, loc.country].filter(Boolean);
-                if (parts.length > 0) {
-                    fullAddress = parts.join(", ");
+            try {
+                // Reverse geocode để lấy tên địa chỉ hiển thị
+                const reverse = await Location.reverseGeocodeAsync({
+                    latitude: coords.latitude,
+                    longitude: coords.longitude,
+                });
+
+                if (reverse && reverse.length > 0) {
+                    const loc = reverse[0];
+                    const parts = [loc.name, loc.street, loc.subregion, loc.city, loc.region, loc.country].filter(Boolean);
+                    if (parts.length > 0) {
+                        fullAddress = parts.join(", ");
+                    }
+                }
+            } catch (geocodeError) {
+                console.warn("Reverse geocode warning on web:", geocodeError);
+                try {
+                    // Fallback to Photon API
+                    const res = await fetch(`https://photon.komoot.io/reverse?lon=${coords.longitude}&lat=${coords.latitude}`);
+                    const data = await res.json();
+                    if (data.features && data.features.length > 0) {
+                        const props = data.features[0].properties;
+                        const name = props.name || "";
+                        const city = props.city || props.state || "";
+                        const country = props.country || "";
+                        const parts = [name, city, country].filter(Boolean);
+                        if (parts.length > 0) {
+                            fullAddress = parts.join(", ");
+                        }
+                    }
+                } catch (photonError) {
+                    console.log("Photon reverse fail", photonError);
                 }
             }
-            
+
             onSelectLocation(fullAddress, coords);
             onClose();
         } catch (error) {
@@ -142,7 +163,7 @@ const AppMap = ({ visible, onClose, onSelectLocation }: AppMapProps) => {
                                         const iconName = isHotel ? 'bed-outline' : 'location-outline';
 
                                         return (
-                                            <TouchableOpacity 
+                                            <TouchableOpacity
                                                 style={styles.resultItem}
                                                 onPress={() => handleSelectResult(item)}
                                             >
@@ -164,7 +185,7 @@ const AppMap = ({ visible, onClose, onSelectLocation }: AppMapProps) => {
                             </View>
                         )}
                     </View>
-                    
+
                     <View style={styles.webPlaceholder}>
                         <Ionicons name="earth-outline" size={64} color="#CBD5E1" />
                         <Text style={styles.placeholderText}>
@@ -178,11 +199,11 @@ const AppMap = ({ visible, onClose, onSelectLocation }: AppMapProps) => {
 };
 
 const styles = StyleSheet.create({
-    container: { 
-        flex: 1, 
-        backgroundColor: 'rgba(0,0,0,0.5)', 
-        justifyContent: 'center', 
-        alignItems: 'center' 
+    container: {
+        flex: 1,
+        backgroundColor: 'rgba(0,0,0,0.5)',
+        justifyContent: 'center',
+        alignItems: 'center'
     },
     modalContent: {
         width: '90%',
