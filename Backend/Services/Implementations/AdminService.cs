@@ -387,6 +387,22 @@ public async Task<bool> UnlockUserAsync(string userId)
             MonthlyRevenue = monthlyBookings // Same data, Amount field contains revenue
         };
     }
+
+    public async Task<AdminDashboardStatsDto> GetDashboardStatsAsync()
+{
+    var totalUsers = await _userManager.Users.CountAsync();
+    var totalHotels = await _context.Hotels.CountAsync();
+    var totalHosts = await _context.HostProfiles.CountAsync();
+    var totalVouchers = await _context.Vouchers.CountAsync();
+
+    return new AdminDashboardStatsDto
+    {
+        TotalUsers = totalUsers,
+        TotalHotels = totalHotels,
+        TotalHosts = totalHosts,
+        TotalVouchers = totalVouchers
+    };
+}
 }
     // ── Mapping Helpers ──────────────────────────────────────────
 

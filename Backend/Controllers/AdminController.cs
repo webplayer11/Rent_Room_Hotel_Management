@@ -198,4 +198,15 @@ public async Task<IActionResult> UnlockUser(string id)
         var result = await _service.GetGrowthStatsAsync();
         return Ok(ResponseApi<GrowthStatsDto>.Success(result));
     }
+
+    [HttpGet("dashboard-stats")]
+public async Task<IActionResult> GetDashboardStats()
+{
+    var result = await _service.GetDashboardStatsAsync();
+
+    return Ok(
+        ResponseApi<AdminDashboardStatsDto>
+            .Success(result)
+    );
+}
 }

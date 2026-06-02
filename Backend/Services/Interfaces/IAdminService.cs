@@ -30,4 +30,5 @@ Task<bool> UnlockUserAsync(string userId);
     // ── Statistics ───────────────────────────────
     Task<RevenueStatsDto> GetRevenueStatsAsync();
     Task<GrowthStatsDto> GetGrowthStatsAsync();
+    Task<AdminDashboardStatsDto> GetDashboardStatsAsync();
 }

@@ -46,7 +46,20 @@ export type AdminUserDto = {
   createdAt: string;
 };
 
+export type DashboardStatsDto = {
+  totalUsers: number;
+  totalHotels: number;
+  totalHosts: number;
+  totalVouchers: number;
+};
+
 export const adminApi = {
+  getDashboardStats: () => {
+    return apiFetch('/api/admin/dashboard-stats', {
+      method: 'GET',
+    }) as Promise<ApiResponse<DashboardStatsDto>>;
+  },
+
   getPendingHosts: () => {
     return apiFetch('/api/admin/hosts/pending', {
       method: "GET",
