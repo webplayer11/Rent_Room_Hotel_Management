@@ -8,40 +8,49 @@ import {
   StatusBar,
   ActivityIndicator,
   TouchableOpacity,
-  Pressable,
+  Dimensions,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect, router } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
 import Toast from 'react-native-toast-message';
 
-import { hotelApi } from '../../../src/shared/api/hotelApi';
-import { hostApi, HostProfileDto } from '../../../src/shared/api/hostApi';
-import { bookingApi, BookingDto } from '../../../src/shared/api/bookingApi';
-import { apiFetch } from '../../../src/shared/api/apiClient';
-import { tokenStorage } from '../../../src/shared/storage/tokenStorage';
+// Icons
+import {
+  Calendar,
+  DollarSign,
+  Key,
+  BedDouble,
+  Building,
+  PlusCircle,
+  LogIn,
+  LogOut,
+  Users,
+  LayoutGrid,
+  BarChart3
+} from 'lucide-react-native';
 
-type DashboardStats = {
-  bookingsToday: number;
-  revenueThisMonth: number;
-  emptyRooms: number;
-  occupiedRooms: number;
-};
+import { hotelApi, HotelDto } from '../../../src/shared/api/hotelApi';
+import { bookingApi, BookingDto } from '../../../src/shared/api/bookingApi';
+import { roomApi } from '../../../src/shared/api/roomApi';
+import { tokenStorage } from '../../../src/shared/storage/tokenStorage';
+import { apiFetch } from '../../../src/shared/api/apiClient';
+
+const { width } = Dimensions.get('window');
 
 const STATUS_MAP: Record<string, { label: string; color: string; bg: string }> = {
-  Pending:   { label: 'Chờ xác nhận', color: '#D97706', bg: '#FEF3C7' },
-  Confirmed: { label: 'Đã xác nhận',  color: '#2563EB', bg: '#DBEAFE' },
-  CheckedIn: { label: 'Đang ở',        color: '#7C3AED', bg: '#EDE9FE' },
-  CheckedOut:{ label: 'Đã trả phòng', color: '#16A34A', bg: '#DCFCE7' },
-  Completed: { label: 'Hoàn thành',   color: '#16A34A', bg: '#DCFCE7' },
-  Cancelled: { label: 'Đã hủy',       color: '#DC2626', bg: '#FEE2E2' },
-  Rejected:  { label: 'Từ chối',      color: '#DC2626', bg: '#FEE2E2' },
+  Pending: { label: 'Chờ xác nhận', color: '#D97706', bg: '#FEF3C7' },
+  Confirmed: { label: 'Đã xác nhận', color: '#2563EB', bg: '#DBEAFE' },
+  CheckedIn: { label: 'Đang ở', color: '#7C3AED', bg: '#EDE9FE' },
+  CheckedOut: { label: 'Đã trả phòng', color: '#16A34A', bg: '#DCFCE7' },
+  Completed: { label: 'Hoàn thành', color: '#16A34A', bg: '#DCFCE7' },
+  Cancelled: { label: 'Đã hủy', color: '#DC2626', bg: '#FEE2E2' },
+  Rejected: { label: 'Từ chối', color: '#DC2626', bg: '#FEE2E2' },
 };
 
-const fmt = (n: number) =>
+const formatCurrency = (n: number) =>
   new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(n);
 
-const fmtDate = (d: string) => {
+const formatDate = (d: string) => {
   const dt = new Date(d);
   return `${dt.getDate().toString().padStart(2, '0')}/${(dt.getMonth() + 1)
     .toString()
@@ -50,19 +59,20 @@ const fmtDate = (d: string) => {
 
 export default function OwnerHome() {
   const [refreshing, setRefreshing] = useState(false);
-  const [loading, setLoading]       = useState(true);
+  const [loading, setLoading] = useState(true);
 
-  const [hostName, setHostName]     = useState('');
-  const [hotelCount, setHotelCount] = useState(0);
-  const [stats, setStats]           = useState<DashboardStats>({
-    bookingsToday: 0,
-    revenueThisMonth: 0,
-    emptyRooms: 0,
-    occupiedRooms: 0,
-  });
+  const [hostName, setHostName] = useState('');
+  const [hotels, setHotels] = useState<HotelDto[]>([]);
+
+  // Stats
+  const [bookingsToday, setBookingsToday] = useState(0);
+  const [revenueThisMonth, setRevenueThisMonth] = useState(0);
+  const [emptyRooms, setEmptyRooms] = useState(0);
+  const [occupiedRooms, setOccupiedRooms] = useState(0);
+
   const [recentBookings, setRecentBookings] = useState<BookingDto[]>([]);
 
-  const today = new Date().toLocaleDateString('vi-VN', {
+  const todayStr = new Date().toLocaleDateString('vi-VN', {
     weekday: 'long',
     day: 'numeric',
     month: 'long',
@@ -79,33 +89,91 @@ export default function OwnerHome() {
           if (profileRes.isSuccess && profileRes.data?.fullName) {
             name = profileRes.data.fullName;
           }
-        } catch {}
+        } catch { }
       }
       setHostName(name || 'Chủ khách sạn');
 
-      // 2. Hotel count
-      const hotelsRes = await hotelApi.getMyHotels();
+      // 2. Fetch Data (Hotels, Bookings)
+      const [hotelsRes, bookingsRes] = await Promise.all([
+        hotelApi.getMyHotels(),
+        bookingApi.getHostBookings()
+      ]);
+
+      let myHotels: HotelDto[] = [];
       if (hotelsRes.isSuccess && hotelsRes.data) {
-        setHotelCount(hotelsRes.data.length);
+        myHotels = hotelsRes.data;
+        setHotels(myHotels);
       }
 
-      // 3. Dashboard stats
-      try {
-        const statsRes = await apiFetch<DashboardStats>('/api/hosts/revenue/dashboard');
-        if ((statsRes as any).isSuccess && (statsRes as any).data) {
-          setStats((statsRes as any).data);
+      let allBookings: BookingDto[] = [];
+      if (bookingsRes.isSuccess && bookingsRes.data) {
+        allBookings = bookingsRes.data;
+      }
+
+      // 3. Fetch Rooms for all hotels
+      let totalRoomsCount = 0;
+      const roomsPromises = myHotels.map(h => roomApi.getRoomsByHotelId(h.id));
+      const roomsResults = await Promise.allSettled(roomsPromises);
+
+      roomsResults.forEach(res => {
+        if (res.status === 'fulfilled' && res.value.isSuccess && res.value.data) {
+          totalRoomsCount += res.value.data.length;
         }
-      } catch {}
+      });
 
-      // 4. Recent bookings (lấy 5 cái mới nhất)
-      const bookRes = await bookingApi.getHostBookings();
-      if (bookRes.isSuccess && bookRes.data) {
-        const sorted = [...bookRes.data]
-          .sort((a, b) => new Date(b.createdAt ?? 0).getTime() - new Date(a.createdAt ?? 0).getTime())
-          .slice(0, 5);
-        setRecentBookings(sorted);
-      }
+      // 4. Calculate Stats
+      const now = new Date();
+      const currentYear = now.getFullYear();
+      const currentMonth = now.getMonth();
+      const todayISO = now.toISOString().split('T')[0];
+
+      let todayCount = 0;
+      let monthRevenue = 0;
+      const occupiedRoomIds = new Set<string>();
+
+      allBookings.forEach(b => {
+        // Bookings created today
+        const createdAtISO = b.createdAt ? new Date(b.createdAt).toISOString().split('T')[0] : '';
+        if (createdAtISO === todayISO) {
+          todayCount++;
+        }
+
+        // Monthly revenue (CheckedOut in current month)
+        if (b.status === 'CheckedOut' || b.status === 'Completed') {
+          const outDate = new Date(b.checkOutDate);
+          if (outDate.getFullYear() === currentYear && outDate.getMonth() === currentMonth) {
+            monthRevenue += b.finalPrice ?? b.totalPrice ?? 0;
+          }
+        }
+
+        // Occupied Rooms Today
+        if (b.status === 'CheckedIn') {
+          occupiedRoomIds.add(b.roomId);
+        } else if (b.status !== 'Cancelled' && b.status !== 'Rejected') {
+          const inDate = new Date(b.checkInDate).toISOString().split('T')[0];
+          const outDate = new Date(b.checkOutDate).toISOString().split('T')[0];
+
+          if (todayISO >= inDate && todayISO < outDate) {
+            occupiedRoomIds.add(b.roomId);
+          }
+        }
+      });
+
+      setBookingsToday(todayCount);
+      setRevenueThisMonth(monthRevenue);
+      setOccupiedRooms(occupiedRoomIds.size);
+
+      const empty = totalRoomsCount - occupiedRoomIds.size;
+      setEmptyRooms(empty > 0 ? empty : 0);
+
+      // 5. Recent Bookings (top 5)
+      const sorted = [...allBookings]
+        .sort((a, b) => new Date(b.createdAt ?? 0).getTime() - new Date(a.createdAt ?? 0).getTime())
+        .slice(0, 5);
+      setRecentBookings(sorted);
+
     } catch (e) {
+      console.log(e);
       Toast.show({ type: 'error', text1: 'Lỗi', text2: 'Không tải được dữ liệu trang chủ' });
     } finally {
       setLoading(false);
@@ -125,6 +193,38 @@ export default function OwnerHome() {
     setRefreshing(false);
   }, []);
 
+  const handleAction = (action: string) => {
+    switch (action) {
+      case 'add_hotel':
+        router.push('/owner/hotel-form');
+        break;
+      case 'add_room':
+        if (hotels.length === 0) {
+          Toast.show({ type: 'error', text1: 'Chưa có khách sạn', text2: 'Vui lòng tạo khách sạn trước.' });
+        } else if (hotels.length === 1) {
+          router.push(`/owner/room-form?hotelId=${hotels[0].id}` as any);
+        } else {
+          Toast.show({ type: 'info', text1: 'Chọn khách sạn', text2: 'Vui lòng chọn khách sạn để thêm phòng từ danh sách.' });
+          router.push('/owner/hotels' as any);
+        }
+        break;
+      case 'create_booking':
+      case 'manage_customer':
+        Toast.show({ type: 'info', text1: 'Tính năng', text2: 'Tính năng đang được phát triển.' });
+        break;
+      case 'check_in':
+      case 'check_out':
+        router.push('/owner/bookings' as any);
+        break;
+      case 'manage_room':
+        router.push('/owner/hotels' as any);
+        break;
+      case 'report':
+        router.push('/owner/analytics' as any);
+        break;
+    }
+  };
+
   if (loading) {
     return (
       <SafeAreaView style={styles.center}>
@@ -133,10 +233,14 @@ export default function OwnerHome() {
     );
   }
 
-  const occupancyRate =
-    stats.emptyRooms + stats.occupiedRooms > 0
-      ? Math.round((stats.occupiedRooms / (stats.emptyRooms + stats.occupiedRooms)) * 100)
-      : 0;
+  const QuickActionButton = ({ icon, label, onPress, color }: any) => (
+    <TouchableOpacity style={styles.actionButton} onPress={onPress} activeOpacity={0.7}>
+      <View style={[styles.actionIconWrapper, { backgroundColor: `${color}15` }]}>
+        {icon}
+      </View>
+      <Text style={styles.actionLabel} numberOfLines={2} textAlign="center">{label}</Text>
+    </TouchableOpacity>
+  );
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -150,81 +254,95 @@ export default function OwnerHome() {
       >
         {/* ── HEADER ── */}
         <View style={styles.header}>
-          <View style={styles.headerLeft}>
-            <View style={styles.avatar}>
-              <Text style={styles.avatarText}>
-                {hostName.charAt(0).toUpperCase() || 'H'}
-              </Text>
-            </View>
-            <View>
-              <Text style={styles.greeting}>Xin chào, {hostName} 👋</Text>
-              <Text style={styles.dateText}>{today}</Text>
-            </View>
-          </View>
-          <View style={styles.hotelBadge}>
-            <Ionicons name="business-outline" size={14} color="#2563EB" />
-            <Text style={styles.hotelBadgeText}>{hotelCount} KS</Text>
-          </View>
+          <Text style={styles.greeting}>Xin chào, {hostName} 👋</Text>
+          <Text style={styles.dateText}>{todayStr}</Text>
         </View>
 
         {/* ── STATS GRID ── */}
         <View style={styles.statsGrid}>
-          {/* Booking hôm nay */}
-          <View style={[styles.statCard, { backgroundColor: '#2563EB' }]}>
-            <View style={[styles.iconBox, { backgroundColor: 'rgba(255,255,255,0.2)' }]}>
-              <Ionicons name="calendar" size={20} color="#FFF" />
+          <View style={styles.statCard}>
+            <View style={styles.statHeader}>
+              <View style={[styles.iconBox, { backgroundColor: '#EFF6FF' }]}>
+                <Calendar size={20} color="#2563EB" />
+              </View>
             </View>
-            <Text style={styles.statValueLight}>{stats.bookingsToday}</Text>
-            <Text style={styles.statLabelLight}>Booking hôm nay</Text>
+            <Text style={styles.statValue}>{bookingsToday}</Text>
+            <Text style={styles.statLabel}>Booking hôm nay</Text>
           </View>
 
-          {/* Doanh thu tháng */}
           <View style={styles.statCard}>
-            <View style={[styles.iconBox, { backgroundColor: '#EFF6FF' }]}>
-              <Ionicons name="wallet" size={20} color="#2563EB" />
+            <View style={styles.statHeader}>
+              <View style={[styles.iconBox, { backgroundColor: '#F0FDF4' }]}>
+                <DollarSign size={20} color="#16A34A" />
+              </View>
             </View>
-            <Text style={styles.statValue}>{fmt(stats.revenueThisMonth)}</Text>
+            <Text style={styles.statValue}>{formatCurrency(revenueThisMonth)}</Text>
             <Text style={styles.statLabel}>Doanh thu tháng</Text>
           </View>
 
-          {/* Phòng trống */}
           <View style={styles.statCard}>
-            <View style={[styles.iconBox, { backgroundColor: '#DCFCE7' }]}>
-              <Ionicons name="key" size={20} color="#16A34A" />
+            <View style={styles.statHeader}>
+              <View style={[styles.iconBox, { backgroundColor: '#FEF2F2' }]}>
+                <Key size={20} color="#DC2626" />
+              </View>
             </View>
-            <Text style={styles.statValue}>{stats.emptyRooms}</Text>
+            <Text style={styles.statValue}>{emptyRooms}</Text>
             <Text style={styles.statLabel}>Phòng trống</Text>
           </View>
 
-          {/* Đang có khách */}
           <View style={styles.statCard}>
-            <View style={[styles.iconBox, { backgroundColor: '#FEF9C3' }]}>
-              <Ionicons name="bed" size={20} color="#CA8A04" />
+            <View style={styles.statHeader}>
+              <View style={[styles.iconBox, { backgroundColor: '#FEF9C3' }]}>
+                <BedDouble size={20} color="#CA8A04" />
+              </View>
             </View>
-            <Text style={styles.statValue}>{stats.occupiedRooms}</Text>
+            <Text style={styles.statValue}>{occupiedRooms}</Text>
             <Text style={styles.statLabel}>Đang có khách</Text>
           </View>
         </View>
 
-        {/* ── OCCUPANCY BAR ── */}
-        {stats.emptyRooms + stats.occupiedRooms > 0 && (
-          <View style={styles.occupancyCard}>
-            <View style={styles.occupancyRow}>
-              <Text style={styles.occupancyTitle}>Tỉ lệ lấp đầy</Text>
-              <Text style={styles.occupancyRate}>{occupancyRate}%</Text>
-            </View>
-            <View style={styles.progressBg}>
-              <View style={[styles.progressFill, { width: `${occupancyRate}%` }]} />
-            </View>
-            <Text style={styles.occupancySub}>
-              {stats.occupiedRooms} / {stats.emptyRooms + stats.occupiedRooms} phòng đang có khách
-            </Text>
+        {/* ── QUICK ACTIONS ── */}
+        <View style={styles.sectionCard}>
+          <Text style={styles.sectionTitle}>Quản lý nhanh</Text>
+          <View style={styles.actionGrid}>
+            <QuickActionButton
+              icon={<Building size={24} color="#3B82F6" />}
+              color="#3B82F6" label="Thêm khách sạn" onPress={() => handleAction('add_hotel')}
+            />
+            <QuickActionButton
+              icon={<BedDouble size={24} color="#10B981" />}
+              color="#10B981" label="Thêm phòng" onPress={() => handleAction('add_room')}
+            />
+            <QuickActionButton
+              icon={<PlusCircle size={24} color="#F59E0B" />}
+              color="#F59E0B" label="Tạo booking" onPress={() => handleAction('create_booking')}
+            />
+            <QuickActionButton
+              icon={<LogIn size={24} color="#8B5CF6" />}
+              color="#8B5CF6" label="Check-in" onPress={() => handleAction('check_in')}
+            />
+            <QuickActionButton
+              icon={<LogOut size={24} color="#EC4899" />}
+              color="#EC4899" label="Check-out" onPress={() => handleAction('check_out')}
+            />
+            <QuickActionButton
+              icon={<Users size={24} color="#6366F1" />}
+              color="#6366F1" label="Khách hàng" onPress={() => handleAction('manage_customer')}
+            />
+            <QuickActionButton
+              icon={<LayoutGrid size={24} color="#14B8A6" />}
+              color="#14B8A6" label="Quản lý phòng" onPress={() => handleAction('manage_room')}
+            />
+            <QuickActionButton
+              icon={<BarChart3 size={24} color="#F43F5E" />}
+              color="#F43F5E" label="Xem báo cáo" onPress={() => handleAction('report')}
+            />
           </View>
-        )}
+        </View>
 
         {/* ── RECENT BOOKINGS ── */}
-        <View style={styles.sectionCard}>
-          <View style={styles.sectionHeader}>
+        <View style={[styles.sectionCard, { marginBottom: 40 }]}>
+          <View style={[styles.sectionHeader, { marginBottom: 8 }]}>
             <Text style={styles.sectionTitle}>Booking mới nhất</Text>
             <TouchableOpacity onPress={() => router.push('/owner/bookings' as any)}>
               <Text style={styles.seeAll}>Xem tất cả</Text>
@@ -233,7 +351,7 @@ export default function OwnerHome() {
 
           {recentBookings.length === 0 ? (
             <View style={styles.emptyWrap}>
-              <Ionicons name="calendar-outline" size={40} color="#D1D5DB" />
+              <Calendar size={48} color="#E5E7EB" />
               <Text style={styles.emptyText}>Chưa có đơn đặt phòng nào</Text>
             </View>
           ) : (
@@ -250,16 +368,16 @@ export default function OwnerHome() {
                   ]}
                 >
                   <View style={styles.bookingLeft}>
-                    <Text style={styles.bookingRoom} numberOfLines={1}>
-                      {b.hotelName || b.roomName || 'Phòng'}
+                    <Text style={styles.bookingGuest} numberOfLines={1}>
+                      {b.roomName || 'Khách'}
                     </Text>
                     <Text style={styles.bookingDates}>
-                      {fmtDate(b.checkInDate)} → {fmtDate(b.checkOutDate)}
+                      {formatDate(b.checkInDate)} → {formatDate(b.checkOutDate)}
                     </Text>
                   </View>
                   <View style={styles.bookingRight}>
                     <Text style={styles.bookingPrice}>
-                      {fmt(b.finalPrice ?? b.totalPrice)}
+                      {formatCurrency(b.finalPrice ?? b.totalPrice)}
                     </Text>
                     <View style={[styles.badge, { backgroundColor: st.bg }]}>
                       <Text style={[styles.badgeText, { color: st.color }]}>{st.label}</Text>
@@ -276,136 +394,123 @@ export default function OwnerHome() {
 }
 
 const styles = StyleSheet.create({
-  safeArea: { flex: 1, backgroundColor: '#F9FAFB' },
-  center:   { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  content:  { padding: 16, paddingBottom: 100 },
+  safeArea: { flex: 1, backgroundColor: '#F8FAFC' },
+  center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+  content: { padding: 20 },
 
   // Header
   header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 20,
+    marginBottom: 24,
+    marginTop: 10,
   },
-  headerLeft: { flexDirection: 'row', alignItems: 'center' },
-  avatar: {
-    width: 48, height: 48, borderRadius: 24,
-    backgroundColor: '#2563EB',
-    justifyContent: 'center', alignItems: 'center',
-    marginRight: 12,
-  },
-  avatarText: { color: '#FFF', fontSize: 18, fontWeight: 'bold' },
-  greeting: { fontSize: 16, fontWeight: '700', color: '#111827' },
-  dateText: { fontSize: 12, color: '#6B7280', marginTop: 2 },
-  hotelBadge: {
-    flexDirection: 'row', alignItems: 'center', gap: 4,
-    backgroundColor: '#EFF6FF',
-    paddingHorizontal: 12, paddingVertical: 6,
-    borderRadius: 20,
-  },
-  hotelBadgeText: { fontSize: 13, fontWeight: '700', color: '#2563EB' },
+  greeting: { fontSize: 24, fontWeight: '800', color: '#0F172A' },
+  dateText: { fontSize: 14, color: '#64748B', marginTop: 4, fontWeight: '500' },
 
   // Stats grid
   statsGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'space-between',
-    marginBottom: 16,
-    gap: 12,
+    marginBottom: 8,
+    gap: 16,
   },
   statCard: {
-    width: '47%',
-    backgroundColor: '#FFF',
-    borderRadius: 16,
+    width: (width - 40 - 16) / 2, // 40 is padding horizontal, 16 is gap
+    backgroundColor: '#FFFFFF',
+    borderRadius: 20,
     padding: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
+    shadowColor: '#64748B',
+    shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.05,
-    shadowRadius: 8,
-    elevation: 2,
+    shadowRadius: 12,
+    elevation: 3,
   },
-  iconBox: {
-    width: 36, height: 36, borderRadius: 10,
-    justifyContent: 'center', alignItems: 'center',
-    marginBottom: 12,
-  },
-  statValueLight: { fontSize: 22, fontWeight: '800', color: '#FFF' },
-  statLabelLight: { fontSize: 13, color: 'rgba(255,255,255,0.9)', marginTop: 4, fontWeight: '500' },
-  statValue: { fontSize: 18, fontWeight: '800', color: '#111827' },
-  statLabel: { fontSize: 13, color: '#6B7280', marginTop: 4, fontWeight: '500' },
-
-  // Occupancy
-  occupancyCard: {
-    backgroundColor: '#FFF',
-    borderRadius: 16,
-    padding: 16,
-    marginBottom: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-    elevation: 2,
-  },
-  occupancyRow: {
+  statHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 10,
+    alignItems: 'flex-start',
+    marginBottom: 12,
   },
-  occupancyTitle: { fontSize: 15, fontWeight: '700', color: '#111827' },
-  occupancyRate:  { fontSize: 18, fontWeight: '800', color: '#7C3AED' },
-  progressBg: {
-    height: 8, backgroundColor: '#F3F4F6', borderRadius: 4, overflow: 'hidden',
+  iconBox: {
+    width: 40, height: 40, borderRadius: 12,
+    justifyContent: 'center', alignItems: 'center',
   },
-  progressFill: {
-    height: '100%', backgroundColor: '#7C3AED', borderRadius: 4,
-  },
-  occupancySub: { fontSize: 12, color: '#6B7280', marginTop: 8 },
+  statValue: { fontSize: 22, fontWeight: '800', color: '#0F172A' },
+  statLabel: { fontSize: 13, color: '#64748B', marginTop: 4, fontWeight: '600' },
 
   // Section card
   sectionCard: {
-    backgroundColor: '#FFF',
-    borderRadius: 16,
-    padding: 16,
-    marginBottom: 24,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
+    backgroundColor: '#FFFFFF',
+    borderRadius: 20,
+    padding: 20,
+    marginTop: 24,
+    shadowColor: '#64748B',
+    shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.05,
-    shadowRadius: 8,
-    elevation: 2,
+    shadowRadius: 12,
+    elevation: 3,
   },
   sectionHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 12,
   },
-  sectionTitle: { fontSize: 18, fontWeight: '700', color: '#111827' },
-  seeAll:       { fontSize: 14, fontWeight: '600', color: '#2563EB' },
+  sectionTitle: { fontSize: 18, fontWeight: '800', color: '#0F172A' },
+  seeAll: { fontSize: 14, fontWeight: '700', color: '#2563EB' },
+
+  // Quick Actions Grid
+  actionGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'flex-start',
+    marginHorizontal: -8,
+    marginTop: 20,
+  },
+  actionButton: {
+    width: '25%',
+    alignItems: 'center',
+    paddingHorizontal: 4,
+    marginBottom: 20,
+  },
+  actionIconWrapper: {
+    width: 48,
+    height: 48,
+    borderRadius: 16,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  actionLabel: {
+    fontSize: 12,
+    color: '#334155',
+    fontWeight: '600',
+    lineHeight: 16,
+    height: 32,
+  },
 
   // Booking rows
   bookingRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: 14,
+    paddingVertical: 16,
   },
   bookingBorder: {
     borderBottomWidth: 1,
-    borderBottomColor: '#F3F4F6',
+    borderBottomColor: '#F1F5F9',
   },
-  bookingLeft:  { flex: 1, marginRight: 8 },
-  bookingRoom:  { fontSize: 15, fontWeight: '600', color: '#111827', marginBottom: 4 },
-  bookingDates: { fontSize: 13, color: '#6B7280' },
+  bookingLeft: { flex: 1, marginRight: 12 },
+  bookingGuest: { fontSize: 15, fontWeight: '700', color: '#1E293B', marginBottom: 4 },
+  bookingDates: { fontSize: 13, color: '#64748B', fontWeight: '500' },
   bookingRight: { alignItems: 'flex-end' },
-  bookingPrice: { fontSize: 14, fontWeight: 'bold', color: '#2563EB', marginBottom: 6 },
+  bookingPrice: { fontSize: 15, fontWeight: '800', color: '#0F172A', marginBottom: 6 },
   badge: {
-    paddingHorizontal: 8, paddingVertical: 3,
+    paddingHorizontal: 8, paddingVertical: 4,
     borderRadius: 6, overflow: 'hidden',
   },
-  badgeText: { fontSize: 11, fontWeight: '700' },
+  badgeText: { fontSize: 11, fontWeight: '800' },
 
   // Empty
-  emptyWrap: { alignItems: 'center', paddingVertical: 24 },
-  emptyText: { fontSize: 14, color: '#9CA3AF', marginTop: 10 },
+  emptyWrap: { alignItems: 'center', paddingVertical: 32 },
+  emptyText: { fontSize: 14, color: '#94A3B8', marginTop: 12, fontWeight: '500' },
 });
