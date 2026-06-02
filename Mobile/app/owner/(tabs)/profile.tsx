@@ -1,17 +1,47 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import {
   View,
   Text,
   StyleSheet,
   TouchableOpacity,
-  Alert,
+  ActivityIndicator,
+  ScrollView,
+  Alert
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { router } from "expo-router";
-import { User, Mail, Shield, LogOut } from "lucide-react-native";
+import { Ionicons } from "@expo/vector-icons";
+import Toast from "react-native-toast-message";
+import { useRouter } from "expo-router";
+
+import { profileApi } from "../../../src/shared/api/profileApi";
 import { tokenStorage } from "../../../src/shared/storage/tokenStorage";
 
-export default function AdminProfileScreen() {
+export default function ProfileScreen() {
+  const router = useRouter();
+
+  const [loading, setLoading] = useState(true);
+  const [profile, setProfile] = useState<any>(null);
+
+  const loadProfile = async () => {
+    try {
+      setLoading(true);
+      const res = await profileApi.getProfile();
+      setProfile(res.data);
+    } catch {
+      Toast.show({
+        type: "error",
+        text1: "Lỗi",
+        text2: "Không tải được thông tin",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadProfile();
+  }, []);
+
   const handleLogout = () => {
     Alert.alert("Đăng xuất", "Bạn có chắc muốn đăng xuất không?", [
       {
@@ -23,131 +53,151 @@ export default function AdminProfileScreen() {
         style: "destructive",
         onPress: async () => {
           await tokenStorage.clearTokens();
-          router.replace("/auth/login");
+          Toast.show({
+            type: "success",
+            text1: "Đăng xuất thành công",
+          });
+          setTimeout(() => {
+            router.replace("/auth/login");
+          }, 800);
         },
       },
     ]);
   };
 
+  if (loading) {
+    return (
+      <SafeAreaView style={styles.center}>
+        <ActivityIndicator size="large" color="#5392F9" />
+      </SafeAreaView>
+    );
+  }
+
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.title}>Cá nhân</Text>
-        <Text style={styles.subtitle}>Thông tin tài khoản quản trị</Text>
-      </View>
+      <ScrollView showsVerticalScrollIndicator={false}>
+        {/* HEADER */}
+        <View style={styles.header}>
+          <View style={styles.avatar}>
+            <Ionicons name="person" size={36} color="#fff" />
+          </View>
 
-      <View style={styles.card}>
-        <View style={styles.avatar}>
-          <User size={42} color="#2563EB" />
+          <Text style={styles.name}>
+            {profile?.fullName || "Chủ nhà"}
+          </Text>
+
+          <Text style={styles.email}>
+            {profile?.email || ""}
+          </Text>
         </View>
 
-        <Text style={styles.name}>Quản trị viên</Text>
+        {/* ACCOUNT */}
+        <View style={styles.card}>
+          <Text style={styles.sectionTitle}>Cá nhân</Text>
 
-        <View style={styles.infoRow}>
-          <Mail size={18} color="#64748B" />
-          <Text style={styles.infoText}>admin@example.com</Text>
+          <TouchableOpacity
+            style={styles.row}
+            onPress={() => router.push("/customer/setting/account-info")}
+          >
+            <Ionicons name="person-outline" size={20} color="#5392F9" />
+            <Text style={styles.rowText}>Thông tin tài khoản</Text>
+            <Ionicons name="chevron-forward" size={18} color="#ccc" />
+          </TouchableOpacity>
         </View>
 
-        <View style={styles.infoRow}>
-          <Shield size={18} color="#64748B" />
-          <Text style={styles.infoText}>Admin</Text>
-        </View>
-      </View>
+        {/* LOGOUT */}
+        <TouchableOpacity
+          style={styles.logoutBtn}
+          onPress={handleLogout}
+        >
+          <Ionicons name="log-out-outline" size={20} color="#EF4444" />
+          <Text style={styles.logoutText}>Đăng xuất</Text>
+        </TouchableOpacity>
 
-      <TouchableOpacity
-        style={styles.logoutButton}
-        activeOpacity={0.8}
-        onPress={handleLogout}
-      >
-        <LogOut size={20} color="#FFF" />
-        <Text style={styles.logoutText}>Đăng xuất</Text>
-      </TouchableOpacity>
+        <View style={{ height: 30 }} />
+      </ScrollView>
     </SafeAreaView>
   );
 }
 
+// ================= STYLE =================
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#F5F7FB",
-    padding: 20,
   },
-
-  header: {
-    marginBottom: 24,
-  },
-
-  title: {
-    fontSize: 26,
-    fontWeight: "800",
-    color: "#0F172A",
-  },
-
-  subtitle: {
-    marginTop: 6,
-    fontSize: 14,
-    color: "#64748B",
-  },
-
-  card: {
-    backgroundColor: "#FFF",
-    borderRadius: 22,
-    padding: 24,
-    alignItems: "center",
-    shadowColor: "#000",
-    shadowOpacity: 0.08,
-    shadowRadius: 12,
-    elevation: 4,
-  },
-
-  avatar: {
-    width: 90,
-    height: 90,
-    borderRadius: 45,
-    backgroundColor: "#DBEAFE",
+  center: {
+    flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    marginBottom: 16,
   },
-
-  name: {
-    fontSize: 22,
-    fontWeight: "800",
-    color: "#0F172A",
-    marginBottom: 20,
-  },
-
-  infoRow: {
-    width: "100%",
+  logoutBtn: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#F8FAFC",
-    padding: 14,
-    borderRadius: 14,
-    marginBottom: 10,
+    justifyContent: "center",
+    marginHorizontal: 15,
+    marginTop: 20,
+    paddingVertical: 12,
+    borderRadius: 12,
+    backgroundColor: "#fff",
+    borderWidth: 1,
+    borderColor: "#FECACA",
   },
-
-  infoText: {
-    marginLeft: 12,
-    fontSize: 15,
-    color: "#334155",
+  logoutText: {
+    marginLeft: 8,
+    color: "#EF4444",
     fontWeight: "600",
   },
-
-  logoutButton: {
-    marginTop: 28,
-    height: 54,
-    borderRadius: 18,
-    backgroundColor: "#EF4444",
+  header: {
+    backgroundColor: "#5392F9",
+    paddingVertical: 18,
+    paddingHorizontal: 20,
+    borderBottomLeftRadius: 20,
+    borderBottomRightRadius: 20,
+    alignItems: "center",
+  },
+  avatar: {
+    width: 55,
+    height: 55,
+    borderRadius: 28,
+    backgroundColor: "rgba(255,255,255,0.2)",
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 6,
+  },
+  name: {
+    color: "#fff",
+    fontSize: 16,
+    fontWeight: "bold",
+  },
+  email: {
+    color: "#E5E7EB",
+    fontSize: 12,
+  },
+  card: {
+    backgroundColor: "#fff",
+    marginHorizontal: 15,
+    marginTop: 15,
+    borderRadius: 12,
+    padding: 12,
+    elevation: 2,
+  },
+  sectionTitle: {
+    fontSize: 12,
+    fontWeight: "bold",
+    color: "#9CA3AF",
+    marginBottom: 8,
+  },
+  row: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "center",
-    gap: 10,
+    paddingVertical: 12,
   },
-
-  logoutText: {
-    color: "#FFF",
-    fontSize: 16,
-    fontWeight: "800",
+  rowText: {
+    flex: 1,
+    marginLeft: 10,
+    fontSize: 14,
+    color: "#111827",
+    fontWeight: "500",
   },
 });

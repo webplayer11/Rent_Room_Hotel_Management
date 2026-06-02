@@ -1,5 +1,5 @@
-import React, { useState, useCallback } from 'react';
-import { View, Text, StyleSheet, ScrollView, ActivityIndicator, Dimensions } from 'react-native';
+import React, { useState, useCallback, useRef } from 'react';
+import { View, Text, StyleSheet, ScrollView, ActivityIndicator, Dimensions, Animated, PanResponder } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LineChart } from 'react-native-chart-kit';
 import axios from 'axios';
@@ -12,6 +12,11 @@ export default function AnalyticsTab() {
   const [stats, setStats] = useState<any>(null);
   const [chartData, setChartData] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [scale, setScale] = useState(1);
+  
+  const scaleAnim = useRef(new Animated.Value(1)).current;
+  const lastScaleRef = useRef(1);
+  const lastDistanceRef = useRef(0);
 
   const fetchData = async () => {
     try {
@@ -49,6 +54,49 @@ export default function AnalyticsTab() {
     }, [])
   );
 
+  // Calculate distance between two touch points
+  const getDistance = (x1: number, y1: number, x2: number, y2: number) => {
+    const dx = x1 - x2;
+    const dy = y1 - y2;
+    return Math.sqrt(dx * dx + dy * dy);
+  };
+
+  const panResponder = useRef(
+    PanResponder.create({
+      onStartShouldSetPanResponder: (evt) => {
+        return evt.nativeEvent.touches.length === 2;
+      },
+      onMoveShouldSetPanResponder: (evt) => {
+        return evt.nativeEvent.touches.length === 2;
+      },
+      onPanResponderMove: (evt) => {
+        const touches = evt.nativeEvent.touches;
+        if (touches.length === 2) {
+          const distance = getDistance(
+            touches[0].pageX,
+            touches[0].pageY,
+            touches[1].pageX,
+            touches[1].pageY
+          );
+
+          if (lastDistanceRef.current > 0) {
+            const newScale = Math.max(
+              1,
+              Math.min(3, lastScaleRef.current * (distance / lastDistanceRef.current))
+            );
+            setScale(newScale);
+            scaleAnim.setValue(newScale);
+          }
+          lastDistanceRef.current = distance;
+        }
+      },
+      onPanResponderRelease: () => {
+        lastDistanceRef.current = 0;
+        lastScaleRef.current = scale;
+      },
+    })
+  ).current;
+
   const getChartConfig = () => {
     const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
@@ -75,6 +123,8 @@ export default function AnalyticsTab() {
       ]
     };
   };
+
+  const chartWidth = (screenWidth - 64) * scale;
 
   return (
     <SafeAreaView style={styles.container}>

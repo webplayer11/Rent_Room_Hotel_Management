@@ -34,14 +34,14 @@ export default function AdminTabsLayout() {
       <Tabs.Screen
         name="home"
         options={{
-          title: 'Tổng quan',
+          title: 'Home',
           tabBarIcon: ({ color }) => <Ionicons name="home" size={24} color={color} />,
         }}
       />
       <Tabs.Screen
         name="stats"
         options={{
-          title: 'Thống kê',
+          title: 'Analytics',
           tabBarIcon: ({ color }) => <Ionicons name="pie-chart" size={24} color={color} />,
         }}
       />
@@ -55,7 +55,7 @@ export default function AdminTabsLayout() {
       <Tabs.Screen
         name="profile"
         options={{
-          title: 'Cá nhân',
+          title: 'Profile',
           tabBarIcon: ({ color }) => <Ionicons name="person" size={24} color={color} />,
         }}
       />

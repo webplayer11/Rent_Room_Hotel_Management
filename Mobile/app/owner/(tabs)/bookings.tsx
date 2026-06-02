@@ -43,11 +43,6 @@ const STATUS_BG: Record<string, string> = {
 /** Trả về các nút hành động host có thể thực hiện */
 const getActions = (status: string): { label: string; next: string; color: string }[] => {
   switch (status) {
-    case 'Pending':
-      return [
-        { label: 'Xác nhận', next: 'Confirmed', color: '#2563EB' },
-        { label: 'Từ chối', next: 'Rejected', color: '#EF4444' },
-      ];
     case 'Confirmed':
       return [{ label: 'Check-in', next: 'CheckedIn', color: '#059669' }];
     case 'CheckedIn':
@@ -60,7 +55,6 @@ const getActions = (status: string): { label: string; next: string; color: strin
 /* ─── Filter tabs ─────────────────────────────────────────────────── */
 const FILTERS: { key: string | null; label: string }[] = [
   { key: null, label: 'Tất cả' },
-  { key: 'Pending', label: 'Chờ xác nhận' },
   { key: 'Confirmed', label: 'Đã xác nhận' },
   { key: 'CheckedIn', label: 'Check-in' },
   { key: 'CheckedOut', label: 'Check-out' },
@@ -401,7 +395,7 @@ export default function HostBookingsTab() {
 
   const filtered = filter
     ? bookings.filter((b) => b.status === filter)
-    : bookings;
+    : bookings.filter((b) => b.status !== 'Pending');
 
   /* Sort: newest first */
   const sorted = [...filtered].sort((a, b) => {
@@ -423,33 +417,36 @@ export default function HostBookingsTab() {
       </View>
 
       {/* Filter bar */}
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        style={styles.filterBarWrapper}
-        contentContainerStyle={styles.filterBar}
-      >
-        {FILTERS.map((f) => (
-          <TouchableOpacity
-            key={String(f.key)}
-            style={[
-              styles.filterChip,
-              filter === f.key && styles.filterChipActive,
-            ]}
-            onPress={() => setFilter(f.key)}
-            activeOpacity={0.75}
-          >
-            <Text
+      <View style={styles.filterBarWrapper}>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.filterBar}
+        >
+          {FILTERS.map((f) => (
+            <TouchableOpacity
+              key={String(f.key)}
               style={[
-                styles.filterLabel,
-                filter === f.key && styles.filterLabelActive,
+                styles.filterChip,
+                filter === f.key && styles.filterChipActive,
               ]}
+              onPress={() => setFilter(f.key)}
+              activeOpacity={0.75}
             >
-              {f.label}
-            </Text>
-          </TouchableOpacity>
-        ))}
-      </ScrollView>
+              <Text
+                style={[
+                  styles.filterLabel,
+                  filter === f.key && styles.filterLabelActive,
+                ]}
+                numberOfLines={1}
+                ellipsizeMode="tail"
+              >
+                {f.label}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
+      </View>
 
       {/* Count */}
       <Text style={styles.countText}>
@@ -521,26 +518,38 @@ const styles = StyleSheet.create({
   refreshBtn: { padding: 4 },
 
   filterBarWrapper: {
-    flexGrow: 0,
     backgroundColor: '#FFF',
+    borderBottomWidth: 1,
+    borderBottomColor: '#E5E7EB',
+    height: 50,
   },
   filterBar: {
-    paddingHorizontal: 14,
+    paddingHorizontal: 16,
     paddingVertical: 8,
-    gap: 8,
     alignItems: 'center',
+    minHeight: 34,
   },
   filterChip: {
-    paddingHorizontal: 14,
-    paddingVertical: 7,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    marginRight: 8,
     borderRadius: 20,
     backgroundColor: '#F3F4F6',
     borderWidth: 1,
     borderColor: '#E5E7EB',
-    alignSelf: 'center',
+    justifyContent: 'center',
+    alignItems: 'center',
+    minWidth: 60,
+    height: 34,
   },
   filterChipActive: { backgroundColor: '#EFF6FF', borderColor: '#2563EB' },
-  filterLabel: { fontSize: 12, fontWeight: '600', color: '#6B7280' },
+  filterLabel: { 
+    fontSize: 13, 
+    fontWeight: '600', 
+    color: '#6B7280',
+    textAlign: 'center',
+    lineHeight: 16,
+  },
   filterLabelActive: { color: '#2563EB' },
 
   countText: {
