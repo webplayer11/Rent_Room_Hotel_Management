@@ -11,16 +11,17 @@ import {
 } from 'react-native';
 import { ChevronLeft, Star, MapPin } from 'lucide-react-native';
 import { adminApi, PendingHotelDto } from '../../src/shared/api/adminApi';
-import { router, Stack, useFocusEffect } from 'expo-router';
+import { router, Stack, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { IMAGE_URL } from '../../src/config';
 
 // ─── Types ──────────────────────────────────────────────────────────
-type TabType = 'all' | 'pending' | 'approved';
+type TabType = 'all' | 'pending' | 'approved' | 'suspended';
 
 const TABS: { key: TabType; label: string }[] = [
-  { key: 'all', label: 'Tất cả' },
-  { key: 'pending', label: 'Chờ duyệt' },
-  { key: 'approved', label: 'Đã duyệt' },
+  { key: 'all',       label: 'Tất cả' },
+  { key: 'pending',   label: 'Chờ duyệt' },
+  { key: 'approved',  label: 'Đã duyệt' },
+  { key: 'suspended', label: 'Tạm khóa' },
 ];
 
 // ─── Helpers ─────────────────────────────────────────────────────────
@@ -47,7 +48,13 @@ const resolveImageUrl = (url: string | undefined | null): string | null => {
 
 // ─── Component ───────────────────────────────────────────────────────
 export default function HotelsScreen() {
-  const [activeTab, setActiveTab] = useState<TabType>('all');
+  const { filter } = useLocalSearchParams<{ filter?: string }>();
+
+  // Nếu được điều hướng từ màn khác với filter=suspended thì mở tab Tạm khóa
+  const initialTab: TabType =
+    filter === 'suspended' ? 'suspended' : 'all';
+
+  const [activeTab, setActiveTab] = useState<TabType>(initialTab);
   const [hotels,   setHotels]    = useState<PendingHotelDto[]>([]);
   const [loading,  setLoading]   = useState(false);
   const [error,    setError]     = useState<string | null>(null);
@@ -59,12 +66,23 @@ export default function HotelsScreen() {
       setError(null);
 
       let result;
-      if (tab === 'all')      result = await adminApi.getAllHotels();
-      else if (tab === 'pending')  result = await adminApi.getPendingHotel();
-      else                         result = await adminApi.getApprovedHotels();
+      if (tab === 'pending') {
+        result = await adminApi.getPendingHotel();
+      } else if (tab === 'approved') {
+        result = await adminApi.getApprovedHotels();
+      } else {
+        // 'all' và 'suspended' đều lấy toàn bộ rồi filter client-side
+        result = await adminApi.getAllHotels();
+      }
 
       if (result.isSuccess) {
-        setHotels(result.data || []);
+        const data = result.data || [];
+        if (tab === 'suspended') {
+          // Tạm khóa: đã duyệt nhưng đang bị khóa
+          setHotels(data.filter(h => h.isApproved === true && h.isActive === false));
+        } else {
+          setHotels(data);
+        }
       } else {
         setError(result.message || 'Không tải được danh sách');
       }
