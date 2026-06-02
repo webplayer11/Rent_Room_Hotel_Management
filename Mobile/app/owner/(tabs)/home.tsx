@@ -4,7 +4,6 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from 'expo-router';
 import axios from 'axios';
 import { HomeHeader } from '../components/HomeHeader';
-import { HotelSwitcher } from '../components/HotelSwitcher';
 import { DashboardStats } from '../components/DashboardStats';
 import { RoomStatus } from '../components/RoomStatus';
 import { RecentBookings } from '../components/RecentBookings';
@@ -17,6 +16,7 @@ export default function OwnerHome() {
   const [refreshing, setRefreshing] = useState(false);
   const [hostName, setHostName] = useState('');
   const [currentHotel, setCurrentHotel] = useState('Đang tải...');
+  const [hotelId, setHotelId] = useState('');
   const [stats, setStats] = useState({
     bookingsToday: 0,
     revenueThisMonth: 0,
@@ -59,6 +59,7 @@ export default function OwnerHome() {
       if (res.isSuccess && res.data && res.data.length > 0) {
         setCurrentHotel(res.data[0].name || 'Khách sạn của bạn');
         selectedHotelId = res.data[0].id;
+        setHotelId(res.data[0].id);
       } else {
         setCurrentHotel('Chưa có khách sạn');
       }
@@ -105,9 +106,8 @@ export default function OwnerHome() {
         }
       >
         <HomeHeader hostName={hostName} />
-        <HotelSwitcher currentHotel={currentHotel} />
         <DashboardStats {...stats} />
-        <RoomStatus />
+        <RoomStatus hotelId={hotelId} />
         <QuickActions />
         <RecentBookings />
       </ScrollView>
