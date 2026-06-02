@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, StyleSheet, ScrollView, RefreshControl, Dimensions, ActivityIndicator } from 'react-native';
 import { BarChart } from 'react-native-chart-kit';
-import { adminApi, AdminUserDto } from '../../../src/shared/api/adminApi';
+import { adminApi } from '../../../src/shared/api/adminApi';
 import { BookingDto } from '../../../src/shared/api/bookingApi';
-import { TrendingUp, TrendingDown, Users, DollarSign, CheckCircle, Calendar, BarChart2 } from 'lucide-react-native';
+import { TrendingUp, TrendingDown, DollarSign, CheckCircle, Calendar, BarChart2 } from 'lucide-react-native';
 
 const { width } = Dimensions.get('window');
 
@@ -21,18 +21,11 @@ const formatCurrency = (value: number) => {
 export default function AdminStatsScreen() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [users, setUsers] = useState<AdminUserDto[]>([]);
   const [bookings, setBookings] = useState<BookingDto[]>([]);
 
   const fetchData = async () => {
     try {
-      const [usersRes, bookingsRes] = await Promise.all([
-        adminApi.getAllUsers(),
-        adminApi.getAllBookings()
-      ]);
-      if (usersRes.isSuccess && usersRes.data) {
-        setUsers(usersRes.data);
-      }
+      const bookingsRes = await adminApi.getAllBookings();
       if (bookingsRes.isSuccess && bookingsRes.data) {
         setBookings(bookingsRes.data as unknown as BookingDto[]);
       }
@@ -72,7 +65,6 @@ export default function AdminStatsScreen() {
   };
 
   const totalAdminRevenue = checkoutBookings.reduce((sum, b) => sum + getRevenue(b), 0);
-  const totalUsers = users.length;
   const totalCheckoutOrders = checkoutBookings.length;
 
   const now = new Date();
@@ -216,12 +208,6 @@ export default function AdminStatsScreen() {
           value={totalCheckoutOrders.toString()}
           icon={<CheckCircle size={24} color="#14B8A6" />}
           color="#14B8A6"
-        />
-        <KpiCard
-          title="Tổng số người dùng"
-          value={totalUsers.toString()}
-          icon={<Users size={24} color="#EC4899" />}
-          color="#EC4899"
         />
       </View>
 
