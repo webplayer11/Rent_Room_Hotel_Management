@@ -238,7 +238,7 @@ export default function OwnerHome() {
       <View style={[styles.actionIconWrapper, { backgroundColor: `${color}15` }]}>
         {icon}
       </View>
-      <Text style={styles.actionLabel} numberOfLines={2} textAlign="center">{label}</Text>
+      <Text style={[styles.actionLabel, { textAlign: 'center' }]} numberOfLines={2}>{label}</Text>
     </TouchableOpacity>
   );
 

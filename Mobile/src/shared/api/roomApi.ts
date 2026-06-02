@@ -53,6 +53,8 @@ export type CreateRoomDto = {
   isSmokingAllowed: boolean;
   images: any[];
   status?: string;
+  // NEW: tiện ích phòng — gửi mảng string tên tiện ích
+  roomAmenities?: string[];
 };
 
 
@@ -64,16 +66,25 @@ export const roomApi = {
     if (data.roomNumber) formData.append("RoomNumber", data.roomNumber);
     if (data.roomType) formData.append("RoomType", data.roomType);
     if (data.description) formData.append("Description", data.description);
-    
+
     formData.append("Capacity", String(data.capacity));
     formData.append("BedCount", String(data.bedCount));
     if (data.bedType) formData.append("BedType", data.bedType);
-    
+
     formData.append("PricePerNight", String(data.pricePerNight));
-    if (data.discountPrice !== undefined) formData.append("DiscountPrice", String(data.discountPrice));
-    if (data.roomSize !== undefined) formData.append("RoomSize", String(data.roomSize));
-    
+    if (data.discountPrice !== undefined)
+      formData.append("DiscountPrice", String(data.discountPrice));
+    if (data.roomSize !== undefined)
+      formData.append("RoomSize", String(data.roomSize));
+
     formData.append("IsSmokingAllowed", String(data.isSmokingAllowed));
+
+    // NEW: gửi từng tiện ích theo key RoomAmenities (backend nhận List<string>)
+    if (data.roomAmenities && data.roomAmenities.length > 0) {
+      data.roomAmenities.forEach((amenity) => {
+        formData.append("RoomAmenities", amenity);
+      });
+    }
 
     data.images.forEach((image, index) => {
       formData.append("Images", {
@@ -83,7 +94,6 @@ export const roomApi = {
       } as any);
     });
 
-    
     return apiFetch("/api/rooms", {
       method: "POST",
       body: formData,
