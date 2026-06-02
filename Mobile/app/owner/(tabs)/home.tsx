@@ -314,10 +314,6 @@ export default function OwnerHome() {
               color="#10B981" label="Thêm phòng" onPress={() => handleAction('add_room')}
             />
             <QuickActionButton
-              icon={<PlusCircle size={24} color="#F59E0B" />}
-              color="#F59E0B" label="Tạo booking" onPress={() => handleAction('create_booking')}
-            />
-            <QuickActionButton
               icon={<LogIn size={24} color="#8B5CF6" />}
               color="#8B5CF6" label="Check-in" onPress={() => handleAction('check_in')}
             />
@@ -325,14 +321,7 @@ export default function OwnerHome() {
               icon={<LogOut size={24} color="#EC4899" />}
               color="#EC4899" label="Check-out" onPress={() => handleAction('check_out')}
             />
-            <QuickActionButton
-              icon={<Users size={24} color="#6366F1" />}
-              color="#6366F1" label="Khách hàng" onPress={() => handleAction('manage_customer')}
-            />
-            <QuickActionButton
-              icon={<LayoutGrid size={24} color="#14B8A6" />}
-              color="#14B8A6" label="Quản lý phòng" onPress={() => handleAction('manage_room')}
-            />
+  
             <QuickActionButton
               icon={<BarChart3 size={24} color="#F43F5E" />}
               color="#F43F5E" label="Xem báo cáo" onPress={() => handleAction('report')}

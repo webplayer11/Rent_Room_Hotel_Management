@@ -3,23 +3,24 @@ import { ApiResponse } from './hotelApi';
 
 export type HostProfileDto = {
   id: string;
-  userId: string;
-  fullName?: string;
-  phone?: string;
-  email?: string;
   companyName?: string;
-  taxId?: string;
-  businessAddress?: string;
-  avatarUrl?: string;
-  isVerified?: boolean;
+  taxCode?: string;
+  bankAccount?: string;
+  bankName?: string;
+  isVerified: boolean;
+  businessLicenseUrls: string[];
+  // User info
+  email?: string;
+  fullName?: string;
+  phoneNumber?: string;
+  createdAt: string;
 };
 
 export type UpdateHostProfileDto = {
-  fullName?: string;
-  phone?: string;
   companyName?: string;
-  taxId?: string;
-  businessAddress?: string;
+  taxCode?: string;
+  bankAccount?: string;
+  bankName?: string;
 };
 
 export type RevenueByTimeDto = {
