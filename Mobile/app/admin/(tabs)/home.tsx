@@ -111,10 +111,7 @@ export default function AdminHomeScreen() {
               <Text style={styles.subtitle}>Hôm nay có 25 yêu cầu mới cần xử lý.</Text>
             </View>
           </View>
-          <Pressable style={styles.notificationBtn}>
-            <Ionicons name="notifications-outline" size={24} color="#111827" />
-            <View style={styles.badge} />
-          </Pressable>
+
         </View>
 
         {/* DASHBOARD STATS */}
@@ -154,16 +151,7 @@ export default function AdminHomeScreen() {
             </View>
           </View>
 
-          {/* Row 3 - Full Width */}
-          <View style={[styles.statsCardFull, styles.cardBlue]}>
-            <View style={{ flex: 1 }}>
-              <Text style={[styles.statsLabel, { color: 'rgba(255,255,255,0.8)' }]}>Tổng booking hệ thống</Text>
-              <Text style={[styles.statsValue, { color: '#FFF', fontSize: 32 }]}>{MOCK_STATS.totalBookings}</Text>
-            </View>
-            <View style={[styles.iconBox, { backgroundColor: 'rgba(255,255,255,0.2)', width: 60, height: 60, borderRadius: 30, marginBottom: 0 }]}>
-              <Ionicons name="bar-chart" size={32} color="#FFFFFF" />
-            </View>
-          </View>
+
         </View>
 
         {/* QUICK ACTIONS */}
