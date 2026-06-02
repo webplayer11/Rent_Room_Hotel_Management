@@ -24,6 +24,7 @@ public interface IAdminService
     // ── User Management ──────────────────────────
     Task<IEnumerable<AdminUserDto>> GetAllUsersAsync();
     Task<AdminUserDto?> GetUserByIdAsync(string userId);
+    Task<IEnumerable<BookingDto>> GetAllBookingsAsync();
 
     // ── Statistics ───────────────────────────────
     Task<RevenueStatsDto> GetRevenueStatsAsync();

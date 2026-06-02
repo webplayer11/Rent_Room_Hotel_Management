@@ -384,7 +384,9 @@ export default function HotelDetailScreen() {
               <Text style={{ color: '#94A3B8', fontStyle: 'italic' }}>Khách sạn chưa có phòng nào</Text>
             ) : (
               rooms.map((room) => {
-                const firstImg = room.images?.[0]?.url || room.images?.[0];
+                const firstImg = typeof room.images?.[0] === 'string' 
+                  ? room.images?.[0] 
+                  : (room.images?.[0] as any)?.url;
                 const roomImgUri = firstImg
                   ? (firstImg.startsWith('http') ? firstImg : `${IMAGE_URL}/${firstImg}`)
                   : null;

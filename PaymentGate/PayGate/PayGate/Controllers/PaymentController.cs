@@ -46,7 +46,7 @@ public class PaymentController : ControllerBase
         var signature = _payGateService.GenerateHmacSha256(data, an.Key);
         var request = new HttpRequestMessage(
             HttpMethod.Post,
-            "http://192.168.1.13:5204/api/payments/callback"
+            "http://192.168.0.102:5204/api/payments/callback"
         );
         request.Headers.Add("X-Signature", signature);
         request.Content = JsonContent.Create(result);

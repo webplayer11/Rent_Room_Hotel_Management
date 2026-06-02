@@ -282,15 +282,27 @@ public class AdminService : IAdminService
     }
 
     // ══════════════════════════════════════════════════════════════
-    //  STATISTICS
+    //  STATISTICS & BOOKINGS
     // ══════════════════════════════════════════════════════════════
+
+    public async Task<IEnumerable<BookingDto>> GetAllBookingsAsync()
+    {
+        var bookings = await _context.Bookings
+            .Include(b => b.User)
+            .Include(b => b.Room)
+                .ThenInclude(r => r.Hotel)
+            .OrderByDescending(b => b.CreatedAt)
+            .ToListAsync();
+
+        return _mapper.Map<IEnumerable<BookingDto>>(bookings);
+    }
 
     public async Task<RevenueStatsDto> GetRevenueStatsAsync()
     {
         var commissionRate = _configuration.GetValue<double>("Commission:Rate", 0.10);
 
         var bookings = await _context.Bookings.ToListAsync();
-        var completedBookings = bookings.Where(b => b.Status == "Completed").ToList();
+        var completedBookings = bookings.Where(b => b.Status == "Completed" || b.Status == "CheckedOut").ToList();
 
         var totalRevenue = completedBookings.Sum(b => b.FinalPrice);
         var totalCommission = totalRevenue * (decimal)commissionRate;
@@ -352,7 +364,7 @@ public class AdminService : IAdminService
             TotalHotels = totalHotels,
             ApprovedHotels = approvedHotels,
             TotalBookingsThisMonth = bookingsThisMonth.Count,
-            CompletedBookingsThisMonth = bookingsThisMonth.Count(b => b.Status == "Completed"),
+            CompletedBookingsThisMonth = bookingsThisMonth.Count(b => b.Status == "Completed" || b.Status == "CheckedOut"),
             MonthlyBookings = monthlyBookings,
             MonthlyRevenue = monthlyBookings // Same data, Amount field contains revenue
         };

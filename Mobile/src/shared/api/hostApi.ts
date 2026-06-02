@@ -22,20 +22,44 @@ export type UpdateHostProfileDto = {
   businessAddress?: string;
 };
 
-export type HostRevenueDto = {
-  totalRevenue: number;
-  totalBookings: number;
-  completedBookings: number;
-  cancelledBookings: number;
-  hotels: HostRevenueItemDto[];
+export type RevenueByTimeDto = {
+  period: string;
+  revenue: number;
 };
 
 export type HostRevenueItemDto = {
   hotelId: string;
-  hotelName: string;
+  hotelName?: string;
+  revenue: number;
+  commission: number;
+  netRevenue: number;
+  bookingCount: number;
+};
+
+export type HostRevenueDto = {
   totalRevenue: number;
+  commissionRate: number;
+  commissionAmount: number;
+  netRevenue: number;
   totalBookings: number;
   completedBookings: number;
+  cancelledBookings: number;
+  byYear: RevenueByTimeDto[];
+  byMonth: RevenueByTimeDto[];
+  byHotel: HostRevenueItemDto[];
+};
+
+export type HotelRevenueDetailDto = {
+  hotelId: string;
+  hotelName?: string;
+  totalRevenue: number;
+  commission: number;
+  netRevenue: number;
+  totalBookings: number;
+  completedBookings: number;
+  cancelledBookings: number;
+  byYear: RevenueByTimeDto[];
+  byMonth: RevenueByTimeDto[];
 };
 
 export const hostApi = {
@@ -65,6 +89,6 @@ export const hostApi = {
   getHotelRevenue: (hotelId: string) => {
     return apiFetch(`/api/hosts/revenue/${hotelId}`, {
       method: 'GET',
-    }) as Promise<ApiResponse<HostRevenueItemDto>>;
+    }) as Promise<ApiResponse<HotelRevenueDetailDto>>;
   },
 };

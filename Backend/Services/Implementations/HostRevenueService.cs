@@ -21,10 +21,10 @@ public class HostRevenueService : IHostRevenueService
         var commissionRate = _configuration.GetValue<double>("Commission:Rate", 0.10);
 
         // Lấy tất cả hotel của host
-        var hotelIds = await _context.Hotels
+        var hotels = await _context.Hotels
             .Where(h => h.HostId == hostId)
-            .Select(h => h.Id)
             .ToListAsync();
+        var hotelIds = hotels.Select(h => h.Id).ToList();
 
         // Lấy tất cả booking completed thuộc rooms của các hotel
         var bookings = await _context.Bookings
@@ -35,28 +35,26 @@ public class HostRevenueService : IHostRevenueService
                 && hotelIds.Contains(b.Room.HotelId))
             .ToListAsync();
 
-        var completedBookings = bookings.Where(b => b.Status == "Completed").ToList();
+        var completedBookings = bookings.Where(b => b.Status == "Completed" || b.Status == "CheckedOut").ToList();
         var totalRevenue = completedBookings.Sum(b => b.FinalPrice);
         var commissionAmount = totalRevenue * (decimal)commissionRate;
 
         // Phân theo hotel
-        var byHotel = completedBookings
-            .GroupBy(b => b.Room!.HotelId!)
-            .Select(g =>
+        var byHotel = hotels.Select(hotel => 
+        {
+            var hotelBookings = completedBookings.Where(b => b.Room?.HotelId == hotel.Id).ToList();
+            var hotelRevenue = hotelBookings.Sum(b => b.FinalPrice);
+            var hotelCommission = hotelRevenue * (decimal)commissionRate;
+            return new HotelRevenueItemDto
             {
-                var hotelRevenue = g.Sum(b => b.FinalPrice);
-                var hotelCommission = hotelRevenue * (decimal)commissionRate;
-                return new HotelRevenueItemDto
-                {
-                    HotelId = g.Key,
-                    HotelName = g.First().Room?.Hotel?.Name,
-                    Revenue = hotelRevenue,
-                    Commission = hotelCommission,
-                    NetRevenue = hotelRevenue - hotelCommission,
-                    BookingCount = g.Count()
-                };
-            })
-            .ToList();
+                HotelId = hotel.Id,
+                HotelName = hotel.Name,
+                Revenue = hotelRevenue,
+                Commission = hotelCommission,
+                NetRevenue = hotelRevenue - hotelCommission,
+                BookingCount = hotelBookings.Count
+            };
+        }).ToList();
 
         return new HostRevenueDto
         {
@@ -70,7 +68,7 @@ public class HostRevenueService : IHostRevenueService
         };
     }
 
-    public async Task<HotelRevenueItemDto?> GetHotelRevenueAsync(string hostId, string hotelId)
+    public async Task<HotelRevenueDetailDto?> GetHotelRevenueAsync(string hostId, string hotelId)
     {
         var commissionRate = _configuration.GetValue<double>("Commission:Rate", 0.10);
 
@@ -78,24 +76,53 @@ public class HostRevenueService : IHostRevenueService
         var hotel = await _context.Hotels.FindAsync(hotelId);
         if (hotel == null || hotel.HostId != hostId) return null;
 
-        var completedBookings = await _context.Bookings
+        var allBookings = await _context.Bookings
             .Include(b => b.Room)
-            .Where(b => b.Room != null
-                && b.Room.HotelId == hotelId
-                && b.Status == "Completed")
+            .Where(b => b.Room != null && b.Room.HotelId == hotelId)
             .ToListAsync();
 
-        var hotelRevenue = completedBookings.Sum(b => b.FinalPrice);
-        var hotelCommission = hotelRevenue * (decimal)commissionRate;
+        var completedBookings = allBookings.Where(b => b.Status == "Completed" || b.Status == "CheckedOut").ToList();
+        var cancelledBookings = allBookings.Where(b => b.Status == "Cancelled" || b.Status == "Rejected").ToList();
 
-        return new HotelRevenueItemDto
+        var totalRevenue = completedBookings.Sum(b => b.FinalPrice);
+        var totalCommission = totalRevenue * (decimal)commissionRate;
+
+        // by month
+        var byMonth = completedBookings
+            .Where(b => b.UpdatedAt.HasValue)
+            .GroupBy(b => new { b.UpdatedAt!.Value.Year, b.UpdatedAt!.Value.Month })
+            .Select(g => new RevenueByTimeDto
+            {
+                Period = $"{g.Key.Month:D2}/{g.Key.Year}",
+                Revenue = g.Sum(b => b.FinalPrice)
+            })
+            .OrderByDescending(x => x.Period)
+            .ToList();
+
+        // by year
+        var byYear = completedBookings
+            .Where(b => b.UpdatedAt.HasValue)
+            .GroupBy(b => b.UpdatedAt!.Value.Year)
+            .Select(g => new RevenueByTimeDto
+            {
+                Period = g.Key.ToString(),
+                Revenue = g.Sum(b => b.FinalPrice)
+            })
+            .OrderByDescending(x => x.Period)
+            .ToList();
+
+        return new HotelRevenueDetailDto
         {
             HotelId = hotelId,
             HotelName = hotel.Name,
-            Revenue = hotelRevenue,
-            Commission = hotelCommission,
-            NetRevenue = hotelRevenue - hotelCommission,
-            BookingCount = completedBookings.Count
+            TotalRevenue = totalRevenue,
+            Commission = totalCommission,
+            NetRevenue = totalRevenue - totalCommission,
+            TotalBookings = allBookings.Count,
+            CompletedBookings = completedBookings.Count,
+            CancelledBookings = cancelledBookings.Count,
+            ByMonth = byMonth,
+            ByYear = byYear
         };
     }
     
@@ -120,7 +147,7 @@ public class HostRevenueService : IHostRevenueService
         var revenueThisMonth = await _context.Bookings
             .Include(b => b.Room)
             .Where(b => b.Room != null && b.Room.HotelId != null && hotels.Contains(b.Room.HotelId)
-                        && b.Status == "Completed"
+                        && (b.Status == "Completed" || b.Status == "CheckedOut")
                         && b.UpdatedAt != null && b.UpdatedAt.Value.Month == thisMonth && b.UpdatedAt.Value.Year == thisYear)
             .SumAsync(b => b.FinalPrice);
 

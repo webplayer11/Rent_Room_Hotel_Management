@@ -11,3 +11,5 @@ obj/
 node_modules/
 .env
 .expo/
+bin/
+*.log

@@ -153,6 +153,15 @@ public async Task<IActionResult> GetUserById(string id)
 
 
 
+    // ── Bookings ────────────────────────────────────────────────
+    
+    [HttpGet("bookings")]
+    public async Task<IActionResult> GetAllBookings()
+    {
+        var result = await _service.GetAllBookingsAsync();
+        return Ok(ResponseApi<IEnumerable<BookingDto>>.Success(result));
+    }
+
     // ── Statistics ────────────────────────────────────────────────
 
     [HttpGet("stats/revenue")]

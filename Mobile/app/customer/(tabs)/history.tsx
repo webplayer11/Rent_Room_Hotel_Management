@@ -218,8 +218,13 @@ const styles = StyleSheet.create({
   tabBar: { flexDirection: 'row', backgroundColor: '#FFF', borderBottomWidth: 1, borderBottomColor: '#EEE' },
   tabItem: { flex: 1, paddingVertical: 15, alignItems: 'center' },
   activeTab: { borderBottomWidth: 2, borderBottomColor: '#5392F9' },
+  tabInner: { flexDirection: 'row', alignItems: 'center' },
+  tabBadge: { marginLeft: 6, backgroundColor: '#EEE', borderRadius: 10, paddingHorizontal: 6, paddingVertical: 2 },
+  tabBadgeActive: { backgroundColor: '#5392F9' },
   tabText: { fontSize: 14, color: '#666', fontWeight: '500' },
   activeTabText: { color: '#5392F9', fontWeight: 'bold' },
+  tabBadgeText: { fontSize: 10, color: '#666', fontWeight: 'bold' },
+  tabBadgeTextActive: { color: '#FFF' },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   listContent: { padding: 15 },
   historyCard: {

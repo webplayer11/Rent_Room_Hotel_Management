@@ -37,6 +37,7 @@ public class RoomService : IRoomService
                 b.RoomId == dto.Id &&
                 b.Status != "Cancelled" &&
                 b.Status != "Completed" &&
+                b.Status != "CheckedOut" &&
                 b.CheckInDate < checkOutDate &&
                 b.CheckOutDate > checkInDate);
             

@@ -1,11 +1,6 @@
 import { apiFetch } from "./apiClient";
+import { ApiResponse } from './hotelApi';
 
-export type ApiResponse<T> = {
-  isSuccess: boolean;
-  code: number;
-  message: string;
-  data: T;
-};
 
 export type PendingHostDto = {
 
@@ -134,6 +129,12 @@ export const adminApi = {
     return apiFetch(`/api/admin/users/${id}`, {
       method: "GET",
     }) as Promise<ApiResponse<AdminUserDto>>;
+  },
+
+  getAllBookings: () => {
+    return apiFetch('/api/admin/bookings', {
+      method: "GET",
+    }) as Promise<ApiResponse<any[]>>;
   },
 };
 

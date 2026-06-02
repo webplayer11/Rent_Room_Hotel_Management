@@ -37,16 +37,6 @@ public class HostRevenueController : ControllerBase
         var result = await _service.GetHotelRevenueAsync(hostId, hotelId);
         if (result == null) return NotFound(ResponseApi<string>.Failure(404, "Không tìm thấy khách sạn hoặc bạn không có quyền"));
 
-        return Ok(ResponseApi<HotelRevenueItemDto>.Success(result));
-    }
-
-    [HttpGet("dashboard")]
-    public async Task<IActionResult> GetDashboardStats([FromQuery] string? hotelId)
-    {
-        var hostId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        if (hostId == null) return Unauthorized();
-
-        var result = await _service.GetDashboardStatsAsync(hostId, hotelId);
-        return Ok(ResponseApi<DashboardStatsDto>.Success(result));
+        return Ok(ResponseApi<HotelRevenueDetailDto>.Success(result));
     }
 }

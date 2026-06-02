@@ -77,11 +77,12 @@ public class BookingRepository : IBookingRepository
     {
         // Hai khoảng ngày [A_in, A_out) và [B_in, B_out) bị trùng khi:
         //   A_in < B_out  &&  A_out > B_in
-        // Bỏ qua các booking đã Cancelled hoặc Completed
+        // Bỏ qua các booking đã Cancelled, Completed, hoặc CheckedOut
         return await _context.Bookings.AnyAsync(b =>
             b.RoomId == roomId &&
             b.Status != "Cancelled" &&
             b.Status != "Completed" &&
+            b.Status != "CheckedOut" &&
             b.CheckInDate < checkOut &&
             b.CheckOutDate > checkIn
         );

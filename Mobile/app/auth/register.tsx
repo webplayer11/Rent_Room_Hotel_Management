@@ -39,6 +39,8 @@ function formatApi(date: Date): string {
 // ── Validation helpers ────────────────────────────────────────────────────────
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 const PHONE_REGEX = /^(0[3|5|7|8|9])[0-9]{8}$/;
+const PASSWORD_REGEX =
+  /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&#^()_+\-=])[A-Za-z\d@$!%*?&#^()_+\-=]{8,}$/;
 
 function validateField(value: string, rules: Array<[boolean, string]>): string {
   for (const [condition, message] of rules) {
@@ -93,6 +95,8 @@ export default function RegisterScreen() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const hasLeadingOrTrailingSpaces = (value: string) =>
+  value.startsWith(" ");
 
   // Touched states — show error only after user has interacted
   const [touched, setTouched] = useState<Record<string, boolean>>({});
@@ -118,18 +122,34 @@ export default function RegisterScreen() {
       ]),
       email: validateField(email, [
         [!email.trim(), "Email không được để trống"],
+        [
+    hasLeadingOrTrailingSpaces(email),
+    "Email không được chứa khoảng trắng ở đầu hoặc cuối",
+  ],
         [!EMAIL_REGEX.test(email.trim()), "Email không đúng định dạng"],
       ]),
       password: validateField(password, [
-        [!password, "Mật khẩu không được để trống"],
-        [password.length < 6, "Mật khẩu tối thiểu 6 ký tự"],
-      ]),
+  [!password, "Mật khẩu không được để trống"],
+  [password.length < 8, "Mật khẩu tối thiểu 8 ký tự"],
+  [
+    hasLeadingOrTrailingSpaces(email),
+    "Mật khẩu không được chứa khoảng trắng ở đầu hoặc cuối",
+  ],
+  [
+    !PASSWORD_REGEX.test(password),
+    "Mật khẩu phải có chữ hoa, chữ thường, số và ký tự đặc biệt",
+  ],
+]),
       confirmPassword: validateField(confirmPassword, [
         [!confirmPassword, "Vui lòng nhập lại mật khẩu"],
         [confirmPassword !== password, "Mật khẩu nhập lại không khớp"],
       ]),
       phone: validateField(phoneNumber, [
         [!phoneNumber.trim(), "Số điện thoại không được để trống"],
+        [
+    hasLeadingOrTrailingSpaces(email),
+    "Số điện thoại được chứa khoảng trắng ở đầu hoặc cuối",
+  ],
         [!PHONE_REGEX.test(phoneNumber.trim()), "Số điện thoại không hợp lệ (10 số, bắt đầu 03/05/07/08/09)"],
       ]),
       dob:
@@ -413,6 +433,24 @@ export default function RegisterScreen() {
               </TouchableOpacity>
             </View>
           </Field>
+          {password.length > 0 && (
+  <Text
+    style={{
+      color: "#6B7280",
+      fontSize: 12,
+      marginTop: 4,
+      marginLeft: 4,
+      lineHeight: 18,
+    }}
+  >
+    Mật khẩu phải có:
+    {"\n"}• Ít nhất 8 ký tự
+    {"\n"}• 1 chữ hoa (A-Z)
+    {"\n"}• 1 chữ thường (a-z)
+    {"\n"}• 1 chữ số (0-9)
+    {"\n"}• 1 ký tự đặc biệt (@$!%*?&#...)
+  </Text>
+)}
 
           {/* Nhập lại mật khẩu */}
           <Field fieldKey="confirmPassword" touched={touched} error={errors.confirmPassword}>

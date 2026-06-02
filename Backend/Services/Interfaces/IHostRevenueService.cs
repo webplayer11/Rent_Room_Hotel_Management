@@ -5,6 +5,6 @@ namespace RoomManagement.Services.Interfaces;
 public interface IHostRevenueService
 {
     Task<HostRevenueDto> GetHostRevenueAsync(string hostId);
-    Task<HotelRevenueItemDto?> GetHotelRevenueAsync(string hostId, string hotelId);
+    Task<HotelRevenueDetailDto?> GetHotelRevenueAsync(string hostId, string hotelId);
     Task<DashboardStatsDto> GetDashboardStatsAsync(string hostId, string? hotelId = null);
 }

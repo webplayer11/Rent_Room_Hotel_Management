@@ -39,57 +39,60 @@ public class AuthRepository : IAuthRepository
         }
     }
 
-    public async Task<IdentityResult> RegisterAsync(RegisterDto registerDto)
+   public async Task<IdentityResult> RegisterAsync(RegisterDto registerDto)
+{
+    // Kiểm tra email
+    var emailExists = await _userManager.FindByEmailAsync(registerDto.Email);
+
+    if (emailExists != null)
     {
-        var userExists = await _userManager.FindByEmailAsync(registerDto.Email);
-        if (userExists != null)
-            return IdentityResult.Failed(new IdentityError { Description = "User already exists!" });
+        return IdentityResult.Failed(
+            new IdentityError
+            {
+                Code = "EmailExists",
+                Description = "Email đã được sử dụng"
+            });
+    }
 
-        var user = new ApplicationUser()
-        {
-            Email = registerDto.Email,
-            SecurityStamp = Guid.NewGuid().ToString(),
-            UserName = registerDto.Email,
-            FullName = registerDto.FullName,
-            PhoneNumber = registerDto.PhoneNumber,
-            DateOfBirth = registerDto.DateOfBirth,
-            Gender = registerDto.Gender,
-            Address = registerDto.Address
-        };
+    // Kiểm tra số điện thoại
+    var phoneExists = await _userManager.Users
+        .AnyAsync(x => x.PhoneNumber == registerDto.PhoneNumber);
 
-        var result = await _userManager.CreateAsync(user, registerDto.Password);
-        if (!result.Succeeded) return result;
+    if (phoneExists)
+    {
+        return IdentityResult.Failed(
+            new IdentityError
+            {
+                Code = "PhoneExists",
+                Description = "Số điện thoại đã được sử dụng"
+            });
+    }
 
-        await EnsureRoleExistsAsync(AppRoles.Customer);
-        await _userManager.AddToRoleAsync(user, AppRoles.Customer);
+    var user = new ApplicationUser
+    {
+        Email = registerDto.Email,
+        SecurityStamp = Guid.NewGuid().ToString(),
+        UserName = registerDto.Email,
+        FullName = registerDto.FullName,
+        PhoneNumber = registerDto.PhoneNumber,
+        DateOfBirth = registerDto.DateOfBirth,
+        Gender = registerDto.Gender,
+        Address = registerDto.Address
+    };
 
+    var result = await _userManager.CreateAsync(
+        user,
+        registerDto.Password
+    );
+
+    if (!result.Succeeded)
         return result;
-    }
-/*
-    public async Task<bool> UpgradeToHostAsync(string userId, UpgradeToHostDto dto, string businessLicenseUrlsJson)
-    {
-        var user = await _userManager.FindByIdAsync(userId);
-        if (user == null)
-            return false;
 
-        if (await _userManager.IsInRoleAsync(user, AppRoles.Host))
-            return false;
+    await EnsureRoleExistsAsync(AppRoles.Customer);
+    await _userManager.AddToRoleAsync(user, AppRoles.Customer);
 
-        // Tạo HostProfile cho User
-        var hostProfile = new HostProfile
-        {
-            Id = user.Id,
-            CompanyName = dto.CompanyName,
-            TaxCode = dto.TaxCode,
-            BusinessLicenseUrls = new List<string> { businessLicenseUrlsJson }
-        };
-
-        _context.HostProfiles.Add(hostProfile);
-        await _context.SaveChangesAsync();
-        
-        return true;
-    }
-*/
+    return result;
+}
     public async Task<bool> UpgradeToHostAsync(
     string userId,
     UpgradeToHostDto dto,
