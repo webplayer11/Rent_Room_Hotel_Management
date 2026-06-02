@@ -25,10 +25,6 @@ export function HomeHeader({ hostName }: Props) {
           <Text style={styles.date}>{today}</Text>
         </View>
       </View>
-      <Pressable style={styles.notificationBtn}>
-        <Ionicons name="notifications-outline" size={24} color="#111827" />
-        <View style={styles.badge} />
-      </Pressable>
     </View>
   );
 }
@@ -67,19 +63,6 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: '#6B7280',
     marginTop: 2,
-  },
-  notificationBtn: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: '#FFF',
-    justifyContent: 'center',
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-    elevation: 2,
   },
   badge: {
     position: 'absolute',
