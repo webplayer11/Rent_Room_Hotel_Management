@@ -35,7 +35,7 @@ public class HostRevenueService : IHostRevenueService
                 && hotelIds.Contains(b.Room.HotelId))
             .ToListAsync();
 
-        var completedBookings = bookings.Where(b => b.Status == "Completed").ToList();
+        var completedBookings = bookings.Where(b => b.Status == "CheckedOut").ToList();
         var totalRevenue = completedBookings.Sum(b => b.FinalPrice);
         var commissionAmount = totalRevenue * (decimal)commissionRate;
 
@@ -82,7 +82,7 @@ public class HostRevenueService : IHostRevenueService
             .Include(b => b.Room)
             .Where(b => b.Room != null
                 && b.Room.HotelId == hotelId
-                && b.Status == "Completed")
+                && b.Status == "CheckedOut")
             .ToListAsync();
 
         var hotelRevenue = completedBookings.Sum(b => b.FinalPrice);
@@ -120,7 +120,7 @@ public class HostRevenueService : IHostRevenueService
         var revenueThisMonth = await _context.Bookings
             .Include(b => b.Room)
             .Where(b => b.Room != null && b.Room.HotelId != null && hotels.Contains(b.Room.HotelId)
-                        && b.Status == "Completed"
+                        && b.Status == "CheckedOut"
                         && b.UpdatedAt != null && b.UpdatedAt.Value.Month == thisMonth && b.UpdatedAt.Value.Year == thisYear)
             .SumAsync(b => b.FinalPrice);
 
@@ -139,5 +139,32 @@ public class HostRevenueService : IHostRevenueService
             EmptyRooms = emptyRooms,
             OccupiedRooms = occupiedRooms,
         };
+    }
+
+    public async Task<List<MonthlyRevenueDto>> GetMonthlyRevenueAsync(string hostId, int year, string? hotelId = null)
+    {
+        var hotels = await _context.Hotels
+            .Where(h => h.HostId == hostId && (string.IsNullOrEmpty(hotelId) || h.Id == hotelId))
+            .Select(h => h.Id)
+            .ToListAsync();
+
+        var completedBookings = await _context.Bookings
+            .Include(b => b.Room)
+            .Where(b => b.Room != null && b.Room.HotelId != null && hotels.Contains(b.Room.HotelId)
+                        && b.Status == "CheckedOut"
+                        && b.UpdatedAt != null && b.UpdatedAt.Value.Year == year)
+            .ToListAsync();
+
+        var monthlyData = new List<MonthlyRevenueDto>();
+        for (int i = 1; i <= 12; i++)
+        {
+            monthlyData.Add(new MonthlyRevenueDto
+            {
+                Month = i,
+                Revenue = completedBookings.Where(b => b.UpdatedAt!.Value.Month == i).Sum(b => b.FinalPrice)
+            });
+        }
+        
+        return monthlyData;
     }
 }
