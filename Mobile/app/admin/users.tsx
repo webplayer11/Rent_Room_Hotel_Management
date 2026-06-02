@@ -12,7 +12,7 @@ import {
 } from 'react-native';
 import { ChevronLeft, Search, Users } from 'lucide-react-native';
 import { adminApi, AdminUserDto } from '../../src/shared/api/adminApi';
-import { router, Stack, useFocusEffect } from 'expo-router';
+import { router, Stack, useFocusEffect, useLocalSearchParams } from 'expo-router';
 
 // ─── Types & Constants ───────────────────────────────────────────────
 type FilterType = 'all' | 'Customer' | 'Host' | 'Admin' | 'locked';
@@ -63,11 +63,16 @@ const getInitial = (user: AdminUserDto) => {
 
 // ─── Component ───────────────────────────────────────────────────────
 export default function UsersScreen() {
+  const params = useLocalSearchParams<{ filter?: string }>();
+  const initialFilter = (['all', 'Customer', 'Host', 'Admin', 'locked'].includes(params.filter ?? '')
+    ? params.filter
+    : 'all') as FilterType;
+
   const [users,     setUsers]    = useState<AdminUserDto[]>([]);
   const [loading,   setLoading]  = useState(false);
   const [error,     setError]    = useState<string | null>(null);
   const [search,    setSearch]   = useState('');
-  const [filter,    setFilter]   = useState<FilterType>('all');
+  const [filter,    setFilter]   = useState<FilterType>(initialFilter);
 
   // ── Data loading ─────────────────────────────────────────────────
   const loadUsers = useCallback(async () => {

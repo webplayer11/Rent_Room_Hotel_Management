@@ -5,9 +5,11 @@ import {
   StyleSheet,
   ScrollView,
   RefreshControl,
+  Pressable,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
 import { adminApi, DashboardStatsDto } from '../../../src/shared/api/adminApi';
 
 // ── Types ──────────────────────────────────────────────────────────
@@ -21,6 +23,7 @@ type CardConfig = {
   icon: IoniconsName;
   iconColor: string;
   iconBg: string;
+  route: string;
 };
 
 const CARDS: CardConfig[] = [
@@ -30,6 +33,7 @@ const CARDS: CardConfig[] = [
     icon: 'person-outline',
     iconColor: '#3B82F6',
     iconBg: '#EFF6FF',
+    route: '/admin/users',
   },
   {
     key: 'totalHotels',
@@ -37,6 +41,7 @@ const CARDS: CardConfig[] = [
     icon: 'business-outline',
     iconColor: '#10B981',
     iconBg: '#ECFDF5',
+    route: '/admin/hotels',
   },
   {
     key: 'totalHosts',
@@ -44,6 +49,7 @@ const CARDS: CardConfig[] = [
     icon: 'people-outline',
     iconColor: '#F97316',
     iconBg: '#FFF7ED',
+    route: '/admin/users',
   },
   {
     key: 'totalVouchers',
@@ -51,6 +57,7 @@ const CARDS: CardConfig[] = [
     icon: 'ticket-outline',
     iconColor: '#8B5CF6',
     iconBg: '#F5F3FF',
+    route: '/admin/(tabs)/voucher',
   },
 ];
 
@@ -61,6 +68,7 @@ type StatusItemConfig = {
   icon: IoniconsName;
   accentColor: string;
   accentBg: string;
+  route: string;
 };
 
 const STATUS_ITEMS: StatusItemConfig[] = [
@@ -70,6 +78,7 @@ const STATUS_ITEMS: StatusItemConfig[] = [
     icon: 'lock-closed-outline',
     accentColor: '#DC2626',
     accentBg: '#FEE2E2',
+    route: '/admin/users',
   },
   {
     key: 'suspendedHotels',
@@ -77,6 +86,7 @@ const STATUS_ITEMS: StatusItemConfig[] = [
     icon: 'ban-outline',
     accentColor: '#D97706',
     accentBg: '#FEF3C7',
+    route: '/admin/hotels',
   },
   {
     key: 'pendingHosts',
@@ -84,6 +94,7 @@ const STATUS_ITEMS: StatusItemConfig[] = [
     icon: 'time-outline',
     accentColor: '#1D4ED8',
     accentBg: '#DBEAFE',
+    route: '/admin/pending',
   },
   {
     key: 'pendingHotels',
@@ -91,6 +102,7 @@ const STATUS_ITEMS: StatusItemConfig[] = [
     icon: 'construct-outline',
     accentColor: '#6D28D9',
     accentBg: '#EDE9FE',
+    route: '/admin/pending-hotels',
   },
 ];
 
@@ -117,6 +129,7 @@ function SkeletonStatusItem() {
 
 // ── Main screen ────────────────────────────────────────────────────
 export default function AdminStatsScreen() {
+  const router = useRouter();
   const [stats, setStats] = useState<DashboardStatsDto | null>(null);
   const [loadState, setLoadState] = useState<LoadState>('loading');
   const [refreshing, setRefreshing] = useState(false);
@@ -199,7 +212,11 @@ export default function AdminStatsScreen() {
             {/* ── Overview cards (2-col grid) ── */}
             <View style={styles.grid}>
               {CARDS.map((card) => (
-                <View key={card.key} style={styles.card}>
+                <Pressable
+                  key={card.key}
+                  style={({ pressed }) => [styles.card, pressed && { opacity: 0.75 }]}
+                  onPress={() => router.push(card.route as any)}
+                >
                   <View style={[styles.iconBox, { backgroundColor: card.iconBg }]}>
                     <Ionicons name={card.icon} size={22} color={card.iconColor} />
                   </View>
@@ -207,7 +224,7 @@ export default function AdminStatsScreen() {
                     {stats[card.key].toLocaleString('vi-VN')}
                   </Text>
                   <Text style={styles.cardLabel}>{card.label}</Text>
-                </View>
+                </Pressable>
               ))}
             </View>
 
@@ -219,24 +236,42 @@ export default function AdminStatsScreen() {
 
             {/* ── Status rows ── */}
             <View style={styles.statusList}>
-              {STATUS_ITEMS.map((item) => (
-                <View
-                  key={item.key}
-                  style={[styles.statusItem, { backgroundColor: item.accentBg }]}
-                >
-                  <View style={[styles.statusIconBox, { backgroundColor: '#FFFFFF40' }]}>
-                    <Ionicons name={item.icon} size={20} color={item.accentColor} />
-                  </View>
-                  <Text style={[styles.statusLabel, { color: item.accentColor }]}>
-                    {item.label}
-                  </Text>
-                  <View style={styles.statusBadge}>
-                    <Text style={[styles.statusBadgeText, { color: item.accentColor }]}>
-                      {stats[item.key].toLocaleString('vi-VN')}
+              {STATUS_ITEMS.map((item) => {
+                const handlePress = () => {
+                  if (item.key === 'lockedUsers') {
+                    router.push({ pathname: '/admin/users' as any, params: { filter: 'locked' } });
+                  } else if (item.key === 'suspendedHotels') {
+                    router.push({ pathname: '/admin/hotels' as any, params: { tab: 'suspended' } });
+                  } else if (item.key === 'pendingHotels') {
+                    router.push({ pathname: '/admin/hotels' as any, params: { tab: 'pending' } });
+                  } else {
+                    router.push(item.route as any);
+                  }
+                };
+                return (
+                  <Pressable
+                    key={item.key}
+                    style={({ pressed }) => [
+                      styles.statusItem,
+                      { backgroundColor: item.accentBg },
+                      pressed && { opacity: 0.75 },
+                    ]}
+                    onPress={handlePress}
+                  >
+                    <View style={[styles.statusIconBox, { backgroundColor: '#FFFFFF40' }]}>
+                      <Ionicons name={item.icon} size={20} color={item.accentColor} />
+                    </View>
+                    <Text style={[styles.statusLabel, { color: item.accentColor }]}>
+                      {item.label}
                     </Text>
-                  </View>
-                </View>
-              ))}
+                    <View style={styles.statusBadge}>
+                      <Text style={[styles.statusBadgeText, { color: item.accentColor }]}>
+                        {stats[item.key].toLocaleString('vi-VN')}
+                      </Text>
+                    </View>
+                  </Pressable>
+                );
+              })}
             </View>
           </>
         ) : null}

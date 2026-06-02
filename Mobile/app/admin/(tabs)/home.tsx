@@ -11,14 +11,9 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
+import { adminApi, DashboardStatsDto } from '../../../src/shared/api/adminApi';
 
-// --- Fake Data ---
-const MOCK_STATS = {
-  totalHotels: 150,
-  totalHosts: 420,
-  pendingHosts: 15,
-  totalBookings: '1,250',
-};
+
 
 const RECENT_ACTIVITIES = [
   {
@@ -51,21 +46,30 @@ export default function AdminHomeScreen() {
   const router = useRouter();
   const [refreshing, setRefreshing] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [stats, setStats] = useState<DashboardStatsDto | null>(null);
+
+  const fetchStats = React.useCallback(async () => {
+    try {
+      const res = await adminApi.getDashboardStats();
+      if (res.isSuccess && res.data) {
+        setStats(res.data);
+      }
+    } catch {
+      // keep previous stats on error
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
-    // Simulate loading data
-    const timer = setTimeout(() => {
-      setLoading(false);
-    }, 1000);
-    return () => clearTimeout(timer);
-  }, []);
+    fetchStats();
+  }, [fetchStats]);
 
-  const onRefresh = React.useCallback(() => {
+  const onRefresh = React.useCallback(async () => {
     setRefreshing(true);
-    setTimeout(() => {
-      setRefreshing(false);
-    }, 1500);
-  }, []);
+    await fetchStats();
+    setRefreshing(false);
+  }, [fetchStats]);
 
   // Skeleton Loader for Dashboard Cards
   if (loading) {
@@ -128,37 +132,43 @@ export default function AdminHomeScreen() {
               <View style={[styles.iconBox, { backgroundColor: '#EFF6FF' }]}>
                 <Ionicons name="business" size={24} color="#5392F9" />
               </View>
-              <Text style={styles.statsValue}>{MOCK_STATS.totalHotels}</Text>
+              <Text style={styles.statsValue}>{loading ? '--' : (stats?.totalHotels?.toLocaleString('vi-VN') ?? '--')}</Text>
               <Text style={styles.statsLabel}>Tổng khách sạn</Text>
             </Pressable>
-            <View style={[styles.statsCard, styles.cardWhite]}>
+            <Pressable
+              style={({ pressed }) => [styles.statsCard, styles.cardWhite, pressed && { opacity: 0.75 }]}
+              onPress={() => router.push('/admin/users')}
+            >
               <View style={[styles.iconBox, { backgroundColor: '#F3E8FF' }]}>
                 <Ionicons name="people" size={24} color="#9333EA" />
               </View>
-              <Text style={styles.statsValue}>{MOCK_STATS.totalHosts}</Text>
-              <Text style={styles.statsLabel}>Tổng host</Text>
-            </View>
+              <Text style={styles.statsValue}>{loading ? '--' : (stats?.totalUsers?.toLocaleString('vi-VN') ?? '--')}</Text>
+              <Text style={styles.statsLabel}>Tổng người dùng</Text>
+            </Pressable>
           </View>
 
           {/* Row 2 */}
           <View style={styles.row}>
-            <View style={[styles.statsCard, styles.cardOrange]}>
+            <Pressable
+              style={({ pressed }) => [styles.statsCard, styles.cardOrange, pressed && { opacity: 0.75 }]}
+              onPress={() => router.push('/admin/pending')}
+            >
               <View style={styles.cardHeader}>
                 <View style={[styles.iconBox, { backgroundColor: 'rgba(255,255,255,0.3)' }]}>
                   <Ionicons name="time" size={24} color="#FFFFFF" />
                 </View>
                 <Ionicons name="arrow-forward" size={20} color="#FFFFFF" />
               </View>
-              <Text style={[styles.statsValue, { color: '#FFF' }]}>{MOCK_STATS.pendingHosts}</Text>
+              <Text style={[styles.statsValue, { color: '#FFF' }]}>{loading ? '--' : (stats?.pendingHosts?.toLocaleString('vi-VN') ?? '--')}</Text>
               <Text style={[styles.statsLabel, { color: 'rgba(255,255,255,0.9)' }]}>Host chờ duyệt</Text>
-            </View>
+            </Pressable>
           </View>
 
           {/* Row 3 - Full Width */}
           <View style={[styles.statsCardFull, styles.cardBlue]}>
             <View style={{ flex: 1 }}>
               <Text style={[styles.statsLabel, { color: 'rgba(255,255,255,0.8)' }]}>Tổng booking hệ thống</Text>
-              <Text style={[styles.statsValue, { color: '#FFF', fontSize: 32 }]}>{MOCK_STATS.totalBookings}</Text>
+              <Text style={[styles.statsValue, { color: '#FFF', fontSize: 32 }]}>{loading ? '--' : (stats?.totalBookings?.toLocaleString('vi-VN') ?? '--')}</Text>
             </View>
             <View style={[styles.iconBox, { backgroundColor: 'rgba(255,255,255,0.2)', width: 60, height: 60, borderRadius: 30, marginBottom: 0 }]}>
               <Ionicons name="bar-chart" size={32} color="#FFFFFF" />

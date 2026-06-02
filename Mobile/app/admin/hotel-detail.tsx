@@ -1,4 +1,4 @@
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import Toast from 'react-native-toast-message';
 import React, { useEffect, useState } from 'react';
 import {
@@ -36,6 +36,7 @@ const STATUS_BADGE: Record<HotelStatus, { label: string; bg: string; color: stri
 export default function HotelDetailScreen() {
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
+  const insets = useSafeAreaInsets();
 
   const [hotel,         setHotel]         = useState<PendingHotelDto | null>(null);
   const [rooms,         setRooms]         = useState<RoomDto[]>([]);
@@ -243,18 +244,22 @@ export default function HotelDetailScreen() {
 
   // ── Main render ─────────────────────────────────────────────────
   return (
-    <SafeAreaView style={styles.container}>
-      <Stack.Screen
-        options={{
-          headerShown: true,
-          title: 'Chi tiết khách sạn',
-          headerLeft: () => (
-            <TouchableOpacity onPress={() => router.back()} style={{ marginLeft: 10 }}>
-              <ChevronLeft size={28} color="#000" />
-            </TouchableOpacity>
-          ),
-        }}
-      />
+    <SafeAreaView style={styles.container} edges={['bottom', 'left', 'right']}>
+      <Stack.Screen options={{ headerShown: false }} />
+
+      {/* Custom header — khoảng cách top được tính theo insets.top + 8 */}
+      <View style={[styles.customHeader, { paddingTop: insets.top + 8 }]}>
+        <TouchableOpacity
+          onPress={() => router.back()}
+          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+          style={styles.backBtn}
+        >
+          <ChevronLeft size={28} color="#111827" />
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>Chi tiết khách sạn</Text>
+        {/* Spacer để title căn giữa */}
+        <View style={styles.backBtn} />
+      </View>
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         <View style={styles.section}>
@@ -506,6 +511,29 @@ export default function HotelDetailScreen() {
 // ── Styles ────────────────────────────────────────────────────────
 const styles = StyleSheet.create({
   container:   { flex: 1, backgroundColor: '#FFF' },
+  customHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 8,
+    paddingBottom: 12,
+    backgroundColor: '#FFF',
+    borderBottomWidth: 1,
+    borderBottomColor: '#F1F5F9',
+  },
+  backBtn: {
+    width: 44,
+    height: 44,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  headerTitle: {
+    fontSize: 17,
+    fontWeight: '700',
+    color: '#111827',
+    flex: 1,
+    textAlign: 'center',
+  },
   content:     { flex: 1, padding: 20 },
   section:     { paddingBottom: 120 },
   rowSection:  { flexDirection: 'row', gap: 16 },
