@@ -507,17 +507,19 @@ export default function HostBookingsTab() {
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: '#F3F4F6' },
 
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    backgroundColor: '#FFF',
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    borderBottomWidth: 1,
-    borderBottomColor: '#E5E7EB',
+    header: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 20,
+    paddingTop: 16,
+    paddingBottom: 20,
   },
-  headerTitle: { fontSize: 20, fontWeight: '800', color: '#111827' },
+  headerTitle: {
+    fontSize: 20,
+    fontWeight: "700",
+    color: "#0F172A",
+    flex: 1,
+  },
   refreshBtn: { padding: 4 },
 
   filterBarWrapper: {

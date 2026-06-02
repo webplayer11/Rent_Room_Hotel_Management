@@ -201,12 +201,18 @@ const styles = StyleSheet.create({
   center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
 
   header: {
-    padding: 20,
-    backgroundColor: '#6c88c4',
-    borderBottomLeftRadius: 20,
-    borderBottomRightRadius: 20,
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 20,
+    paddingTop: 16,
+    paddingBottom: 20,
   },
-  title: { color: '#fff', fontSize: 20, fontWeight: 'bold' },
+  title: {
+    fontSize: 20,
+    fontWeight: "700",
+    color: "#0F172A",
+    flex: 1,
+  },
 
   content: { padding: 15, paddingBottom: 40 },
 

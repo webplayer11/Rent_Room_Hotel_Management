@@ -74,20 +74,25 @@ export default function BecomeHostScreen() {
 
   // ── Image picker ────────────────────────────────────────────────────────
   const pickImages = async () => {
-    const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (!perm.granted) {
-      Toast.show({ type: "info", text1: "Cần quyền truy cập ảnh", position: "top" });
-      return;
-    }
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsMultipleSelection: true,
-      quality: 0.8,
-    });
-    if (!result.canceled) {
-      setBusinessLicenses((prev) => [...prev, ...result.assets]);
-    }
-  };
+  const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
+  if (!perm.granted) return;
+
+  const result = await ImagePicker.launchImageLibraryAsync({
+    mediaTypes: ['images'],
+    allowsMultipleSelection: true,
+    quality: 0.8,
+  });
+
+  if (!result.canceled) {
+    const files = result.assets.map((img) => ({
+      uri: img.uri,
+      name: img.fileName || `license_${Date.now()}.jpg`,
+      type: img.mimeType || "image/jpeg",
+    }));
+
+    setBusinessLicenses((prev) => [...prev, ...files]);
+  }
+};
 
   const removeImage = (idx: number) =>
     setBusinessLicenses((prev) => prev.filter((_, i) => i !== idx));

@@ -244,9 +244,6 @@ export default function HotelDetailScreen() {
                     >
                         <Plus size={20} color="#1E293B" />
                     </TouchableOpacity>
-                    <View style={styles.avatar}>
-                        <Text style={styles.avatarText}>H</Text>
-                    </View>
                 </View>
             </View>
             <ScrollView style={styles.container} contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
@@ -322,16 +319,7 @@ export default function HotelDetailScreen() {
                         <Text style={[styles.statValueBold, { color: "#EF4444" }]}>{maintenanceRoomsCount}</Text>
                     </View>
 
-                    <TouchableOpacity
-                        style={styles.reportButton}
-                        onPress={() => Toast.show({
-                            type: 'info',
-                            text1: "Báo cáo",
-                            text2: "Tính năng báo cáo doanh thu & công suất phòng đang được chuẩn bị."
-                        })}
-                    >
-                        <Text style={styles.reportButtonText}>Xem báo cáo chi tiết</Text>
-                    </TouchableOpacity>
+        
                 </View>
 
                 {/* Quản lý ảnh Card */}
@@ -344,14 +332,6 @@ export default function HotelDetailScreen() {
                 {/* Available Rooms Header */}
                 <View style={styles.roomsHeaderRow}>
                     <Text style={styles.roomsHeaderTitle}>Danh sách các phòng hiện có</Text>
-                    <View style={styles.roomsHeaderIcons}>
-                        <TouchableOpacity style={styles.iconButton}>
-                            <Ionicons name="options-outline" size={18} color="#4B5563" />
-                        </TouchableOpacity>
-                        <TouchableOpacity style={styles.iconButton}>
-                            <Ionicons name="grid-outline" size={18} color="#4B5563" />
-                        </TouchableOpacity>
-                    </View>
                 </View>
 
                 {/* Rooms List */}
@@ -487,16 +467,17 @@ const styles = StyleSheet.create({
         fontWeight: "500",
     },
     header: {
-        flexDirection: "row",
-        alignItems: "center",
-        justifyContent: "space-between",
-        paddingTop: Platform.OS === "android" ? 45 : 10,
-        paddingHorizontal: 16,
-        paddingBottom: 12,
-        backgroundColor: "#FFFFFF",
-        borderBottomWidth: 1,
-        borderColor: "#E2E8F0",
-    },
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 20,
+    paddingTop: 16,
+    paddingBottom: 20,},
+    headerTitle: {
+    fontSize: 20,
+    fontWeight: "700",
+    color: "#0F172A",
+    flex: 1,
+  },
     headerLeft: {
         flexDirection: "row",
         alignItems: "center",
@@ -506,12 +487,6 @@ const styles = StyleSheet.create({
     iconBtn: {
         padding: 4,
         marginRight: 8,
-    },
-    headerTitle: {
-        fontSize: 18,
-        fontWeight: "700",
-        color: "#0F172A",
-        flex: 1,
     },
     headerRight: {
         flexDirection: "row",

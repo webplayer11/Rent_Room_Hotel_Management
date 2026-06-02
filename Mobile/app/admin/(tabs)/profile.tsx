@@ -255,7 +255,6 @@ export default function AdminProfileScreen() {
           />
         </View>
 
-        <Text style={s.versionText}>HanWangHo Admin • v1.0.0</Text>
       </ScrollView>
 
       <AccountInfoModal

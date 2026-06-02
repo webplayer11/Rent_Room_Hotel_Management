@@ -4,7 +4,7 @@ import { BarChart } from 'react-native-chart-kit';
 import { adminApi } from '../../../src/shared/api/adminApi';
 import { BookingDto } from '../../../src/shared/api/bookingApi';
 import { TrendingUp, TrendingDown, DollarSign, CheckCircle, Calendar, BarChart2 } from 'lucide-react-native';
-
+import { SafeAreaView } from "react-native-safe-area-context";
 const { width } = Dimensions.get('window');
 
 // Lấy % tăng trưởng (tránh chia cho 0)
@@ -169,15 +169,16 @@ export default function AdminStatsScreen() {
   };
 
   return (
-    <ScrollView
-      style={styles.container}
-      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
-    >
-      <View style={styles.header}>
+    <SafeAreaView style={styles.container} edges={["top"]}>
+     <View style={styles.header}>
         <Text style={styles.headerTitle}>Dashboard Admin</Text>
         <Text style={styles.headerSub}>Thống kê doanh thu (Hoa hồng 10%)</Text>
       </View>
 
+    <ScrollView
+      style={styles.container}
+      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+    >
       <View style={styles.kpiGrid}>
         <KpiCard
           title="Doanh thu hôm nay"
@@ -271,6 +272,7 @@ export default function AdminStatsScreen() {
         />
       </View>
     </ScrollView>
+    </SafeAreaView>
   );
 }
 
@@ -375,6 +377,7 @@ const styles = StyleSheet.create({
     color: '#475569',
     fontWeight: '500',
   },
+
   badge: {
     flexDirection: 'row',
     alignItems: 'center',

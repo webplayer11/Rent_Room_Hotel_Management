@@ -34,7 +34,6 @@ import { bookingApi, BookingDto } from '../../../src/shared/api/bookingApi';
 import { roomApi } from '../../../src/shared/api/roomApi';
 import { tokenStorage } from '../../../src/shared/storage/tokenStorage';
 import { apiFetch } from '../../../src/shared/api/apiClient';
-
 const { width } = Dimensions.get('window');
 
 const STATUS_MAP: Record<string, { label: string; color: string; bg: string }> = {
@@ -72,12 +71,12 @@ export default function OwnerHome() {
 
   const [recentBookings, setRecentBookings] = useState<BookingDto[]>([]);
 
-  const todayStr = new Date().toLocaleDateString('vi-VN', {
-    weekday: 'long',
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric',
-  });
+  const formatDateKey = (date?: string) => {
+  if (!date) return '';
+
+  return new Date(date).toLocaleDateString('sv-SE');
+  }
+  const todayISO = new Date().toLocaleDateString('sv-SE');
 
   const loadData = async () => {
     try {
@@ -122,6 +121,7 @@ export default function OwnerHome() {
       });
 
       // 4. Calculate Stats
+    
       const now = new Date();
       const currentYear = now.getFullYear();
       const currentMonth = now.getMonth();
@@ -132,32 +132,34 @@ export default function OwnerHome() {
       const occupiedRoomIds = new Set<string>();
 
       allBookings.forEach(b => {
-        // Bookings created today
-        const createdAtISO = b.createdAt ? new Date(b.createdAt).toISOString().split('T')[0] : '';
-        if (createdAtISO === todayISO) {
-          todayCount++;
-        }
+  const createdAtISO = formatDateKey(b.createdAt);
 
-        // Monthly revenue (CheckedOut in current month)
-        if (b.status === 'CheckedOut' || b.status === 'Completed') {
-          const outDate = new Date(b.checkOutDate);
-          if (outDate.getFullYear() === currentYear && outDate.getMonth() === currentMonth) {
-            monthRevenue += b.finalPrice ?? b.totalPrice ?? 0;
-          }
-        }
+  if (createdAtISO === todayISO) {
+    todayCount++;
+  }
 
-        // Occupied Rooms Today
-        if (b.status === 'CheckedIn') {
-          occupiedRoomIds.add(b.roomId);
-        } else if (b.status !== 'Cancelled' && b.status !== 'Rejected') {
-          const inDate = new Date(b.checkInDate).toISOString().split('T')[0];
-          const outDate = new Date(b.checkOutDate).toISOString().split('T')[0];
+  if (b.status === 'CheckedOut' || b.status === 'Completed') {
+    const outDate = new Date(b.checkOutDate);
 
-          if (todayISO >= inDate && todayISO < outDate) {
-            occupiedRoomIds.add(b.roomId);
-          }
-        }
-      });
+    if (
+      outDate.getFullYear() === currentYear &&
+      outDate.getMonth() === currentMonth
+    ) {
+      monthRevenue += b.finalPrice ?? b.totalPrice ?? 0;
+    }
+  }
+
+  if (b.status === 'CheckedIn') {
+    occupiedRoomIds.add(b.roomId);
+  } else if (b.status !== 'Cancelled' && b.status !== 'Rejected') {
+    const inDate = formatDateKey(b.checkInDate);
+    const outDate = formatDateKey(b.checkOutDate);
+
+    if (todayISO >= inDate && todayISO < outDate) {
+      occupiedRoomIds.add(b.roomId);
+    }
+  }
+});
 
       setBookingsToday(todayCount);
       setRevenueThisMonth(monthRevenue);
@@ -245,6 +247,12 @@ export default function OwnerHome() {
   return (
     <SafeAreaView style={styles.safeArea}>
       <StatusBar barStyle="dark-content" />
+       {/* ── HEADER ── */}
+        <View style={styles.header}>
+          <Text style={styles.greeting}>Xin chào, {hostName} 👋</Text>
+          <Text style={styles.dateText}>{todayISO}</Text>
+        </View>
+
       <ScrollView
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
@@ -252,12 +260,7 @@ export default function OwnerHome() {
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#2563EB']} />
         }
       >
-        {/* ── HEADER ── */}
-        <View style={styles.header}>
-          <Text style={styles.greeting}>Xin chào, {hostName} 👋</Text>
-          <Text style={styles.dateText}>{todayStr}</Text>
-        </View>
-
+       
         {/* ── STATS GRID ── */}
         <View style={styles.statsGrid}>
           <View style={styles.statCard}>
@@ -391,6 +394,7 @@ const styles = StyleSheet.create({
   header: {
     marginBottom: 24,
     marginTop: 10,
+    marginLeft:20,
   },
   greeting: { fontSize: 24, fontWeight: '800', color: '#0F172A' },
   dateText: { fontSize: 14, color: '#64748B', marginTop: 4, fontWeight: '500' },

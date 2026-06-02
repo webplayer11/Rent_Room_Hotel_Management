@@ -119,9 +119,6 @@ export default function HotelsTab() {
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.container}>
         <View style={styles.header}>
-          <TouchableOpacity onPress={() => router.back()} style={{ marginRight: 12 }}>
-            <ChevronLeft size={28} color="#0F172A" />
-          </TouchableOpacity>
           <Text style={styles.headerTitle}>Khách sạn của tôi</Text>
         </View>
 

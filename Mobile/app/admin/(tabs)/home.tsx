@@ -12,33 +12,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { adminApi } from '../../../src/shared/api/adminApi';
 
-// ── Fake hoạt động gần đây (UI placeholder — chưa có API) ────────────────────
-const RECENT_ACTIVITIES = [
-  {
-    id: '1',
-    title: 'Host Anh Tuấn vừa đăng ký mới.',
-    time: '2 phút trước',
-    icon: 'person-add-outline',
-    color: '#3B82F6',
-    bgColor: '#EFF6FF',
-  },
-  {
-    id: '2',
-    title: 'Khách sạn Blue Wave đã được duyệt.',
-    time: '15 phút trước',
-    icon: 'checkmark-circle-outline',
-    color: '#10B981',
-    bgColor: '#ECFDF5',
-  },
-  {
-    id: '3',
-    title: 'Booking #2042 vừa hoàn tất.',
-    time: '1 giờ trước',
-    icon: 'card-outline',
-    color: '#8B5CF6',
-    bgColor: '#F5F3FF',
-  },
-];
+
 
 export default function AdminHomeScreen() {
   const router = useRouter();
@@ -106,6 +80,15 @@ export default function AdminHomeScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
+      {/* ── HEADER ── */}
+        <View style={styles.header}>
+          <View style={styles.headerLeft}>
+            <View>
+              <Text style={styles.greeting}>Xin chào, Quản trị viên! 👋</Text>
+              <Text style={styles.subtitle}>Tổng quan hệ thống hôm nay</Text>
+            </View>
+          </View>
+        </View>
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.content}
@@ -118,18 +101,7 @@ export default function AdminHomeScreen() {
           />
         }
       >
-        {/* ── HEADER ── */}
-        <View style={styles.header}>
-          <View style={styles.headerLeft}>
-            <View style={styles.avatar}>
-              <Text style={styles.avatarText}>Q</Text>
-            </View>
-            <View>
-              <Text style={styles.greeting}>Xin chào, Quản trị viên! 👋</Text>
-              <Text style={styles.subtitle}>Tổng quan hệ thống hôm nay</Text>
-            </View>
-          </View>
-        </View>
+       
 
         {/* ── DASHBOARD STATS ── */}
         <View style={styles.statsContainer}>
@@ -238,21 +210,6 @@ export default function AdminHomeScreen() {
           </Pressable>
         </View>
 
-        {/* ── RECENT ACTIVITIES ── */}
-        <Text style={styles.sectionTitle}>Hoạt động gần đây</Text>
-        <View style={styles.activitiesContainer}>
-          {RECENT_ACTIVITIES.map((activity) => (
-            <View key={activity.id} style={styles.activityItem}>
-              <View style={[styles.activityIconWrap, { backgroundColor: activity.bgColor }]}>
-                <Ionicons name={activity.icon as any} size={20} color={activity.color} />
-              </View>
-              <View style={styles.activityInfo}>
-                <Text style={styles.activityTitle}>{activity.title}</Text>
-                <Text style={styles.activityTime}>{activity.time}</Text>
-              </View>
-            </View>
-          ))}
-        </View>
       </ScrollView>
     </SafeAreaView>
   );
@@ -277,6 +234,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 24,
+    marginLeft: 20,
   },
   headerLeft: {
     flexDirection: 'row',
