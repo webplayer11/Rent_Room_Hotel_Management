@@ -2,10 +2,13 @@ import { apiFetch} from "./apiClient";
 import { ApiResponse } from './hotelApi';
 export type ProfileDto = {
   email: string;
-  fullName: string;
-  phoneNumber: string;
-  dateOfBirth: string;
-  address: string;
+  fullName: string | null;
+  phoneNumber: string | null;
+  dateOfBirth: string | null;
+  address: string | null;
+  role: string | null;
+  isActive: boolean;
+  createdAt: string;
 };
 
 export const profileApi = {

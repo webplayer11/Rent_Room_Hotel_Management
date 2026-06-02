@@ -288,13 +288,18 @@ if (existingProfile != null)
     if (user == null)
         return null;
 
+    var roles = await _userManager.GetRolesAsync(user);
+
     return new UserProfileDto
     {
         Email = user.Email!,
         FullName = user.FullName,
         PhoneNumber = user.PhoneNumber,
         DateOfBirth = user.DateOfBirth,
-        Address = user.Address
+        Address = user.Address,
+        Role = roles.FirstOrDefault(),
+        IsActive = user.IsActive,
+        CreatedAt = user.CreatedAt
     };
 }
 
