@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -6,20 +6,13 @@ import {
   ScrollView,
   RefreshControl,
   Pressable,
-  Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
+import { adminApi } from '../../../src/shared/api/adminApi';
 
-// --- Fake Data ---
-const MOCK_STATS = {
-  totalHotels: 150,
-  totalHosts: 420,
-  pendingHosts: 15,
-  totalBookings: '1,250',
-};
-
+// ── Fake hoạt động gần đây (UI placeholder — chưa có API) ────────────────────
 const RECENT_ACTIVITIES = [
   {
     id: '1',
@@ -49,25 +42,45 @@ const RECENT_ACTIVITIES = [
 
 export default function AdminHomeScreen() {
   const router = useRouter();
-  const [refreshing, setRefreshing] = useState(false);
+
+  const [totalHotels, setTotalHotels] = useState<number | null>(null);
+  const [totalUsers, setTotalUsers] = useState<number | null>(null);
+  const [pendingHosts, setPendingHosts] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+
+  const fetchStats = useCallback(async (isRefresh = false) => {
+    try {
+      if (isRefresh) setRefreshing(true);
+      const [hotelsRes, usersRes, pendingRes] = await Promise.all([
+        adminApi.getAllHotels(),
+        adminApi.getAllUsers(),
+        adminApi.getPendingHosts(),
+      ]);
+      if (hotelsRes.isSuccess && hotelsRes.data) setTotalHotels(hotelsRes.data.length);
+      if (usersRes.isSuccess && usersRes.data) setTotalUsers(usersRes.data.length);
+      if (pendingRes.isSuccess && pendingRes.data) setPendingHosts(pendingRes.data.length);
+    } catch (e) {
+      console.error('Lỗi khi tải dữ liệu home:', e);
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  }, []);
 
   useEffect(() => {
-    // Simulate loading data
-    const timer = setTimeout(() => {
-      setLoading(false);
-    }, 1000);
-    return () => clearTimeout(timer);
-  }, []);
+    fetchStats();
+  }, [fetchStats]);
 
-  const onRefresh = React.useCallback(() => {
-    setRefreshing(true);
-    setTimeout(() => {
-      setRefreshing(false);
-    }, 1500);
-  }, []);
+  const onRefresh = useCallback(() => {
+    fetchStats(true);
+  }, [fetchStats]);
 
-  // Skeleton Loader for Dashboard Cards
+  // Hiển thị "--" khi đang tải, số thật khi có data
+  const display = (val: number | null) =>
+    loading ? '--' : (val ?? '--').toString();
+
+  // ── Skeleton Loader ──
   if (loading) {
     return (
       <SafeAreaView style={styles.container}>
@@ -84,7 +97,7 @@ export default function AdminHomeScreen() {
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 16 }}>
             <View style={[styles.skeleton, styles.statsCard, { height: 120 }]} />
             <View style={[styles.skeleton, styles.statsCard, { height: 120 }]} />
-            <View style={[styles.skeleton, styles.statsCardFull, { height: 120 }]} />
+            <View style={[styles.skeleton, styles.statsCard, { height: 120, flex: 2 }]} />
           </View>
         </View>
       </SafeAreaView>
@@ -97,10 +110,15 @@ export default function AdminHomeScreen() {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.content}
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#5392F9']} />
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            colors={['#5392F9']}
+            tintColor="#5392F9"
+          />
         }
       >
-        {/* HEADER */}
+        {/* ── HEADER ── */}
         <View style={styles.header}>
           <View style={styles.headerLeft}>
             <View style={styles.avatar}>
@@ -108,53 +126,75 @@ export default function AdminHomeScreen() {
             </View>
             <View>
               <Text style={styles.greeting}>Xin chào, Quản trị viên! 👋</Text>
-              <Text style={styles.subtitle}>Hôm nay có 25 yêu cầu mới cần xử lý.</Text>
+              <Text style={styles.subtitle}>Tổng quan hệ thống hôm nay</Text>
             </View>
           </View>
-
         </View>
 
-        {/* DASHBOARD STATS */}
+        {/* ── DASHBOARD STATS ── */}
         <View style={styles.statsContainer}>
-          {/* Row 1 */}
+          {/* Row 1: Tổng khách sạn + Tổng user */}
           <View style={styles.row}>
+            {/* Card: Tổng khách sạn */}
             <Pressable
-              style={({ pressed }) => [styles.statsCard, styles.cardWhite, pressed && { opacity: 0.75 }]}
+              style={({ pressed }) => [
+                styles.statsCard,
+                styles.cardWhite,
+                pressed && { opacity: 0.75 },
+              ]}
               onPress={() => router.push('/admin/hotels')}
             >
               <View style={[styles.iconBox, { backgroundColor: '#EFF6FF' }]}>
                 <Ionicons name="business" size={24} color="#5392F9" />
               </View>
-              <Text style={styles.statsValue}>{MOCK_STATS.totalHotels}</Text>
+              <Text style={styles.statsValue}>{display(totalHotels)}</Text>
               <Text style={styles.statsLabel}>Tổng khách sạn</Text>
             </Pressable>
-            <View style={[styles.statsCard, styles.cardWhite]}>
+
+            {/* Card: Tổng user */}
+            <Pressable
+              style={({ pressed }) => [
+                styles.statsCard,
+                styles.cardWhite,
+                pressed && { opacity: 0.75 },
+              ]}
+              onPress={() => router.push('/admin/users')}
+            >
               <View style={[styles.iconBox, { backgroundColor: '#F3E8FF' }]}>
                 <Ionicons name="people" size={24} color="#9333EA" />
               </View>
-              <Text style={styles.statsValue}>{MOCK_STATS.totalHosts}</Text>
-              <Text style={styles.statsLabel}>Tổng host</Text>
-            </View>
+              <Text style={styles.statsValue}>{display(totalUsers)}</Text>
+              <Text style={styles.statsLabel}>Tổng user</Text>
+            </Pressable>
           </View>
 
-          {/* Row 2 */}
+          {/* Row 2: Host chờ duyệt */}
           <View style={styles.row}>
-            <View style={[styles.statsCard, styles.cardOrange]}>
+            <Pressable
+              style={({ pressed }) => [
+                styles.statsCard,
+                styles.cardOrange,
+                pressed && { opacity: 0.85 },
+              ]}
+              onPress={() => router.push('/admin/pending')}
+            >
               <View style={styles.cardHeader}>
                 <View style={[styles.iconBox, { backgroundColor: 'rgba(255,255,255,0.3)' }]}>
                   <Ionicons name="time" size={24} color="#FFFFFF" />
                 </View>
                 <Ionicons name="arrow-forward" size={20} color="#FFFFFF" />
               </View>
-              <Text style={[styles.statsValue, { color: '#FFF' }]}>{MOCK_STATS.pendingHosts}</Text>
-              <Text style={[styles.statsLabel, { color: 'rgba(255,255,255,0.9)' }]}>Host chờ duyệt</Text>
-            </View>
+              <Text style={[styles.statsValue, { color: '#FFF' }]}>
+                {display(pendingHosts)}
+              </Text>
+              <Text style={[styles.statsLabel, { color: 'rgba(255,255,255,0.9)' }]}>
+                Host chờ duyệt
+              </Text>
+            </Pressable>
           </View>
-
-
         </View>
 
-        {/* QUICK ACTIONS */}
+        {/* ── QUICK ACTIONS ── */}
         <Text style={styles.sectionTitle}>Hành động nhanh</Text>
         <View style={styles.actionsContainer}>
           <Pressable
@@ -169,7 +209,8 @@ export default function AdminHomeScreen() {
 
           <Pressable
             style={({ pressed }) => [styles.actionBtn, pressed && { opacity: 0.7 }]}
-            onPress={() => router.push('/admin/pending-hotels')}>
+            onPress={() => router.push('/admin/pending-hotels')}
+          >
             <View style={[styles.actionIcon, { backgroundColor: '#DCFCE7' }]}>
               <Ionicons name="business" size={24} color="#16A34A" />
             </View>
@@ -186,7 +227,8 @@ export default function AdminHomeScreen() {
             <Text style={styles.actionText}>Quản lý KS</Text>
           </Pressable>
 
-          <Pressable style={({ pressed }) => [styles.actionBtn, pressed && { opacity: 0.7 }]}
+          <Pressable
+            style={({ pressed }) => [styles.actionBtn, pressed && { opacity: 0.7 }]}
             onPress={() => router.push('/admin/users')}
           >
             <View style={[styles.actionIcon, { backgroundColor: '#E0E7FF' }]}>
@@ -196,7 +238,7 @@ export default function AdminHomeScreen() {
           </Pressable>
         </View>
 
-        {/* RECENT ACTIVITIES */}
+        {/* ── RECENT ACTIVITIES ── */}
         <Text style={styles.sectionTitle}>Hoạt động gần đây</Text>
         <View style={styles.activitiesContainer}>
           {RECENT_ACTIVITIES.map((activity) => (
@@ -211,7 +253,6 @@ export default function AdminHomeScreen() {
             </View>
           ))}
         </View>
-
       </ScrollView>
     </SafeAreaView>
   );
@@ -265,28 +306,6 @@ const styles = StyleSheet.create({
     color: '#64748B',
     marginTop: 4,
   },
-  notificationBtn: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: '#FFF',
-    justifyContent: 'center',
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-    elevation: 2,
-  },
-  badge: {
-    position: 'absolute',
-    top: 10,
-    right: 12,
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: '#EF4444',
-  },
   // --- Stats ---
   statsContainer: {
     gap: 16,
@@ -312,21 +331,6 @@ const styles = StyleSheet.create({
   cardOrange: {
     backgroundColor: '#F97316',
     flex: 1,
-  },
-  cardBlue: {
-    backgroundColor: '#3A7BF7',
-  },
-  statsCardFull: {
-    width: '100%',
-    borderRadius: 20,
-    padding: 24,
-    flexDirection: 'row',
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.1,
-    shadowRadius: 16,
-    elevation: 5,
   },
   iconBox: {
     width: 44,
