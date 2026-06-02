@@ -394,14 +394,31 @@ public async Task<bool> UnlockUserAsync(string userId)
     var totalHotels = await _context.Hotels.CountAsync();
     var totalHosts = await _context.HostProfiles.CountAsync();
     var totalVouchers = await _context.Vouchers.CountAsync();
+    
+    var lockedUsers = await _userManager.Users
+    .CountAsync(u => !u.IsActive);
+
+var suspendedHotels = await _context.Hotels
+    .CountAsync(h => !h.IsActive);
+
+var pendingHosts = await _context.HostProfiles
+    .CountAsync(h => h.Status == "Pending");
+
+var pendingHotels = await _context.Hotels
+    .CountAsync(h => !h.IsApproved);
 
     return new AdminDashboardStatsDto
-    {
-        TotalUsers = totalUsers,
-        TotalHotels = totalHotels,
-        TotalHosts = totalHosts,
-        TotalVouchers = totalVouchers
-    };
+{
+    TotalUsers = totalUsers,
+    TotalHotels = totalHotels,
+    TotalHosts = totalHosts,
+    TotalVouchers = totalVouchers,
+
+    LockedUsers = lockedUsers,
+    SuspendedHotels = suspendedHotels,
+    PendingHosts = pendingHosts,
+    PendingHotels = pendingHotels
+};
 }
 }
     // ── Mapping Helpers ──────────────────────────────────────────

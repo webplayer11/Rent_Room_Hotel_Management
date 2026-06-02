@@ -5,66 +5,112 @@ import {
   StyleSheet,
   ScrollView,
   RefreshControl,
-  ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { Ionicons } from '@expo/vector-icons';
 import { adminApi, DashboardStatsDto } from '../../../src/shared/api/adminApi';
 
 // ── Types ──────────────────────────────────────────────────────────
 type LoadState = 'loading' | 'success' | 'error';
+type IoniconsName = React.ComponentProps<typeof Ionicons>['name'];
 
-// ── Stat card definition ───────────────────────────────────────────
+// ── Overview card config ───────────────────────────────────────────
 type CardConfig = {
   key: keyof DashboardStatsDto;
   label: string;
-  emoji: string;
+  icon: IoniconsName;
+  iconColor: string;
   iconBg: string;
-  valueBg: string;
-  valueColor: string;
 };
 
 const CARDS: CardConfig[] = [
   {
     key: 'totalUsers',
     label: 'Người dùng',
-    emoji: '👤',
+    icon: 'person-outline',
+    iconColor: '#3B82F6',
     iconBg: '#EFF6FF',
-    valueBg: '#FFFFFF',
-    valueColor: '#1E293B',
   },
   {
     key: 'totalHotels',
     label: 'Khách sạn',
-    emoji: '🏨',
+    icon: 'business-outline',
+    iconColor: '#10B981',
     iconBg: '#ECFDF5',
-    valueBg: '#FFFFFF',
-    valueColor: '#1E293B',
   },
   {
     key: 'totalHosts',
     label: 'Chủ khách sạn',
-    emoji: '🧑‍💼',
+    icon: 'people-outline',
+    iconColor: '#F97316',
     iconBg: '#FFF7ED',
-    valueBg: '#FFFFFF',
-    valueColor: '#1E293B',
   },
   {
     key: 'totalVouchers',
     label: 'Voucher',
-    emoji: '🎟️',
+    icon: 'ticket-outline',
+    iconColor: '#8B5CF6',
     iconBg: '#F5F3FF',
-    valueBg: '#FFFFFF',
-    valueColor: '#1E293B',
   },
 ];
 
-// ── Skeleton card ──────────────────────────────────────────────────
+// ── Status item config ─────────────────────────────────────────────
+type StatusItemConfig = {
+  key: keyof DashboardStatsDto;
+  label: string;
+  icon: IoniconsName;
+  accentColor: string;
+  accentBg: string;
+};
+
+const STATUS_ITEMS: StatusItemConfig[] = [
+  {
+    key: 'lockedUsers',
+    label: 'User bị khóa',
+    icon: 'lock-closed-outline',
+    accentColor: '#DC2626',
+    accentBg: '#FEE2E2',
+  },
+  {
+    key: 'suspendedHotels',
+    label: 'Khách sạn tạm khóa',
+    icon: 'ban-outline',
+    accentColor: '#D97706',
+    accentBg: '#FEF3C7',
+  },
+  {
+    key: 'pendingHosts',
+    label: 'Host chờ duyệt',
+    icon: 'time-outline',
+    accentColor: '#1D4ED8',
+    accentBg: '#DBEAFE',
+  },
+  {
+    key: 'pendingHotels',
+    label: 'Khách sạn chờ duyệt',
+    icon: 'construct-outline',
+    accentColor: '#6D28D9',
+    accentBg: '#EDE9FE',
+  },
+];
+
+// ── Skeleton helpers ───────────────────────────────────────────────
 function SkeletonCard() {
   return (
     <View style={[styles.card, styles.skeletonCard]}>
-      <View style={styles.skeletonCircle} />
+      <View style={styles.skeletonIconBox} />
       <View style={styles.skeletonValueBar} />
       <View style={styles.skeletonLabelBar} />
+    </View>
+  );
+}
+
+function SkeletonStatusItem() {
+  return (
+    <View style={[styles.statusItem, { backgroundColor: '#F1F5F9' }]}>
+      <View style={styles.skeletonIconBoxSm} />
+      <View style={[styles.skeletonLabelBar, { flex: 1, width: undefined }]} />
+      <View style={[styles.skeletonValueBar, { width: 36, height: 20, marginBottom: 0 }]} />
     </View>
   );
 }
@@ -89,19 +135,17 @@ export default function AdminStatsScreen() {
     }
   }, []);
 
-  // Initial load
   useEffect(() => {
     fetchStats();
   }, [fetchStats]);
 
-  // Pull-to-refresh handler
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
     await fetchStats();
     setRefreshing(false);
   }, [fetchStats]);
 
-  // ── Render ──
+
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView
@@ -116,46 +160,85 @@ export default function AdminStatsScreen() {
           />
         }
       >
-        {/* Header */}
+        {/* ── Header ── */}
         <View style={styles.header}>
           <Text style={styles.headerTitle}>Thống kê hệ thống</Text>
           <Text style={styles.headerSubtitle}>Tổng quan dữ liệu hiện tại</Text>
         </View>
 
-        {/* Content area */}
+        {/* ── Loading skeleton ── */}
         {loadState === 'loading' && !refreshing ? (
-          /* Skeleton */
-          <View style={styles.grid}>
-            <SkeletonCard />
-            <SkeletonCard />
-            <SkeletonCard />
-            <SkeletonCard />
-          </View>
+          <>
+            <View style={styles.grid}>
+              <SkeletonCard />
+              <SkeletonCard />
+              <SkeletonCard />
+              <SkeletonCard />
+            </View>
+            <View style={styles.sectionHeader}>
+              <View style={[styles.skeletonLabelBar, { width: 200, height: 18 }]} />
+            </View>
+            <View style={styles.statusList}>
+              <SkeletonStatusItem />
+              <SkeletonStatusItem />
+              <SkeletonStatusItem />
+              <SkeletonStatusItem />
+            </View>
+          </>
+
         ) : loadState === 'error' ? (
-          /* Error state */
+          /* ── Error state ── */
           <View style={styles.errorContainer}>
-            <Text style={styles.errorEmoji}>⚠️</Text>
+            <Ionicons name="cloud-offline-outline" size={52} color="#CBD5E1" />
             <Text style={styles.errorText}>Không thể tải dữ liệu thống kê</Text>
             <Text style={styles.errorHint}>Kéo xuống để thử lại</Text>
           </View>
+
         ) : stats ? (
-          /* Stat cards grid */
-          <View style={styles.grid}>
-            {CARDS.map((card) => (
-              <View key={card.key} style={styles.card}>
-                {/* Emoji icon */}
-                <View style={[styles.emojiBox, { backgroundColor: card.iconBg }]}>
-                  <Text style={styles.emoji}>{card.emoji}</Text>
+          <>
+            {/* ── Overview cards (2-col grid) ── */}
+            <View style={styles.grid}>
+              {CARDS.map((card) => (
+                <View key={card.key} style={styles.card}>
+                  <View style={[styles.iconBox, { backgroundColor: card.iconBg }]}>
+                    <Ionicons name={card.icon} size={22} color={card.iconColor} />
+                  </View>
+                  <Text style={styles.cardValue}>
+                    {stats[card.key].toLocaleString('vi-VN')}
+                  </Text>
+                  <Text style={styles.cardLabel}>{card.label}</Text>
                 </View>
-                {/* Value */}
-                <Text style={[styles.value, { color: card.valueColor }]}>
-                  {stats[card.key].toLocaleString('vi-VN')}
-                </Text>
-                {/* Label */}
-                <Text style={styles.label}>{card.label}</Text>
-              </View>
-            ))}
-          </View>
+              ))}
+            </View>
+
+            {/* ── Status section header ── */}
+            <View style={styles.sectionHeader}>
+              <Text style={styles.sectionTitle}>Trạng thái cần chú ý</Text>
+            </View>
+
+
+            {/* ── Status rows ── */}
+            <View style={styles.statusList}>
+              {STATUS_ITEMS.map((item) => (
+                <View
+                  key={item.key}
+                  style={[styles.statusItem, { backgroundColor: item.accentBg }]}
+                >
+                  <View style={[styles.statusIconBox, { backgroundColor: '#FFFFFF40' }]}>
+                    <Ionicons name={item.icon} size={20} color={item.accentColor} />
+                  </View>
+                  <Text style={[styles.statusLabel, { color: item.accentColor }]}>
+                    {item.label}
+                  </Text>
+                  <View style={styles.statusBadge}>
+                    <Text style={[styles.statusBadgeText, { color: item.accentColor }]}>
+                      {stats[item.key].toLocaleString('vi-VN')}
+                    </Text>
+                  </View>
+                </View>
+              ))}
+            </View>
+          </>
         ) : null}
       </ScrollView>
     </SafeAreaView>
@@ -176,7 +259,7 @@ const styles = StyleSheet.create({
 
   // Header
   header: {
-    marginBottom: 28,
+    marginBottom: 24,
   },
   headerTitle: {
     fontSize: 24,
@@ -190,96 +273,155 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
 
-  // Grid (2-column)
+  // ── 2-column grid ─────────────────────────────────────────────
   grid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 16,
+    gap: 12,
+    marginBottom: 4,
   },
 
-  // Stat card
+  // ── Compact stat card ─────────────────────────────────────────
   card: {
-    // Take up ~half the row minus gap
     width: '47%',
     backgroundColor: '#FFFFFF',
-    borderRadius: 20,
-    padding: 20,
+    borderRadius: 18,
+    paddingVertical: 16,
+    paddingHorizontal: 14,
     alignItems: 'center',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
+    shadowOffset: { width: 0, height: 3 },
     shadowOpacity: 0.06,
-    shadowRadius: 12,
+    shadowRadius: 10,
     elevation: 3,
   },
-  emojiBox: {
-    width: 56,
-    height: 56,
-    borderRadius: 16,
+  iconBox: {
+    width: 44,
+    height: 44,
+    borderRadius: 13,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 14,
+    marginBottom: 10,
   },
-  emoji: {
+  cardValue: {
     fontSize: 26,
-  },
-  value: {
-    fontSize: 30,
     fontWeight: '800',
-    marginBottom: 6,
+    color: '#1E293B',
+    marginBottom: 4,
   },
-  label: {
-    fontSize: 13,
+  cardLabel: {
+    fontSize: 12,
     fontWeight: '600',
     color: '#64748B',
     textAlign: 'center',
   },
 
-  // Error state
+  // ── Status section ────────────────────────────────────────────
+  sectionHeader: {
+    marginTop: 24,
+    marginBottom: 10,
+  },
+  sectionTitle: {
+    fontSize: 17,
+    fontWeight: '800',
+    color: '#1E293B',
+  },
+
+
+  // ── Status rows ───────────────────────────────────────────────
+  statusList: {
+    gap: 10,
+    marginBottom: 16,
+  },
+  statusItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderRadius: 14,
+    paddingVertical: 12,
+    paddingHorizontal: 14,
+    gap: 12,
+  },
+  statusIconBox: {
+    width: 38,
+    height: 38,
+    borderRadius: 10,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255,255,255,0.55)',
+  },
+  statusLabel: {
+    flex: 1,
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  statusBadge: {
+    backgroundColor: 'rgba(255,255,255,0.7)',
+    borderRadius: 8,
+    paddingHorizontal: 11,
+    paddingVertical: 4,
+    minWidth: 36,
+    alignItems: 'center',
+  },
+  statusBadgeText: {
+    fontSize: 14,
+    fontWeight: '800',
+  },
+
+  // ── Error state ───────────────────────────────────────────────
   errorContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
     paddingVertical: 80,
-  },
-  errorEmoji: {
-    fontSize: 48,
-    marginBottom: 16,
+    gap: 10,
   },
   errorText: {
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: '700',
-    color: '#EF4444',
-    marginBottom: 8,
+    color: '#94A3B8',
     textAlign: 'center',
+    marginTop: 4,
   },
   errorHint: {
     fontSize: 13,
-    color: '#94A3B8',
+    color: '#CBD5E1',
     fontWeight: '500',
   },
 
-  // Skeleton
+  // ── Skeleton ──────────────────────────────────────────────────
   skeletonCard: {
     backgroundColor: '#FFFFFF',
   },
-  skeletonCircle: {
-    width: 56,
-    height: 56,
-    borderRadius: 16,
-    backgroundColor: '#E2E8F0',
-    marginBottom: 14,
-  },
-  skeletonValueBar: {
-    width: 60,
-    height: 28,
-    borderRadius: 8,
+  skeletonIconBox: {
+    width: 44,
+    height: 44,
+    borderRadius: 13,
     backgroundColor: '#E2E8F0',
     marginBottom: 10,
   },
-  skeletonLabelBar: {
-    width: 80,
-    height: 14,
+  skeletonIconBoxSm: {
+    width: 38,
+    height: 38,
+    borderRadius: 10,
+    backgroundColor: '#CBD5E1',
+  },
+  skeletonValueBar: {
+    width: 52,
+    height: 24,
     borderRadius: 6,
     backgroundColor: '#E2E8F0',
+    marginBottom: 8,
+  },
+  skeletonLabelBar: {
+    width: 72,
+    height: 12,
+    borderRadius: 5,
+    backgroundColor: '#E2E8F0',
+  },
+  skeletonSummaryBanner: {
+    height: 42,
+    borderRadius: 12,
+    backgroundColor: '#E2E8F0',
+    marginBottom: 12,
   },
 });

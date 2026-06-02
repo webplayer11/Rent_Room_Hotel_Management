@@ -51,6 +51,11 @@ export type DashboardStatsDto = {
   totalHotels: number;
   totalHosts: number;
   totalVouchers: number;
+  // ── Status fields ──────────────────────────────────────────────
+  lockedUsers: number;
+  suspendedHotels: number;
+  pendingHosts: number;
+  pendingHotels: number;
 };
 
 export const adminApi = {
