@@ -149,12 +149,19 @@ export default function CreateRoomScreen() {
   const validateStep = (): string | null => {
     if (step === 0) {
       if (!step1.roomNumber.trim()) return "Vui lòng nhập số phòng";
-      if (!step1.capacity.trim() || isNaN(Number(step1.capacity))) return "Sức chứa phải là một số hợp lệ";
+      if (!step1.capacity.trim() || isNaN(Number(step1.capacity)) || Number(step1.capacity) <= 0) return "Sức chứa phải là một số > 0";
+      if (step1.roomSize.trim() && (isNaN(Number(step1.roomSize)) || Number(step1.roomSize) <= 0)) return "Diện tích phải là một số > 0";
       if (step1.selectedRoomType === "Khác" && !step1.customRoomType.trim()) return "Vui lòng nhập loại phòng khác";
     }
     if (step === 1) {
-      if (!step2.bedCount.trim() || isNaN(Number(step2.bedCount))) return "Số giường phải là một số hợp lệ";
-      if (!step2.pricePerNight.trim() || isNaN(Number(step2.pricePerNight))) return "Giá mỗi đêm phải là một số hợp lệ";
+      if (!step2.bedCount.trim() || isNaN(Number(step2.bedCount)) || Number(step2.bedCount) <= 0) return "Số giường phải là một số > 0";
+      if (!step2.pricePerNight.trim() || isNaN(Number(step2.pricePerNight)) || Number(step2.pricePerNight) <= 0) return "Giá mỗi đêm phải là một số > 0";
+      if (step2.discountPrice.trim()) {
+        const discount = Number(step2.discountPrice);
+        const price = Number(step2.pricePerNight);
+        if (isNaN(discount) || discount < 0) return "Giá khuyến mãi phải là số >= 0";
+        if (discount >= price) return "Giá khuyến mãi phải nhỏ hơn giá gốc";
+      }
       if (step2.selectedBedType === "Khác" && !step2.customBedType.trim()) return "Vui lòng nhập loại giường khác";
     }
     if (step === 3 && images.length === 0 && !isEditMode) {

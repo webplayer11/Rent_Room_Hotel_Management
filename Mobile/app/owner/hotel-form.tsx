@@ -68,6 +68,9 @@ export default function CreateHotelScreen() {
     if (step === 0) {
       if (!step1.name.trim()) return "Vui lòng nhập tên khách sạn";
       if (!step1.description.trim()) return "Vui lòng nhập mô tả khách sạn";
+      if (!step1.checkInTime) return "Vui lòng chọn giờ nhận phòng";
+      if (!step1.checkOutTime) return "Vui lòng chọn giờ trả phòng";
+      if (step1.checkInTime === step1.checkOutTime) return "Giờ nhận phòng phải khác giờ trả phòng";
     }
     if (step === 2) {
       if (!step2.latitude || !step2.longitude) return "Vui lòng chọn vị trí trên bản đồ";
