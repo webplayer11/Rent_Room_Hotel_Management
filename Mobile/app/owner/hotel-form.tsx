@@ -29,6 +29,7 @@ export default function CreateHotelScreen() {
   const [step2, setStep2] = useState<Step2Data>({ street: "", district: "", city: "", latitude: undefined, longitude: undefined, selectedLocation: "" });
   const [mapVisible, setMapVisible] = useState(false);
   const [images, setImages] = useState<HotelImage[]>([]);
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
   React.useEffect(() => {
     if (isEdit && id) {
@@ -65,21 +66,51 @@ export default function CreateHotelScreen() {
   }, [isEdit, id]);
 
   const validate = (): string | null => {
+    const newErrors: Record<string, string> = {};
+    let firstError: string | null = null;
+
     if (step === 0) {
-      if (!step1.name.trim()) return "Vui lòng nhập tên khách sạn";
-      if (!step1.description.trim()) return "Vui lòng nhập mô tả khách sạn";
-      if (!step1.checkInTime) return "Vui lòng chọn giờ nhận phòng";
-      if (!step1.checkOutTime) return "Vui lòng chọn giờ trả phòng";
-      if (step1.checkInTime === step1.checkOutTime) return "Giờ nhận phòng phải khác giờ trả phòng";
+      if (!step1.name.trim()) {
+        newErrors.name = "Vui lòng nhập tên khách sạn";
+        firstError = firstError || newErrors.name;
+      }
+      if (!step1.description.trim()) {
+        newErrors.description = "Vui lòng nhập mô tả khách sạn";
+        firstError = firstError || newErrors.description;
+      }
+      if (!step1.checkInTime) {
+        newErrors.checkInTime = "Vui lòng chọn giờ nhận phòng";
+        firstError = firstError || newErrors.checkInTime;
+      }
+      if (!step1.checkOutTime) {
+        newErrors.checkOutTime = "Vui lòng chọn giờ trả phòng";
+        firstError = firstError || newErrors.checkOutTime;
+      }
+      // Rule checkInTime === checkOutTime đã bỏ: check-in/out có thể trùng giờ nhưng khác ngày
     }
     if (step === 2) {
-      if (!step2.latitude || !step2.longitude) return "Vui lòng chọn vị trí trên bản đồ";
-      if (!step2.street.trim()) return "Vui lòng nhập số nhà / đường";
-      if (!step2.district.trim()) return "Vui lòng nhập quận / huyện";
-      if (!step2.city.trim()) return "Vui lòng nhập tỉnh / thành phố";
+      if (!step2.latitude || !step2.longitude) {
+        firstError = firstError || "Vui lòng chọn vị trí trên bản đồ";
+      }
+      if (!step2.street.trim()) {
+        newErrors.street = "Vui lòng nhập số nhà / đường";
+        firstError = firstError || newErrors.street;
+      }
+      if (!step2.district.trim()) {
+        newErrors.district = "Vui lòng nhập quận / huyện";
+        firstError = firstError || newErrors.district;
+      }
+      if (!step2.city.trim()) {
+        newErrors.city = "Vui lòng nhập tỉnh / thành phố";
+        firstError = firstError || newErrors.city;
+      }
     }
-    if (step === 3 && images.length === 0 && !isEdit) return "Vui lòng chọn ít nhất 1 ảnh";
-    return null;
+    if (step === 3 && images.length === 0 && !isEdit) {
+      firstError = firstError || "Vui lòng chọn ít nhất 1 ảnh";
+    }
+
+    setErrors(newErrors);
+    return firstError;
   };
 
   const handleNext = () => {
@@ -175,7 +206,7 @@ export default function CreateHotelScreen() {
         </View>
         {/* Content */}
         <ScrollView style={{ flex: 1 }} contentContainerStyle={s.content} keyboardShouldPersistTaps="handled">
-          {step === 0 && <StepBasic data={step1} onChange={(k, v) => setStep1((p) => ({ ...p, [k]: v }))} />}
+          {step === 0 && <StepBasic data={step1} onChange={(k, v) => { setStep1((p) => ({ ...p, [k]: v })); setErrors(prev => ({...prev, [k]: ''})); }} errors={errors} />}
           {step === 1 && (
             <View style={s.card}>
               <Text style={s.sectionTitle}>✨ Tiện ích khách sạn</Text>
@@ -192,9 +223,10 @@ export default function CreateHotelScreen() {
           {step === 2 && (
             <StepLocation
               data={step2}
-              onChange={(k, v) => setStep2((p) => ({ ...p, [k]: v }))}
+              onChange={(k, v) => { setStep2((p) => ({ ...p, [k]: v })); if (typeof v === 'string') setErrors(prev => ({...prev, [k]: ''})); }}
               mapVisible={mapVisible}
               setMapVisible={setMapVisible}
+              errors={errors}
             />
           )}
           {step === 3 && (
@@ -220,22 +252,37 @@ export default function CreateHotelScreen() {
 }
 
 // ── Step 1: Basic Info ─────────────────────────────────────────────────────────
-function StepBasic({ data, onChange }: { data: Step1Data; onChange: (k: keyof Step1Data, v: string) => void }) {
+function StepBasic({ data, onChange, errors }: { data: Step1Data; onChange: (k: keyof Step1Data, v: string) => void; errors: Record<string, string> }) {
   return (
     <View style={s.card}>
       <Text style={s.sectionTitle}>📋 Thông tin cơ bản</Text>
-      <FieldInput label="Tên khách sạn *" value={data.name} onChangeText={(v) => onChange("name", v)} placeholder="Nhập tên khách sạn" />
+      <FieldInput
+        label="Tên khách sạn *"
+        value={data.name}
+        onChangeText={(v) => onChange("name", v)}
+        placeholder="Nhập tên khách sạn"
+        error={errors.name}
+      />
       <Text style={s.label}>Mô tả khách sạn *</Text>
-      <TextInput style={[s.input, s.textArea]} value={data.description} onChangeText={(v) => onChange("description", v)} placeholder="Giới thiệu ngắn về khách sạn" multiline textAlignVertical="top" placeholderTextColor="#9CA3AF" />
+      <TextInput
+        style={[s.input, s.textArea, errors.description ? { borderColor: '#EF4444' } : null]}
+        value={data.description}
+        onChangeText={(v) => onChange("description", v)}
+        placeholder="Giới thiệu ngắn về khách sạn"
+        multiline
+        textAlignVertical="top"
+        placeholderTextColor="#9CA3AF"
+      />
+      {errors.description ? <Text style={{ color: '#EF4444', fontSize: 12, marginTop: 4, marginBottom: 10 }}>{errors.description}</Text> : <View style={{ height: 14 }} />}
       <StarField label="Số sao (Tuỳ chọn)" value={data.starRating} onChange={(v) => onChange("starRating", v)} />
-      <TimeField label="Giờ nhận phòng" value={data.checkInTime} onChange={(v) => onChange("checkInTime", v)} />
-      <TimeField label="Giờ trả phòng" value={data.checkOutTime} onChange={(v) => onChange("checkOutTime", v)} />
+      <TimeField label="Giờ nhận phòng *" value={data.checkInTime} onChange={(v) => onChange("checkInTime", v)} error={errors.checkInTime} />
+      <TimeField label="Giờ trả phòng *" value={data.checkOutTime} onChange={(v) => onChange("checkOutTime", v)} error={errors.checkOutTime} />
     </View>
   );
 }
 
 // ── Step 2 (now Step 3): Location ──────────────────────────────────────────────
-function StepLocation({ data, onChange, mapVisible, setMapVisible }: { data: Step2Data; onChange: (k: keyof Step2Data, v: any) => void; mapVisible: boolean; setMapVisible: (v: boolean) => void }) {
+function StepLocation({ data, onChange, mapVisible, setMapVisible, errors }: { data: Step2Data; onChange: (k: keyof Step2Data, v: any) => void; mapVisible: boolean; setMapVisible: (v: boolean) => void; errors: Record<string, string> }) {
   return (
     <View style={s.card}>
       <Text style={s.sectionTitle}>📍 Vị trí khách sạn</Text>
@@ -246,9 +293,9 @@ function StepLocation({ data, onChange, mapVisible, setMapVisible }: { data: Ste
       </Pressable>
       {data.latitude && data.longitude && <Text style={s.hint}>✓ Toạ độ: {data.latitude.toFixed(4)}, {data.longitude.toFixed(4)}</Text>}
       <View style={{ height: 14 }} />
-      <FieldInput label="Số nhà / đường *" value={data.street} onChangeText={(v) => onChange("street", v)} placeholder="Ví dụ: 123 Lý Thường Kiệt" />
-      <FieldInput label="Quận / huyện *" value={data.district} onChangeText={(v) => onChange("district", v)} placeholder="Ví dụ: Hoàn Kiếm" />
-      <FieldInput label="Tỉnh / thành phố *" value={data.city} onChangeText={(v) => onChange("city", v)} placeholder="Ví dụ: Hà Nội" />
+      <FieldInput label="Số nhà / đường *" value={data.street} onChangeText={(v) => onChange("street", v)} placeholder="Ví dụ: 123 Lý Thường Kiệt" error={errors.street} />
+      <FieldInput label="Quận / huyện *" value={data.district} onChangeText={(v) => onChange("district", v)} placeholder="Ví dụ: Hoàn Kiếm" error={errors.district} />
+      <FieldInput label="Tỉnh / thành phố *" value={data.city} onChangeText={(v) => onChange("city", v)} placeholder="Ví dụ: Hà Nội" error={errors.city} />
       <AppMap visible={mapVisible} onClose={() => setMapVisible(false)} onSelectLocation={(addr, coords) => { onChange("selectedLocation", addr); if (coords) { onChange("latitude", coords.latitude); onChange("longitude", coords.longitude); } setMapVisible(false); }} />
     </View>
   );
@@ -293,11 +340,18 @@ function StepPhotos({ images, onPick, onRemove, step1, step2, amenityCount, isEd
 }
 
 // ── Sub-components ──────────────────────────────────────────────────────────────
-function FieldInput({ label, value, onChangeText, placeholder }: { label: string; value: string; onChangeText: (v: string) => void; placeholder?: string }) {
+function FieldInput({ label, value, onChangeText, placeholder, error }: { label: string; value: string; onChangeText: (v: string) => void; placeholder?: string; error?: string }) {
   return (
     <View style={{ marginBottom: 14 }}>
       <Text style={s.label}>{label}</Text>
-      <TextInput style={s.input} value={value} onChangeText={onChangeText} placeholder={placeholder} placeholderTextColor="#9CA3AF" />
+      <TextInput
+        style={[s.input, error ? { borderColor: '#EF4444' } : null]}
+        value={value}
+        onChangeText={onChangeText}
+        placeholder={placeholder}
+        placeholderTextColor="#9CA3AF"
+      />
+      {error ? <Text style={{ color: '#EF4444', fontSize: 12, marginTop: 4 }}>{error}</Text> : null}
     </View>
   );
 }
@@ -319,19 +373,20 @@ const TIME_SLOTS: string[] = Array.from({ length: 48 }, (_, i) => {
   return `${h}:${m}`;
 });
 
-function TimeField({ label, value, onChange }: { label: string; value: string; onChange: (v: string) => void }) {
+function TimeField({ label, value, onChange, error }: { label: string; value: string; onChange: (v: string) => void; error?: string }) {
   const [show, setShow] = useState(false);
 
   return (
     <View style={{ marginBottom: 14 }}>
       <Text style={s.label}>{label}</Text>
       <Pressable
-        style={[s.input, { flexDirection: "row", justifyContent: "space-between", alignItems: "center" }]}
+        style={[s.input, { flexDirection: "row", justifyContent: "space-between", alignItems: "center" }, error ? { borderColor: '#EF4444' } : null]}
         onPress={() => setShow(true)}
       >
         <Text style={{ color: value ? "#111827" : "#9CA3AF" }}>{value || "Chọn giờ"}</Text>
-        <Ionicons name="time-outline" size={20} color="#9CA3AF" />
+        <Ionicons name="time-outline" size={20} color={error ? "#EF4444" : "#9CA3AF"} />
       </Pressable>
+      {error ? <Text style={{ color: '#EF4444', fontSize: 12, marginTop: 4 }}>{error}</Text> : null}
 
       <Modal visible={show} transparent animationType="slide" onRequestClose={() => setShow(false)}>
         <Pressable style={s.mOverlay} onPress={() => setShow(false)}>
