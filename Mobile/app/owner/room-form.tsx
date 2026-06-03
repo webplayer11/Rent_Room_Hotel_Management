@@ -57,6 +57,7 @@ export default function CreateRoomScreen() {
 
   const [step, setStep] = useState(0);
   const [loading, setLoading] = useState(false);
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
   const [step1, setStep1] = useState<Step1Data>({
     roomNumber: "",
@@ -147,27 +148,55 @@ export default function CreateRoomScreen() {
   }, [id, isEditMode]);
 
   const validateStep = (): string | null => {
+    const newErrors: Record<string, string> = {};
+    let firstError: string | null = null;
+
     if (step === 0) {
-      if (!step1.roomNumber.trim()) return "Vui lòng nhập số phòng";
-      if (!step1.capacity.trim() || isNaN(Number(step1.capacity)) || Number(step1.capacity) <= 0) return "Sức chứa phải là một số > 0";
-      if (step1.roomSize.trim() && (isNaN(Number(step1.roomSize)) || Number(step1.roomSize) <= 0)) return "Diện tích phải là một số > 0";
-      if (step1.selectedRoomType === "Khác" && !step1.customRoomType.trim()) return "Vui lòng nhập loại phòng khác";
+      if (!step1.roomNumber.trim()) {
+        firstError = firstError || "Vui lòng nhập số phòng";
+      }
+      if (!step1.capacity.trim() || isNaN(Number(step1.capacity)) || Number(step1.capacity) <= 0) {
+        newErrors.capacity = "Sức chứa phải lớn hơn 0";
+        firstError = firstError || newErrors.capacity;
+      }
+      if (step1.roomSize.trim() && (isNaN(Number(step1.roomSize)) || Number(step1.roomSize) <= 0)) {
+        newErrors.roomSize = "Diện tích phải lớn hơn 0";
+        firstError = firstError || newErrors.roomSize;
+      }
+      if (step1.selectedRoomType === "Khác" && !step1.customRoomType.trim()) {
+        firstError = firstError || "Vui lòng nhập loại phòng khác";
+      }
     }
     if (step === 1) {
-      if (!step2.bedCount.trim() || isNaN(Number(step2.bedCount)) || Number(step2.bedCount) <= 0) return "Số giường phải là một số > 0";
-      if (!step2.pricePerNight.trim() || isNaN(Number(step2.pricePerNight)) || Number(step2.pricePerNight) <= 0) return "Giá mỗi đêm phải là một số > 0";
+      if (!step2.bedCount.trim() || isNaN(Number(step2.bedCount)) || Number(step2.bedCount) <= 0) {
+        newErrors.bedCount = "Số giường phải lớn hơn 0";
+        firstError = firstError || newErrors.bedCount;
+      }
+      if (!step2.pricePerNight.trim() || isNaN(Number(step2.pricePerNight)) || Number(step2.pricePerNight) <= 0) {
+        newErrors.pricePerNight = "Giá mỗi đêm phải lớn hơn 0";
+        firstError = firstError || newErrors.pricePerNight;
+      }
       if (step2.discountPrice.trim()) {
         const discount = Number(step2.discountPrice);
         const price = Number(step2.pricePerNight);
-        if (isNaN(discount) || discount < 0) return "Giá khuyến mãi phải là số >= 0";
-        if (discount >= price) return "Giá khuyến mãi phải nhỏ hơn giá gốc";
+        if (isNaN(discount) || discount < 0) {
+          newErrors.discountPrice = "Giá khuyến mãi phải là số >= 0";
+          firstError = firstError || newErrors.discountPrice;
+        } else if (discount >= price) {
+          newErrors.discountPrice = "Giá khuyến mãi phải nhỏ hơn giá gốc";
+          firstError = firstError || newErrors.discountPrice;
+        }
       }
-      if (step2.selectedBedType === "Khác" && !step2.customBedType.trim()) return "Vui lòng nhập loại giường khác";
+      if (step2.selectedBedType === "Khác" && !step2.customBedType.trim()) {
+        firstError = firstError || "Vui lòng nhập loại giường khác";
+      }
     }
     if (step === 3 && images.length === 0 && !isEditMode) {
-      return "Vui lòng chọn ít nhất 1 ảnh cho phòng này";
+      firstError = firstError || "Vui lòng chọn ít nhất 1 ảnh cho phòng này";
     }
-    return null;
+
+    setErrors(newErrors);
+    return firstError;
   };
 
   const handleNext = () => {
@@ -358,16 +387,18 @@ export default function CreateRoomScreen() {
                   <FieldInput 
                     label="Sức chứa (Người) *" 
                     value={step1.capacity} 
-                    onChangeText={(v: string) => setStep1({...step1, capacity: v})} 
+                    onChangeText={(v: string) => { setStep1({...step1, capacity: v}); setErrors(prev => ({...prev, capacity: ''})); }} 
                     keyboardType="numeric" 
+                    error={errors.capacity}
                   />
                 </View>
                 <View style={{ flex: 1 }}>
                   <FieldInput 
                     label="Diện tích (m2)" 
                     value={step1.roomSize} 
-                    onChangeText={(v: string) => setStep1({...step1, roomSize: v})} 
+                    onChangeText={(v: string) => { setStep1({...step1, roomSize: v}); setErrors(prev => ({...prev, roomSize: ''})); }} 
                     keyboardType="numeric" 
+                    error={errors.roomSize}
                   />
                 </View>
               </View>
@@ -392,8 +423,9 @@ export default function CreateRoomScreen() {
               <FieldInput 
                 label="Số giường *" 
                 value={step2.bedCount} 
-                onChangeText={(v: string) => setStep2({...step2, bedCount: v})} 
+                onChangeText={(v: string) => { setStep2({...step2, bedCount: v}); setErrors(prev => ({...prev, bedCount: ''})); }} 
                 keyboardType="numeric" 
+                error={errors.bedCount}
               />
 
               <Text style={styles.label}>Loại giường *</Text>
@@ -437,12 +469,14 @@ export default function CreateRoomScreen() {
               <CurrencyInput 
                 label="Giá mỗi đêm (VNĐ) *" 
                 value={step2.pricePerNight} 
-                onChangeText={(v: string) => setStep2({...step2, pricePerNight: v})} 
+                onChangeText={(v: string) => { setStep2({...step2, pricePerNight: v}); setErrors(prev => ({...prev, pricePerNight: ''})); }} 
+                error={errors.pricePerNight}
               />
               <CurrencyInput 
                 label="Giá khuyến mãi (VNĐ)" 
                 value={step2.discountPrice} 
-                onChangeText={(v: string) => setStep2({...step2, discountPrice: v})} 
+                onChangeText={(v: string) => { setStep2({...step2, discountPrice: v}); setErrors(prev => ({...prev, discountPrice: ''})); }} 
+                error={errors.discountPrice}
               />
               
               <View style={styles.switchContainer}>
@@ -549,22 +583,23 @@ export default function CreateRoomScreen() {
 }
 
 // ── Sub-components ──────────────────────────────────────────────────────────────
-function FieldInput({ label, value, onChangeText, keyboardType = "default" }: { label: string; value: string; onChangeText: (v: string) => void; keyboardType?: any }) {
+function FieldInput({ label, value, onChangeText, keyboardType = "default", error }: { label: string; value: string; onChangeText: (v: string) => void; keyboardType?: any; error?: string }) {
   return (
     <View style={{ marginBottom: 14 }}>
       <Text style={styles.label}>{label}</Text>
       <TextInput
-        style={styles.input}
+        style={[styles.input, error ? { borderColor: '#EF4444' } : null]}
         value={value}
         onChangeText={onChangeText}
         placeholderTextColor="#9CA3AF"
         keyboardType={keyboardType}
       />
+      {error ? <Text style={{color: '#EF4444', fontSize: 12, marginTop: 4}}>{error}</Text> : null}
     </View>
   );
 }
 
-function CurrencyInput({ label, value, onChangeText }: { label: string; value: string; onChangeText: (v: string) => void }) {
+function CurrencyInput({ label, value, onChangeText, error }: { label: string; value: string; onChangeText: (v: string) => void; error?: string }) {
   const displayValue = value ? value.replace(/\B(?=(\d{3})+(?!\d))/g, ".") : "";
 
   const handleChange = (text: string) => {
@@ -578,12 +613,13 @@ function CurrencyInput({ label, value, onChangeText }: { label: string; value: s
     <View style={{ marginBottom: 14 }}>
       <Text style={styles.label}>{label}</Text>
       <TextInput
-        style={styles.input}
+        style={[styles.input, error ? { borderColor: '#EF4444' } : null]}
         value={displayValue}
         onChangeText={handleChange}
         placeholderTextColor="#9CA3AF"
         keyboardType="numeric"
       />
+      {error ? <Text style={{color: '#EF4444', fontSize: 12, marginTop: 4}}>{error}</Text> : null}
     </View>
   );
 }
