@@ -1,4 +1,4 @@
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import Toast from 'react-native-toast-message';
 import React, { useEffect, useState } from 'react';
 import {
@@ -36,6 +36,7 @@ const STATUS_BADGE: Record<HotelStatus, { label: string; bg: string; color: stri
 export default function HotelDetailScreen() {
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
+  const insets = useSafeAreaInsets();
 
   const [hotel,         setHotel]         = useState<PendingHotelDto | null>(null);
   const [rooms,         setRooms]         = useState<RoomDto[]>([]);
@@ -155,16 +156,18 @@ export default function HotelDetailScreen() {
     if (!hotel) return null;
     const status = getStatus(hotel);
 
+    const footerStyle = [styles.footer, { paddingBottom: insets.bottom + 20 }];
+
     if (status === 'inactive') {
       return (
-        <View style={styles.footer}>
+        <View style={footerStyle}>
           <Text style={styles.inactiveText}>Khách sạn này hiện không hoạt động.</Text>
         </View>
       );
     }
     if (status === 'pending') {
       return (
-        <View style={styles.footer}>
+        <View style={footerStyle}>
           <TouchableOpacity
             style={[styles.actionBtn, styles.btnApprove]}
             onPress={handleApprove}
@@ -188,7 +191,7 @@ export default function HotelDetailScreen() {
     }
     if (status === 'active') {
       return (
-        <View style={styles.footer}>
+        <View style={footerStyle}>
           <TouchableOpacity
             style={[styles.actionBtn, styles.btnSuspend]}
             onPress={() => { setSuspendReason(''); setSuspendModal(true); }}
@@ -204,7 +207,7 @@ export default function HotelDetailScreen() {
     }
     if (status === 'suspended') {
       return (
-        <View style={styles.footer}>
+        <View style={footerStyle}>
           <TouchableOpacity
             style={[styles.actionBtn, styles.btnUnsuspend]}
             onPress={handleUnsuspend}
@@ -243,7 +246,7 @@ export default function HotelDetailScreen() {
 
   // ── Main render ─────────────────────────────────────────────────
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.container} edges={['bottom']}>
       <Stack.Screen
         options={{
           headerShown: true,
@@ -257,7 +260,7 @@ export default function HotelDetailScreen() {
       />
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        <View style={styles.section}>
+        <View style={[styles.section, { paddingBottom: 120 + insets.bottom }]}>
 
           {/* Tên + badge */}
           <View style={styles.infoSection}>
