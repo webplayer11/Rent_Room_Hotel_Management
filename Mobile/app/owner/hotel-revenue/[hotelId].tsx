@@ -118,14 +118,14 @@ export default function HotelRevenueDetailScreen() {
                 <Text style={styles.finValue}>{formatCurrency(data.totalRevenue)}</Text>
               </View>
               <View style={styles.finRow}>
-                <Text style={styles.finLabel}>Hoa hồng (Commission)</Text>
+                <Text style={styles.finLabel}>Hoa hồng </Text>
                 <Text style={[styles.finValue, { color: '#EF4444' }]}>
                   - {formatCurrency(data.commission)}
                 </Text>
               </View>
               <View style={styles.divider} />
               <View style={styles.finRow}>
-                <Text style={styles.finLabelBold}>Thực nhận (Net Revenue)</Text>
+                <Text style={styles.finLabelBold}>Thực nhận </Text>
                 <Text style={styles.finValueBold}>{formatCurrency(data.netRevenue)}</Text>
               </View>
             </View>

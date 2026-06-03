@@ -130,10 +130,20 @@ export default function CreateHotelScreen() {
           amenities, images,
         });
         if (result.isSuccess) {
-          Alert.alert("Thành công 🎉", "Khách sạn đã được gửi chờ admin duyệt", [{ text: "OK", onPress: () => router.back() }]);
-        } else {
-          Toast.show({ type: "error", text1: "Lỗi", text2: result.message || "Tạo khách sạn thất bại" });
-        }
+  Toast.show({
+    type: "success",
+    text1: "Thành công 🎉",
+    text2: "Khách sạn đã được gửi chờ admin duyệt",
+    visibilityTime: 2000,
+    onHide: () => router.back(),
+  });
+} else {
+  Toast.show({
+    type: "error",
+    text1: "Lỗi",
+    text2: result.message || "Tạo khách sạn thất bại",
+  });
+}
       }
     } catch (e: any) {
       Toast.show({ type: "error", text1: "Lỗi", text2: e.message || "Không thể thực hiện yêu cầu" });
@@ -145,7 +155,7 @@ export default function CreateHotelScreen() {
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : undefined}>
         {/* Header */}
         <View style={s.header}>
-          <Pressable style={s.backBtn} onPress={handleBack}><Ionicons name="arrow-back" size={22} color="#111827" /></Pressable>
+          <Pressable style={s.backBtn} onPress={handleBack}><Ionicons name="chevron-back" size={22} color="#111827" /></Pressable>
           <View style={{ flex: 1 }}>
             <Text style={s.title}>{isEdit ? "Sửa khách sạn" : "Thêm khách sạn"}</Text>
             <Text style={s.subtitle}>Bước {step + 1}/{STEPS.length} — {STEPS[step]}</Text>

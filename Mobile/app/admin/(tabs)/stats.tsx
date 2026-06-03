@@ -171,8 +171,7 @@ export default function AdminStatsScreen() {
   return (
     <SafeAreaView style={styles.container} edges={["top"]}>
      <View style={styles.header}>
-        <Text style={styles.headerTitle}>Dashboard Admin</Text>
-        <Text style={styles.headerSub}>Thống kê doanh thu (Hoa hồng 10%)</Text>
+        <Text style={styles.headerTitle}>Thống kê doanh thu</Text>
       </View>
 
     <ScrollView
@@ -185,12 +184,6 @@ export default function AdminStatsScreen() {
           value={formatCurrency(todayRevenue)}
           icon={<DollarSign size={24} color="#10B981" />}
           color="#10B981"
-        />
-        <KpiCard
-          title="Doanh thu tháng này"
-          value={formatCurrency(thisMonthRevenue)}
-          icon={<Calendar size={24} color="#3B82F6" />}
-          color="#3B82F6"
         />
         <KpiCard
           title="Doanh thu năm nay"
@@ -294,16 +287,11 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   header: {
-    padding: 20,
-    backgroundColor: '#FFFFFF',
-    borderBottomWidth: 1,
-    borderBottomColor: '#E2E8F0',
+    flexDirection: 'row', alignItems: 'center', backgroundColor: '#FFF',
+    paddingHorizontal: 12, paddingVertical: 12,
+    borderBottomWidth: 1, borderBottomColor: '#F0F0F0',
   },
-  headerTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#0F172A',
-  },
+  headerTitle: { flex: 1, textAlign: 'center', fontSize: 17, fontWeight: '700', color: '#222' },
   headerSub: {
     fontSize: 14,
     color: '#64748B',

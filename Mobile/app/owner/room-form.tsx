@@ -286,14 +286,26 @@ export default function CreateRoomScreen() {
       }
 
       if (result.isSuccess) {
-        Alert.alert(
-          "Thành công", 
-          isEditMode ? "Thông tin phòng đã được cập nhật thành công" : "Phòng đã được tạo thành công", 
-          [{ text: "OK", onPress: () => router.back() }]
-        );
-      } else {
-        Toast.show({ type: 'error', text1: "Lỗi", text2: result.message || (isEditMode ? "Cập nhật phòng thất bại" : "Tạo phòng thất bại") });
-      }
+     Toast.show({
+    type: 'success',
+    text1: 'Thành công',
+    text2: isEditMode
+      ? 'Thông tin phòng đã được cập nhật thành công'
+      : 'Phòng đã được tạo thành công',
+    visibilityTime: 2000,
+    onHide: () => router.back(),
+  });
+} else {
+  Toast.show({
+    type: 'error',
+    text1: 'Lỗi',
+    text2:
+      result.message ||
+      (isEditMode
+        ? 'Cập nhật phòng thất bại'
+        : 'Tạo phòng thất bại'),
+  });
+}
     } catch (error: any) {
       Toast.show({ type: 'error', text1: "Lỗi", text2: error.message || "Không thể thực hiện tác vụ" });
     } finally {
@@ -307,7 +319,7 @@ export default function CreateRoomScreen() {
         {/* Header */}
         <View style={styles.header}>
           <Pressable style={styles.backBtn} onPress={handleBack}>
-            <Ionicons name="arrow-back" size={22} color="#111827" />
+            <Ionicons name="chevron-back" size={22} color="#111827" />
           </Pressable>
           <View style={{ flex: 1 }}>
             <Text style={styles.title}>{isEditMode ? "Sửa phòng" : "Thêm phòng"}</Text>

@@ -222,7 +222,6 @@ export default function AdminVoucherScreen() {
       <View style={styles.header}>
         <View>
           <Text style={styles.title}>Mã giảm giá</Text>
-          <Text style={styles.subtitle}>Quản lý chiến dịch voucher hệ thống</Text>
         </View>
         <TouchableOpacity style={styles.createButton} onPress={() => setModalVisible(true)}>
           <Ionicons name="add" size={24} color="#FFF" />

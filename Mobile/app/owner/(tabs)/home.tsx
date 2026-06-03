@@ -332,54 +332,6 @@ export default function OwnerHome() {
           </View>
         </View>
 
-        {/* ── RECENT BOOKINGS ── */}
-        <View style={[styles.sectionCard, { marginBottom: 40 }]}>
-          <View style={[styles.sectionHeader, { marginBottom: 8 }]}>
-            <Text style={styles.sectionTitle}>Booking mới nhất</Text>
-            <TouchableOpacity onPress={() => router.push('/owner/bookings' as any)}>
-              <Text style={styles.seeAll}>Xem tất cả</Text>
-            </TouchableOpacity>
-          </View>
-
-          {recentBookings.length === 0 ? (
-            <View style={styles.emptyWrap}>
-              <Calendar size={48} color="#E5E7EB" />
-              <Text style={styles.emptyText}>Chưa có đơn đặt phòng nào</Text>
-            </View>
-          ) : (
-            recentBookings.map((b, idx) => {
-              const st = STATUS_MAP[b.status] ?? {
-                label: b.status, color: '#6B7280', bg: '#F3F4F6'
-              };
-              return (
-                <View
-                  key={b.id}
-                  style={[
-                    styles.bookingRow,
-                    idx < recentBookings.length - 1 && styles.bookingBorder,
-                  ]}
-                >
-                  <View style={styles.bookingLeft}>
-                    <Text style={styles.bookingGuest} numberOfLines={1}>
-                      {b.roomName || 'Khách'}
-                    </Text>
-                    <Text style={styles.bookingDates}>
-                      {formatDate(b.checkInDate)} → {formatDate(b.checkOutDate)}
-                    </Text>
-                  </View>
-                  <View style={styles.bookingRight}>
-                    <Text style={styles.bookingPrice}>
-                      {formatCurrency(b.finalPrice ?? b.totalPrice)}
-                    </Text>
-                    <View style={[styles.badge, { backgroundColor: st.bg }]}>
-                      <Text style={[styles.badgeText, { color: st.color }]}>{st.label}</Text>
-                    </View>
-                  </View>
-                </View>
-              );
-            })
-          )}
-        </View>
       </ScrollView>
     </SafeAreaView>
   );

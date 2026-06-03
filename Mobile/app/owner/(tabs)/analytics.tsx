@@ -109,12 +109,7 @@ export default function AnalyticsTab() {
                 </Text>
               </View>
 
-              <View style={[styles.statCard, { backgroundColor: '#FEF2F2' }]}>
-                <Text style={styles.statLabel}>Huỷ</Text>
-                <Text style={[styles.statValue, { color: '#EF4444' }]}>
-                  {data.cancelledBookings}
-                </Text>
-              </View>
+            
             </View>
 
             {/* HOTELS */}
@@ -201,18 +196,11 @@ const styles = StyleSheet.create({
   center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
 
   header: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingHorizontal: 20,
-    paddingTop: 16,
-    paddingBottom: 20,
+    flexDirection: 'row', alignItems: 'center', backgroundColor: '#FFF',
+    paddingHorizontal: 12, paddingVertical: 12,
+    borderBottomWidth: 1, borderBottomColor: '#F0F0F0',
   },
-  title: {
-    fontSize: 20,
-    fontWeight: "700",
-    color: "#0F172A",
-    flex: 1,
-  },
+  title: { flex: 1, textAlign: 'center', fontSize: 17, fontWeight: '700', color: '#222' },
 
   content: { padding: 15, paddingBottom: 40 },
 
